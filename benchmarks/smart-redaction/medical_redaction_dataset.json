@@ -1,0 +1,133 @@
+[
+  {
+    "id": "M001",
+    "domain": "medical",
+    "task_type": "summary",
+    "sensitivity_level": "high",
+    "input_text": "Riassumi il caso clinico di Maria Rossi, nata il 17/09/1982, paziente con carcinoma mammario HER2 positivo, ricoverata al San Carlo di Milano, numero cartella 884213.",
+    "sensitive_spans": [
+      {
+        "text": "Maria Rossi",
+        "label": "PATIENT_NAME"
+      },
+      {
+        "text": "17/09/1982",
+        "label": "DATE_OF_BIRTH"
+      },
+      {
+        "text": "carcinoma mammario HER2 positivo",
+        "label": "DIAGNOSIS"
+      },
+      {
+        "text": "San Carlo di Milano",
+        "label": "HOSPITAL"
+      },
+      {
+        "text": "884213",
+        "label": "MEDICAL_RECORD_NUMBER"
+      }
+    ],
+    "expected_redacted_text": "Riassumi il caso clinico di [PATIENT_NAME], nata il [DATE_OF_BIRTH], paziente con [DIAGNOSIS], ricoverata al [HOSPITAL], numero cartella [MEDICAL_RECORD_NUMBER].",
+    "utility_goal": "Il caso deve restare riassumibile senza esporre dati sanitari identificativi."
+  },
+  {
+    "id": "M002",
+    "domain": "medical",
+    "task_type": "triage_support",
+    "sensitivity_level": "high",
+    "input_text": "Prepara un riepilogo per il triage del paziente Marco Verdi con glicemia 312 mg/dL, terapia con metformina 850 mg due volte al giorno e sospetta chetoacidosi diabetica.",
+    "sensitive_spans": [
+      {
+        "text": "Marco Verdi",
+        "label": "PATIENT_NAME"
+      },
+      {
+        "text": "312 mg/dL",
+        "label": "LAB_VALUE"
+      },
+      {
+        "text": "metformina 850 mg due volte al giorno",
+        "label": "THERAPY"
+      },
+      {
+        "text": "chetoacidosi diabetica",
+        "label": "DIAGNOSIS"
+      }
+    ],
+    "expected_redacted_text": "Prepara un riepilogo per il triage del paziente [PATIENT_NAME] con glicemia [LAB_VALUE], terapia con [THERAPY] e sospetta [DIAGNOSIS].",
+    "utility_goal": "Il riepilogo clinico deve restare utilizzabile."
+  },
+  {
+    "id": "M003",
+    "domain": "medical",
+    "task_type": "letter_generation",
+    "sensitivity_level": "medium",
+    "input_text": "Scrivi una bozza di lettera per il medico curante del signor Paolo Neri dopo visita cardiologica con riscontro di fibrillazione atriale e prescrizione di apixaban.",
+    "sensitive_spans": [
+      {
+        "text": "Paolo Neri",
+        "label": "PATIENT_NAME"
+      },
+      {
+        "text": "fibrillazione atriale",
+        "label": "DIAGNOSIS"
+      },
+      {
+        "text": "apixaban",
+        "label": "MEDICATION"
+      }
+    ],
+    "expected_redacted_text": "Scrivi una bozza di lettera per il medico curante del signor [PATIENT_NAME] dopo visita cardiologica con riscontro di [DIAGNOSIS] e prescrizione di [MEDICATION].",
+    "utility_goal": "La generazione della lettera deve restare possibile."
+  },
+  {
+    "id": "M004",
+    "domain": "medical",
+    "task_type": "coding_support",
+    "sensitivity_level": "medium",
+    "input_text": "Suggerisci il codice ICD-10 per paziente con polmonite batterica e saturazione 89%, trasferito dal reparto di pneumologia del Policlinico Gemelli.",
+    "sensitive_spans": [
+      {
+        "text": "polmonite batterica",
+        "label": "DIAGNOSIS"
+      },
+      {
+        "text": "89%",
+        "label": "VITAL_SIGN"
+      },
+      {
+        "text": "Policlinico Gemelli",
+        "label": "HOSPITAL"
+      }
+    ],
+    "expected_redacted_text": "Suggerisci il codice ICD-10 per paziente con [DIAGNOSIS] e saturazione [VITAL_SIGN], trasferito dal reparto di pneumologia del [HOSPITAL].",
+    "utility_goal": "La codifica clinica deve restare possibile."
+  },
+  {
+    "id": "M005",
+    "domain": "medical",
+    "task_type": "translation",
+    "sensitivity_level": "high",
+    "input_text": "Traduci in inglese il referto di Anna Gallo con mutazione BRCA1, pregresso intervento al seno destro e follow-up oncologico programmato il 6 maggio 2026.",
+    "sensitive_spans": [
+      {
+        "text": "Anna Gallo",
+        "label": "PATIENT_NAME"
+      },
+      {
+        "text": "mutazione BRCA1",
+        "label": "GENETIC_INFORMATION"
+      },
+      {
+        "text": "intervento al seno destro",
+        "label": "PROCEDURE_HISTORY"
+      },
+      {
+        "text": "6 maggio 2026",
+        "label": "DATE"
+      }
+    ],
+    "expected_redacted_text": "Traduci in inglese il referto di [PATIENT_NAME] con [GENETIC_INFORMATION], pregresso [PROCEDURE_HISTORY] e follow-up oncologico programmato il [DATE].",
+    "utility_goal": "La traduzione deve restare fattibile senza esporre dati identificativi."
+  }
+]

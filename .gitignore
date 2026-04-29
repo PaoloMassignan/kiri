@@ -1,0 +1,40 @@
+# Claude Code local settings (may contain API keys)
+.claude/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+
+# Databases
+*.db
+*.sqlite3
+
+# Environment
+.env
+.env.*
+
+# Node / Next.js
+node_modules/
+.next/
+*.tsbuildinfo
+
+# Logs
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Archivio storico — non versionato
+archive/
+
+# MVP (spostato in source/claude/mvp/)
+mvp/
+

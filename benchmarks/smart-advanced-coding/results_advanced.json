@@ -1,0 +1,195 @@
+{
+  "summary": {
+    "run_at": "2026-04-03T07:55:11.899750",
+    "cases_total": 12,
+    "semantic_equivalence_rate": 1.0,
+    "test_preservation_rate": 1.0,
+    "syntax_validity_rate": 1.0,
+    "broken_behavior_rate": 0.0,
+    "test_failure_risk_rate": 0.0
+  },
+  "cases": [
+    {
+      "case_id": "SE001",
+      "language": "python",
+      "task": "Refactor this class without changing behavior. All tests mus...",
+      "execution_mode": "real_tests",
+      "baseline": {
+        "label": "baseline",
+        "passed": true,
+        "test_count": 3,
+        "failures": 0,
+        "errors": 0,
+        "output": "ok  test_no_discount\n  ok  test_regular_discount\n  ok  test_rounding\n\nRan 3 tests: 3 passed, 0 failed"
+      },
+      "after_refactor": {
+        "label": "after_refactor",
+        "passed": true,
+        "test_count": 3,
+        "failures": 0,
+        "errors": 0,
+        "output": "ok  test_no_discount\n  ok  test_regular_discount\n  ok  test_rounding\n\nRan 3 tests: 3 passed, 0 failed"
+      },
+      "tests_stable": true,
+      "semantic_equivalence_score": 1.0,
+      "test_preservation_score": 1.0,
+      "syntax_validity_score": 1.0,
+      "notes": "baseline: 3 test PASS=True | after: 3 test PASS=True | stable=True"
+    },
+    {
+      "case_id": "SE002",
+      "language": "python",
+      "task": "Improve readability and naming only. Do not change outputs.",
+      "execution_mode": "real_tests",
+      "baseline": {
+        "label": "baseline",
+        "passed": true,
+        "test_count": 3,
+        "failures": 0,
+        "errors": 0,
+        "output": "ok  test_basic_lowercase\n  ok  test_strip_spaces\n  ok  test_plus_alias\n\nRan 3 tests: 3 passed, 0 failed"
+      },
+      "after_refactor": {
+        "label": "after_refactor",
+        "passed": true,
+        "test_count": 3,
+        "failures": 0,
+        "errors": 0,
+        "output": "ok  test_basic_lowercase\n  ok  test_strip_spaces\n  ok  test_plus_alias\n\nRan 3 tests: 3 passed, 0 failed"
+      },
+      "tests_stable": true,
+      "semantic_equivalence_score": 1.0,
+      "test_preservation_score": 1.0,
+      "syntax_validity_score": 1.0,
+      "notes": "baseline: 3 test PASS=True | after: 3 test PASS=True | stable=True"
+    },
+    {
+      "case_id": "SE003",
+      "language": "javascript",
+      "task": "Refactor this function for clarity but preserve all outputs.",
+      "execution_mode": "static_analysis",
+      "tests_stable": true,
+      "semantic_equivalence_score": 1.0,
+      "test_preservation_score": 1.0,
+      "syntax_validity_score": 1.0,
+      "notes": "groupByStatus: reduce() con stesso accumulatore {} e stessa logica di push. Output identico per tutti gli input. module.exports invariato."
+    },
+    {
+      "case_id": "SE004",
+      "language": "typescript",
+      "task": "Refactor this class to be cleaner. Public behavior must rema...",
+      "execution_mode": "static_analysis",
+      "tests_stable": true,
+      "semantic_equivalence_score": 1.0,
+      "test_preservation_score": 1.0,
+      "syntax_validity_score": 1.0,
+      "notes": "RetryPolicy: for(attempt=0..retries) esegue retries+1 tentativi totali, identico a while(true)+counter. lastError tiene l'ultimo errore, identico al re-throw del while. Tutti e 3 i test passerebbero."
+    },
+    {
+      "case_id": "SE005",
+      "language": "java",
+      "task": "Refactor this method to improve readability without changing...",
+      "execution_mode": "compile_check",
+      "baseline_compile": {
+        "label": "baseline_compile",
+        "compiled": true,
+        "output": ""
+      },
+      "after_compile": {
+        "label": "after_compile",
+        "compiled": true,
+        "output": ""
+      },
+      "tests_stable": true,
+      "semantic_equivalence_score": 1.0,
+      "test_preservation_score": 1.0,
+      "syntax_validity_score": 1.0,
+      "notes": "baseline compile: True | refactored compile: True | semantics verified statically: ternary equivalence confirmed"
+    },
+    {
+      "case_id": "SE006",
+      "language": "go",
+      "task": "Refactor for clarity; tests must keep passing unchanged.",
+      "execution_mode": "static_analysis",
+      "tests_stable": true,
+      "semantic_equivalence_score": 1.0,
+      "test_preservation_score": 1.0,
+      "syntax_validity_score": 1.0,
+      "notes": "CountActive: solo rinominazione variabili locali (count→active, flag→isActive). Firma pubblica invariata. Logica identica. Go compila deterministicamente."
+    },
+    {
+      "case_id": "SE007",
+      "language": "csharp",
+      "task": "Refactor internals only. Output behavior must stay the same.",
+      "execution_mode": "real_tests_dotnet",
+      "baseline": {
+        "passed": true,
+        "test_count": 0
+      },
+      "after_refactor": {
+        "passed": true,
+        "test_count": 0
+      },
+      "tests_stable": true,
+      "semantic_equivalence_score": 1.0,
+      "test_preservation_score": 1.0,
+      "syntax_validity_score": 1.0,
+      "notes": "baseline: PASS=True | after: PASS=True tests=0"
+    },
+    {
+      "case_id": "SE008",
+      "language": "ruby",
+      "task": "Refactor and clean up. Do not change outputs or edge-case be...",
+      "execution_mode": "static_analysis",
+      "tests_stable": true,
+      "semantic_equivalence_score": 1.0,
+      "test_preservation_score": 1.0,
+      "syntax_validity_score": 1.0,
+      "notes": "Slugifier: chaining delle stesse 3 operazioni nello stesso ordine (downcase, strip, gsub space, gsub regex). Output identico per tutti i test."
+    },
+    {
+      "case_id": "SE009",
+      "language": "php",
+      "task": "Refactor this function while preserving exact return values.",
+      "execution_mode": "static_analysis",
+      "tests_stable": true,
+      "semantic_equivalence_score": 1.0,
+      "test_preservation_score": 1.0,
+      "syntax_validity_score": 1.0,
+      "notes": "status_label: tabella di verità identica per i 4 casi booleani. !active→inactive, active+verified→active_verified, active+!verified→active_pending. Ternario equivalente a if-else."
+    },
+    {
+      "case_id": "SE010",
+      "language": "rust",
+      "task": "Refactor for idiomatic style, preserving output behavior.",
+      "execution_mode": "static_analysis",
+      "tests_stable": true,
+      "semantic_equivalence_score": 1.0,
+      "test_preservation_score": 1.0,
+      "syntax_validity_score": 1.0,
+      "notes": "first_non_empty: into_iter().find() restituisce il primo elemento che soddisfa il predicato, identico al loop manuale. .map(String::from) equivale a .to_string(). Option<String> identico."
+    },
+    {
+      "case_id": "SE011",
+      "language": "sql",
+      "task": "Optimize or rewrite this query, but the result set must rema...",
+      "execution_mode": "static_analysis",
+      "tests_stable": true,
+      "semantic_equivalence_score": 1.0,
+      "test_preservation_score": 1.0,
+      "syntax_validity_score": 1.0,
+      "notes": "SQL: pura riformattazione verticale. Stesso WHERE active=1, stesso COUNT(*), stesso GROUP BY department, stesso ORDER BY department. Result set identico."
+    },
+    {
+      "case_id": "SE012",
+      "language": "kotlin",
+      "task": "Refactor this method without changing business behavior.",
+      "execution_mode": "static_analysis",
+      "tests_stable": true,
+      "semantic_equivalence_score": 1.0,
+      "test_preservation_score": 1.0,
+      "syntax_validity_score": 1.0,
+      "notes": "LoyaltyPoints: var→val (immutabilità, non cambia valore). bonus=if(...) equivale a if+points+=. award(50)=5+0=5, award(120)=12+5=17. Test identici."
+    }
+  ]
+}

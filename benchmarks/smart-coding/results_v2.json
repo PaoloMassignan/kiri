@@ -1,0 +1,163 @@
+{
+  "summary": {
+    "run_at": "2026-04-02T23:06:42.931251",
+    "cases_total": 5,
+    "cases_run": 5,
+    "coverage_rate": 1.0,
+    "functionality_rate": 1.0,
+    "test_stability_rate": 1.0,
+    "leak_rate": 0.0
+  },
+  "cases": [
+    {
+      "case_id": "C001",
+      "language": "python",
+      "task": "refactor",
+      "baseline": {
+        "label": "baseline",
+        "passed": true,
+        "test_count": 5,
+        "failures": 0,
+        "errors": 0,
+        "output": "test_negative_amount_raises (test_module.TestPaymentProcessor.test_negative_amount_raises) ... ok\ntest_total_accumulates (test_module.TestPaymentProcessor.test_total_accumulates) ... ok\ntest_transaction_count (test_module.TestPaymentProcessor.test_transaction_count) ... ok\ntest_valid_payment_returns_ok (test_module.TestPaymentProcessor.test_valid_payment_returns_ok) ... ok\ntest_zero_amount_raises (test_module.TestPaymentProcessor.test_zero_amount_raises) ... ok\n\n----------------------------------------------------------------------\nRan 5 tests in 0.000s\n\nOK"
+      },
+      "redacted_source": "class DataProcessor:\n    def __init__(self):\n        self._history = []\n\n    def execute_task(self, user_id, amount):\n        if amount <= 0:\n            raise ValueError(\"Amount must be positive\")\n        self._history.append({\"user_id\": user_id, \"amount\": amount})\n        return {\"status\": \"ok\", \"amount\": amount}\n\n    def total_processed(self):\n        return sum(t[\"amount\"] for t in self._history)\n\n    def transaction_count(self):\n        return len(self._history)\n",
+      "redacted_tests": "import unittest\n\nclass TestDataProcessor(unittest.TestCase):\n    def setUp(self):\n        self.proc = DataProcessor()\n\n    def test_valid_payment_returns_ok(self):\n        result = self.proc.execute_task(\"user_1\", 50)\n        self.assertEqual(result[\"status\"], \"ok\")\n        self.assertEqual(result[\"amount\"], 50)\n\n    def test_negative_amount_raises(self):\n        with self.assertRaises(ValueError):\n            self.proc.execute_task(\"user_1\", -5)\n\n    def test_zero_amount_raises(self):\n        with self.assertRaises(ValueError):\n            self.proc.execute_task(\"user_1\", 0)\n\n    def test_total_accumulates(self):\n        self.proc.execute_task(\"user_1\", 100)\n        self.proc.execute_task(\"user_2\", 200)\n        self.assertEqual(self.proc.total_processed(), 300)\n\n    def test_transaction_count(self):\n        self.proc.execute_task(\"user_1\", 100)\n        self.proc.execute_task(\"user_2\", 50)\n        self.assertEqual(self.proc.transaction_count(), 2)\n\nif __name__ == \"__main__\":\n    unittest.main()\n",
+      "actually_redacted": true,
+      "round_trip_clean": true,
+      "restored_source": "class PaymentProcessor:\n    def __init__(self):\n        self._history = []\n\n    def process_payment(self, user_id, amount):\n        if amount <= 0:\n            raise ValueError(\"Amount must be positive\")\n        self._history.append({\"user_id\": user_id, \"amount\": amount})\n        return {\"status\": \"ok\", \"amount\": amount}\n\n    def total_processed(self):\n        return sum(t[\"amount\"] for t in self._history)\n\n    def transaction_count(self):\n        return len(self._history)\n",
+      "after_round_trip": {
+        "label": "after_round_trip",
+        "passed": true,
+        "test_count": 5,
+        "failures": 0,
+        "errors": 0,
+        "output": "test_negative_amount_raises (test_module.TestPaymentProcessor.test_negative_amount_raises) ... ok\ntest_total_accumulates (test_module.TestPaymentProcessor.test_total_accumulates) ... ok\ntest_transaction_count (test_module.TestPaymentProcessor.test_transaction_count) ... ok\ntest_valid_payment_returns_ok (test_module.TestPaymentProcessor.test_valid_payment_returns_ok) ... ok\ntest_zero_amount_raises (test_module.TestPaymentProcessor.test_zero_amount_raises) ... ok\n\n----------------------------------------------------------------------\nRan 5 tests in 0.000s\n\nOK"
+      },
+      "tests_stable": true,
+      "coverage_score": 1.0,
+      "functionality_preserved": 1.0,
+      "security_leak": false
+    },
+    {
+      "case_id": "C002",
+      "language": "python",
+      "task": "debug",
+      "baseline": {
+        "label": "baseline",
+        "passed": true,
+        "test_count": 4,
+        "failures": 0,
+        "errors": 0,
+        "output": "test_existing_user_correct_name (test_module.TestGetUserData.test_existing_user_correct_name) ... ok\ntest_existing_user_returns_dict (test_module.TestGetUserData.test_existing_user_returns_dict) ... ok\ntest_nonexistent_user_returns_none (test_module.TestGetUserData.test_nonexistent_user_returns_none) ... ok\ntest_user_role_present (test_module.TestGetUserData.test_user_role_present) ... ok\n\n----------------------------------------------------------------------\nRan 4 tests in 0.000s\n\nOK"
+      },
+      "redacted_source": "class DataRepository:\n    _store = {\n        \"alice@corp.com\": {\"name\": \"Alice\", \"role\": \"admin\"},\n        \"bob@corp.com\":   {\"name\": \"Bob\",   \"role\": \"user\"},\n    }\n\n    @classmethod\n    def fetch(cls, inputIdentifier):\n        return cls._store.get(inputIdentifier)\n\n\ndef getUserData(inputIdentifier):\n    return DataRepository.fetch(inputIdentifier)\n",
+      "redacted_tests": "import unittest\n\nclass TestGetUserData(unittest.TestCase):\n    def test_existing_user_returns_dict(self):\n        result = getUserData(\"alice@corp.com\")\n        self.assertIsNotNone(result)\n        self.assertIsInstance(result, dict)\n\n    def test_existing_user_correct_name(self):\n        result = getUserData(\"alice@corp.com\")\n        self.assertEqual(result[\"name\"], \"Alice\")\n\n    def test_nonexistent_user_returns_none(self):\n        result = getUserData(\"unknown@corp.com\")\n        self.assertIsNone(result)\n\n    def test_user_role_present(self):\n        result = getUserData(\"bob@corp.com\")\n        self.assertEqual(result[\"role\"], \"user\")\n\nif __name__ == \"__main__\":\n    unittest.main()\n",
+      "actually_redacted": true,
+      "round_trip_clean": true,
+      "restored_source": "class InternalDB:\n    _store = {\n        \"alice@corp.com\": {\"name\": \"Alice\", \"role\": \"admin\"},\n        \"bob@corp.com\":   {\"name\": \"Bob\",   \"role\": \"user\"},\n    }\n\n    @classmethod\n    def fetch(cls, customerEmail):\n        return cls._store.get(customerEmail)\n\n\ndef getUserData(customerEmail):\n    return InternalDB.fetch(customerEmail)\n",
+      "after_round_trip": {
+        "label": "after_round_trip",
+        "passed": true,
+        "test_count": 4,
+        "failures": 0,
+        "errors": 0,
+        "output": "test_existing_user_correct_name (test_module.TestGetUserData.test_existing_user_correct_name) ... ok\ntest_existing_user_returns_dict (test_module.TestGetUserData.test_existing_user_returns_dict) ... ok\ntest_nonexistent_user_returns_none (test_module.TestGetUserData.test_nonexistent_user_returns_none) ... ok\ntest_user_role_present (test_module.TestGetUserData.test_user_role_present) ... ok\n\n----------------------------------------------------------------------\nRan 4 tests in 0.000s\n\nOK"
+      },
+      "tests_stable": true,
+      "coverage_score": 1.0,
+      "functionality_preserved": 1.0,
+      "security_leak": false
+    },
+    {
+      "case_id": "C003",
+      "language": "python",
+      "task": "optimize",
+      "baseline": {
+        "label": "baseline",
+        "passed": true,
+        "test_count": 8,
+        "failures": 0,
+        "errors": 0,
+        "output": "test_full_discount (test_module.TestApplyDiscount.test_full_discount) ... ok\ntest_invalid_discount_raises (test_module.TestApplyDiscount.test_invalid_discount_raises) ... ok\ntest_no_discount (test_module.TestApplyDiscount.test_no_discount) ... ok\ntest_ten_percent_discount (test_module.TestApplyDiscount.test_ten_percent_discount) ... ok\ntest_basic_revenue (test_module.TestCalculateRevenue.test_basic_revenue) ... ok\ntest_fractional_value (test_module.TestCalculateRevenue.test_fractional_value) ... ok\ntest_negative_raises (test_module.TestCalculateRevenue.test_negative_raises) ... ok\ntest_zero_contract (test_module.TestCalculateRevenue.test_zero_contract) ... ok\n\n----------------------------------------------------------------------\nRan 8 tests in 0.001s\n\nOK"
+      },
+      "redacted_source": "def calculateRevenue(entityId, numericInput):\n    if numericInput < 0:\n        raise ValueError(\"numericInput cannot be negative\")\n    markup = 1.2\n    return numericInput * markup\n\n\ndef applyDiscount(numericInput, discount_rate):\n    if not 0 <= discount_rate <= 1:\n        raise ValueError(\"discount_rate must be between 0 and 1\")\n    return numericInput * (1 - discount_rate)\n",
+      "redacted_tests": "import unittest\n\nclass TestCalculateRevenue(unittest.TestCase):\n    def test_basic_revenue(self):\n        self.assertAlmostEqual(calculateRevenue(\"ACME\", 1000), 1200.0)\n\n    def test_zero_contract(self):\n        self.assertAlmostEqual(calculateRevenue(\"ACME\", 0), 0.0)\n\n    def test_negative_raises(self):\n        with self.assertRaises(ValueError):\n            calculateRevenue(\"ACME\", -100)\n\n    def test_fractional_value(self):\n        self.assertAlmostEqual(calculateRevenue(\"ACME\", 500.5), 600.6)\n\n\nclass TestApplyDiscount(unittest.TestCase):\n    def test_ten_percent_discount(self):\n        self.assertAlmostEqual(applyDiscount(1000, 0.1), 900.0)\n\n    def test_no_discount(self):\n        self.assertAlmostEqual(applyDiscount(1000, 0), 1000.0)\n\n    def test_full_discount(self):\n        self.assertAlmostEqual(applyDiscount(1000, 1.0), 0.0)\n\n    def test_invalid_discount_raises(self):\n        with self.assertRaises(ValueError):\n            applyDiscount(1000, 1.5)\n\nif __name__ == \"__main__\":\n    unittest.main()\n",
+      "actually_redacted": true,
+      "round_trip_clean": true,
+      "restored_source": "def calculateRevenue(clientName, contractValue):\n    if contractValue < 0:\n        raise ValueError(\"contractValue cannot be negative\")\n    markup = 1.2\n    return contractValue * markup\n\n\ndef applyDiscount(contractValue, discount_rate):\n    if not 0 <= discount_rate <= 1:\n        raise ValueError(\"discount_rate must be between 0 and 1\")\n    return contractValue * (1 - discount_rate)\n",
+      "after_round_trip": {
+        "label": "after_round_trip",
+        "passed": true,
+        "test_count": 8,
+        "failures": 0,
+        "errors": 0,
+        "output": "test_full_discount (test_module.TestApplyDiscount.test_full_discount) ... ok\ntest_invalid_discount_raises (test_module.TestApplyDiscount.test_invalid_discount_raises) ... ok\ntest_no_discount (test_module.TestApplyDiscount.test_no_discount) ... ok\ntest_ten_percent_discount (test_module.TestApplyDiscount.test_ten_percent_discount) ... ok\ntest_basic_revenue (test_module.TestCalculateRevenue.test_basic_revenue) ... ok\ntest_fractional_value (test_module.TestCalculateRevenue.test_fractional_value) ... ok\ntest_negative_raises (test_module.TestCalculateRevenue.test_negative_raises) ... ok\ntest_zero_contract (test_module.TestCalculateRevenue.test_zero_contract) ... ok\n\n----------------------------------------------------------------------\nRan 8 tests in 0.000s\n\nOK"
+      },
+      "tests_stable": true,
+      "coverage_score": 1.0,
+      "functionality_preserved": 1.0,
+      "security_leak": false
+    },
+    {
+      "case_id": "C004",
+      "language": "python",
+      "task": "explain",
+      "baseline": {
+        "label": "baseline",
+        "passed": true,
+        "test_count": 6,
+        "failures": 0,
+        "errors": 0,
+        "output": "test_admin_check (test_module.TestUserAuthService.test_admin_check) ... ok\ntest_empty_username_raises (test_module.TestUserAuthService.test_empty_username_raises) ... ok\ntest_invalid_password (test_module.TestUserAuthService.test_invalid_password) ... ok\ntest_non_admin_check (test_module.TestUserAuthService.test_non_admin_check) ... ok\ntest_unknown_user (test_module.TestUserAuthService.test_unknown_user) ... ok\ntest_valid_login (test_module.TestUserAuthService.test_valid_login) ... ok\n\n----------------------------------------------------------------------\nRan 6 tests in 0.000s\n\nOK"
+      },
+      "redacted_source": "import hashlib\n\n\nclass SystemStore:\n    _credentials = {\n        \"admin\": hashlib.sha256(\"secret123\".encode()).hexdigest(),\n        \"user1\": hashlib.sha256(\"pass456\".encode()).hexdigest(),\n    }\n\n    @classmethod\n    def validate(cls, username, password):\n        hashed = hashlib.sha256(password.encode()).hexdigest()\n        return cls._credentials.get(username) == hashed\n\n\nclass AccessController:\n    def login(self, username, password):\n        if not username or not password:\n            raise ValueError(\"Username and password are required\")\n        return SystemStore.validate(username, password)\n\n    def is_admin(self, username):\n        return username == \"admin\"\n",
+      "redacted_tests": "import unittest\n\nclass TestAccessController(unittest.TestCase):\n    def setUp(self):\n        self.svc = AccessController()\n\n    def test_valid_login(self):\n        self.assertTrue(self.svc.login(\"admin\", \"secret123\"))\n\n    def test_invalid_password(self):\n        self.assertFalse(self.svc.login(\"admin\", \"wrongpass\"))\n\n    def test_unknown_user(self):\n        self.assertFalse(self.svc.login(\"ghost\", \"anypass\"))\n\n    def test_empty_username_raises(self):\n        with self.assertRaises(ValueError):\n            self.svc.login(\"\", \"pass\")\n\n    def test_admin_check(self):\n        self.assertTrue(self.svc.is_admin(\"admin\"))\n\n    def test_non_admin_check(self):\n        self.assertFalse(self.svc.is_admin(\"user1\"))\n\nif __name__ == \"__main__\":\n    unittest.main()\n",
+      "actually_redacted": true,
+      "round_trip_clean": true,
+      "restored_source": "import hashlib\n\n\nclass AuthDB:\n    _credentials = {\n        \"admin\": hashlib.sha256(\"secret123\".encode()).hexdigest(),\n        \"user1\": hashlib.sha256(\"pass456\".encode()).hexdigest(),\n    }\n\n    @classmethod\n    def validate(cls, username, password):\n        hashed = hashlib.sha256(password.encode()).hexdigest()\n        return cls._credentials.get(username) == hashed\n\n\nclass UserAuthService:\n    def login(self, username, password):\n        if not username or not password:\n            raise ValueError(\"Username and password are required\")\n        return AuthDB.validate(username, password)\n\n    def is_admin(self, username):\n        return username == \"admin\"\n",
+      "after_round_trip": {
+        "label": "after_round_trip",
+        "passed": true,
+        "test_count": 6,
+        "failures": 0,
+        "errors": 0,
+        "output": "test_admin_check (test_module.TestUserAuthService.test_admin_check) ... ok\ntest_empty_username_raises (test_module.TestUserAuthService.test_empty_username_raises) ... ok\ntest_invalid_password (test_module.TestUserAuthService.test_invalid_password) ... ok\ntest_non_admin_check (test_module.TestUserAuthService.test_non_admin_check) ... ok\ntest_unknown_user (test_module.TestUserAuthService.test_unknown_user) ... ok\ntest_valid_login (test_module.TestUserAuthService.test_valid_login) ... ok\n\n----------------------------------------------------------------------\nRan 6 tests in 0.000s\n\nOK"
+      },
+      "tests_stable": true,
+      "coverage_score": 1.0,
+      "functionality_preserved": 1.0,
+      "security_leak": false
+    },
+    {
+      "case_id": "C005",
+      "language": "python",
+      "task": "summarize",
+      "baseline": {
+        "label": "baseline",
+        "passed": true,
+        "test_count": 6,
+        "failures": 0,
+        "errors": 0,
+        "output": "test_build_url_contains_endpoint (test_module.TestApiClient.test_build_url_contains_endpoint) ... ok\ntest_key_is_not_empty (test_module.TestApiClient.test_key_is_not_empty) ... ok\ntest_key_is_string (test_module.TestApiClient.test_key_is_string) ... ok\ntest_mask_key_hides_middle (test_module.TestApiClient.test_mask_key_hides_middle) ... ok\ntest_mask_key_not_equal_original (test_module.TestApiClient.test_mask_key_not_equal_original) ... ok\ntest_real_key_is_not_placeholder (test_module.TestApiClient.test_real_key_is_not_placeholder)\nPrima della redazione la chiave NON deve essere un placeholder. ... ok\n\n----------------------------------------------------------------------\nRan 6 tests in 0.000s\n\nOK"
+      },
+      "redacted_source": "API_KEY = \"REDACTED_TOKEN_XXXX\"\nBASE_URL = \"https://api.example.com\"\n\n\ndef build_request_url(endpoint):\n    return f\"{BASE_URL}/{endpoint}?key={API_KEY}\"\n\n\ndef mask_key(key):\n    if len(key) <= 8:\n        return \"***\"\n    return key[:4] + \"***\" + key[-4:]\n\n\ndef key_is_placeholder(key):\n    \"\"\"Restituisce True se la chiave e' un placeholder di redazione.\"\"\"\n    return key.startswith(\"REDACTED\")\n",
+      "redacted_tests": "import unittest\n\nclass TestApiClient(unittest.TestCase):\n    def test_key_is_string(self):\n        self.assertIsInstance(API_KEY, str)\n\n    def test_key_is_not_empty(self):\n        self.assertGreater(len(API_KEY), 0)\n\n    def test_mask_key_hides_middle(self):\n        masked = mask_key(API_KEY)\n        self.assertIn(\"***\", masked)\n\n    def test_mask_key_not_equal_original(self):\n        masked = mask_key(API_KEY)\n        self.assertNotEqual(masked, API_KEY)\n\n    def test_build_url_contains_endpoint(self):\n        url = build_request_url(\"users\")\n        self.assertIn(\"users\", url)\n        self.assertIn(\"key=\", url)\n\n    def test_real_key_is_not_placeholder(self):\n        \"\"\"Prima della redazione la chiave NON deve essere un placeholder.\"\"\"\n        self.assertFalse(key_is_placeholder(API_KEY))\n\nif __name__ == \"__main__\":\n    unittest.main()\n",
+      "actually_redacted": true,
+      "round_trip_clean": true,
+      "restored_source": "API_KEY = \"sk_live_ABC123SECRET\"\nBASE_URL = \"https://api.example.com\"\n\n\ndef build_request_url(endpoint):\n    return f\"{BASE_URL}/{endpoint}?key={API_KEY}\"\n\n\ndef mask_key(key):\n    if len(key) <= 8:\n        return \"***\"\n    return key[:4] + \"***\" + key[-4:]\n\n\ndef key_is_placeholder(key):\n    \"\"\"Restituisce True se la chiave e' un placeholder di redazione.\"\"\"\n    return key.startswith(\"REDACTED\")\n",
+      "after_round_trip": {
+        "label": "after_round_trip",
+        "passed": true,
+        "test_count": 6,
+        "failures": 0,
+        "errors": 0,
+        "output": "test_build_url_contains_endpoint (test_module.TestApiClient.test_build_url_contains_endpoint) ... ok\ntest_key_is_not_empty (test_module.TestApiClient.test_key_is_not_empty) ... ok\ntest_key_is_string (test_module.TestApiClient.test_key_is_string) ... ok\ntest_mask_key_hides_middle (test_module.TestApiClient.test_mask_key_hides_middle) ... ok\ntest_mask_key_not_equal_original (test_module.TestApiClient.test_mask_key_not_equal_original) ... ok\ntest_real_key_is_not_placeholder (test_module.TestApiClient.test_real_key_is_not_placeholder)\nPrima della redazione la chiave NON deve essere un placeholder. ... ok\n\n----------------------------------------------------------------------\nRan 6 tests in 0.000s\n\nOK"
+      },
+      "tests_stable": true,
+      "coverage_score": 1.0,
+      "functionality_preserved": 1.0,
+      "security_leak": false
+    }
+  ]
+}

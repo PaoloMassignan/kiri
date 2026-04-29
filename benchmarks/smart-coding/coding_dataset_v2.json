@@ -1,0 +1,61 @@
+[
+  {
+    "id": "C001",
+    "language": "python",
+    "task": "refactor",
+    "description": "Classe di elaborazione pagamenti con storico transazioni.",
+    "sensitive_elements": [
+      { "text": "PaymentProcessor", "label": "CLASS_NAME" },
+      { "text": "process_payment",  "label": "FUNCTION_NAME" }
+    ],
+    "source_code": "class PaymentProcessor:\n    def __init__(self):\n        self._history = []\n\n    def process_payment(self, user_id, amount):\n        if amount <= 0:\n            raise ValueError(\"Amount must be positive\")\n        self._history.append({\"user_id\": user_id, \"amount\": amount})\n        return {\"status\": \"ok\", \"amount\": amount}\n\n    def total_processed(self):\n        return sum(t[\"amount\"] for t in self._history)\n\n    def transaction_count(self):\n        return len(self._history)\n",
+    "test_code": "import unittest\n\nclass TestPaymentProcessor(unittest.TestCase):\n    def setUp(self):\n        self.proc = PaymentProcessor()\n\n    def test_valid_payment_returns_ok(self):\n        result = self.proc.process_payment(\"user_1\", 50)\n        self.assertEqual(result[\"status\"], \"ok\")\n        self.assertEqual(result[\"amount\"], 50)\n\n    def test_negative_amount_raises(self):\n        with self.assertRaises(ValueError):\n            self.proc.process_payment(\"user_1\", -5)\n\n    def test_zero_amount_raises(self):\n        with self.assertRaises(ValueError):\n            self.proc.process_payment(\"user_1\", 0)\n\n    def test_total_accumulates(self):\n        self.proc.process_payment(\"user_1\", 100)\n        self.proc.process_payment(\"user_2\", 200)\n        self.assertEqual(self.proc.total_processed(), 300)\n\n    def test_transaction_count(self):\n        self.proc.process_payment(\"user_1\", 100)\n        self.proc.process_payment(\"user_2\", 50)\n        self.assertEqual(self.proc.transaction_count(), 2)\n\nif __name__ == \"__main__\":\n    unittest.main()\n"
+  },
+  {
+    "id": "C002",
+    "language": "python",
+    "task": "debug",
+    "description": "Funzione di recupero utente da database interno tramite email.",
+    "sensitive_elements": [
+      { "text": "customerEmail", "label": "PII_FIELD" },
+      { "text": "InternalDB",    "label": "INTERNAL_DB" }
+    ],
+    "source_code": "class InternalDB:\n    _store = {\n        \"alice@corp.com\": {\"name\": \"Alice\", \"role\": \"admin\"},\n        \"bob@corp.com\":   {\"name\": \"Bob\",   \"role\": \"user\"},\n    }\n\n    @classmethod\n    def fetch(cls, customerEmail):\n        return cls._store.get(customerEmail)\n\n\ndef getUserData(customerEmail):\n    return InternalDB.fetch(customerEmail)\n",
+    "test_code": "import unittest\n\nclass TestGetUserData(unittest.TestCase):\n    def test_existing_user_returns_dict(self):\n        result = getUserData(\"alice@corp.com\")\n        self.assertIsNotNone(result)\n        self.assertIsInstance(result, dict)\n\n    def test_existing_user_correct_name(self):\n        result = getUserData(\"alice@corp.com\")\n        self.assertEqual(result[\"name\"], \"Alice\")\n\n    def test_nonexistent_user_returns_none(self):\n        result = getUserData(\"unknown@corp.com\")\n        self.assertIsNone(result)\n\n    def test_user_role_present(self):\n        result = getUserData(\"bob@corp.com\")\n        self.assertEqual(result[\"role\"], \"user\")\n\nif __name__ == \"__main__\":\n    unittest.main()\n"
+  },
+  {
+    "id": "C003",
+    "language": "python",
+    "task": "optimize",
+    "description": "Calcolo revenue con markup e funzione di sconto.",
+    "sensitive_elements": [
+      { "text": "clientName",     "label": "CLIENT_IDENTIFIER" },
+      { "text": "contractValue",  "label": "FINANCIAL_DATA" }
+    ],
+    "source_code": "def calculateRevenue(clientName, contractValue):\n    if contractValue < 0:\n        raise ValueError(\"contractValue cannot be negative\")\n    markup = 1.2\n    return contractValue * markup\n\n\ndef applyDiscount(contractValue, discount_rate):\n    if not 0 <= discount_rate <= 1:\n        raise ValueError(\"discount_rate must be between 0 and 1\")\n    return contractValue * (1 - discount_rate)\n",
+    "test_code": "import unittest\n\nclass TestCalculateRevenue(unittest.TestCase):\n    def test_basic_revenue(self):\n        self.assertAlmostEqual(calculateRevenue(\"ACME\", 1000), 1200.0)\n\n    def test_zero_contract(self):\n        self.assertAlmostEqual(calculateRevenue(\"ACME\", 0), 0.0)\n\n    def test_negative_raises(self):\n        with self.assertRaises(ValueError):\n            calculateRevenue(\"ACME\", -100)\n\n    def test_fractional_value(self):\n        self.assertAlmostEqual(calculateRevenue(\"ACME\", 500.5), 600.6)\n\n\nclass TestApplyDiscount(unittest.TestCase):\n    def test_ten_percent_discount(self):\n        self.assertAlmostEqual(applyDiscount(1000, 0.1), 900.0)\n\n    def test_no_discount(self):\n        self.assertAlmostEqual(applyDiscount(1000, 0), 1000.0)\n\n    def test_full_discount(self):\n        self.assertAlmostEqual(applyDiscount(1000, 1.0), 0.0)\n\n    def test_invalid_discount_raises(self):\n        with self.assertRaises(ValueError):\n            applyDiscount(1000, 1.5)\n\nif __name__ == \"__main__\":\n    unittest.main()\n"
+  },
+  {
+    "id": "C004",
+    "language": "python",
+    "task": "explain",
+    "description": "Servizio di autenticazione utenti con hashing password.",
+    "sensitive_elements": [
+      { "text": "UserAuthService", "label": "SERVICE_NAME" },
+      { "text": "AuthDB",          "label": "INTERNAL_SYSTEM" }
+    ],
+    "source_code": "import hashlib\n\n\nclass AuthDB:\n    _credentials = {\n        \"admin\": hashlib.sha256(\"secret123\".encode()).hexdigest(),\n        \"user1\": hashlib.sha256(\"pass456\".encode()).hexdigest(),\n    }\n\n    @classmethod\n    def validate(cls, username, password):\n        hashed = hashlib.sha256(password.encode()).hexdigest()\n        return cls._credentials.get(username) == hashed\n\n\nclass UserAuthService:\n    def login(self, username, password):\n        if not username or not password:\n            raise ValueError(\"Username and password are required\")\n        return AuthDB.validate(username, password)\n\n    def is_admin(self, username):\n        return username == \"admin\"\n",
+    "test_code": "import unittest\n\nclass TestUserAuthService(unittest.TestCase):\n    def setUp(self):\n        self.svc = UserAuthService()\n\n    def test_valid_login(self):\n        self.assertTrue(self.svc.login(\"admin\", \"secret123\"))\n\n    def test_invalid_password(self):\n        self.assertFalse(self.svc.login(\"admin\", \"wrongpass\"))\n\n    def test_unknown_user(self):\n        self.assertFalse(self.svc.login(\"ghost\", \"anypass\"))\n\n    def test_empty_username_raises(self):\n        with self.assertRaises(ValueError):\n            self.svc.login(\"\", \"pass\")\n\n    def test_admin_check(self):\n        self.assertTrue(self.svc.is_admin(\"admin\"))\n\n    def test_non_admin_check(self):\n        self.assertFalse(self.svc.is_admin(\"user1\"))\n\nif __name__ == \"__main__\":\n    unittest.main()\n"
+  },
+  {
+    "id": "C005",
+    "language": "python",
+    "task": "summarize",
+    "description": "Client API con chiave segreta. I test non dipendono dal valore della chiave, solo dalla sua forma.",
+    "sensitive_elements": [
+      { "text": "sk_live_ABC123SECRET", "label": "API_KEY" }
+    ],
+    "source_code": "API_KEY = \"sk_live_ABC123SECRET\"\nBASE_URL = \"https://api.example.com\"\n\n\ndef build_request_url(endpoint):\n    return f\"{BASE_URL}/{endpoint}?key={API_KEY}\"\n\n\ndef mask_key(key):\n    if len(key) <= 8:\n        return \"***\"\n    return key[:4] + \"***\" + key[-4:]\n\n\ndef key_is_placeholder(key):\n    \"\"\"Restituisce True se la chiave e' un placeholder di redazione.\"\"\"\n    return key.startswith(\"REDACTED\")\n",
+    "test_code": "import unittest\n\nclass TestApiClient(unittest.TestCase):\n    def test_key_is_string(self):\n        self.assertIsInstance(API_KEY, str)\n\n    def test_key_is_not_empty(self):\n        self.assertGreater(len(API_KEY), 0)\n\n    def test_mask_key_hides_middle(self):\n        masked = mask_key(API_KEY)\n        self.assertIn(\"***\", masked)\n\n    def test_mask_key_not_equal_original(self):\n        masked = mask_key(API_KEY)\n        self.assertNotEqual(masked, API_KEY)\n\n    def test_build_url_contains_endpoint(self):\n        url = build_request_url(\"users\")\n        self.assertIn(\"users\", url)\n        self.assertIn(\"key=\", url)\n\n    def test_real_key_is_not_placeholder(self):\n        \"\"\"Prima della redazione la chiave NON deve essere un placeholder.\"\"\"\n        self.assertFalse(key_is_placeholder(API_KEY))\n\nif __name__ == \"__main__\":\n    unittest.main()\n"
+  }
+]

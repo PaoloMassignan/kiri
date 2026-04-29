@@ -1,0 +1,57 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+    paths:
+      - "kiri/**"
+      - ".github/workflows/ci.yml"
+  pull_request:
+    paths:
+      - "kiri/**"
+      - ".github/workflows/ci.yml"
+
+jobs:
+  test:
+    name: Unit tests (Python ${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        python-version: ["3.11", "3.12"]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+          cache-dependency-path: kiri/pyproject.toml
+
+      - name: Install dependencies
+        working-directory: kiri
+        run: pip install -e ".[dev]"
+
+      - name: Lint (ruff)
+        working-directory: kiri
+        run: ruff check src/ tests/
+
+      - name: Type check (mypy)
+        working-directory: kiri
+        run: mypy src/
+
+      - name: Unit tests
+        working-directory: kiri
+        run: >
+          python -m pytest tests/unit/
+          -q
+          --tb=short
+          --cov=src
+          --cov-report=term-missing
+          --cov-fail-under=80
+
+      - name: Security tests
+        working-directory: kiri
+        run: python -m pytest tests/security/ -q --tb=short

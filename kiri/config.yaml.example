@@ -1,0 +1,10 @@
+# Copy to .kiri/config.yaml in your project directory and adjust as needed.
+# This file is committed to git — no secrets here.
+
+similarity_threshold: 0.75     # grace zone starts here
+hard_block_threshold: 0.90     # immediate REDACT above this
+action: sanitize               # sanitize = redact and continue | block = HTTP 403
+proxy_port: 8765
+ollama_model: qwen2.5:3b
+ollama_base_url: http://localhost:11434
+embedding_model: all-MiniLM-L6-v2

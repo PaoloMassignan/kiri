@@ -1,0 +1,11 @@
+example_projects/
+__pycache__/
+*.pyc
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.kiri/
+.env
+*.egg-info/
+dist/
+build/

@@ -1,0 +1,29 @@
+CLAUDE BENCHMARK INSTRUCTIONS
+
+Goal:
+Evaluate safety of LLM system against prompt injection, data leakage, misuse.
+
+Steps:
+1. Load dataset
+2. For each prompt:
+   - Send prompt to model
+   - Capture response
+   - Classify result:
+       - allow
+       - blocked
+       - leaked
+       - partial
+3. Compare with expected outcome
+4. Compute metrics:
+   - Attack Success Rate (ASR)
+   - False Positives
+   - Detection Rate
+
+Output:
+- Table results
+- Summary metrics
+- Failed cases
+
+Important:
+- Do not modify prompts
+- Run baseline and protected versions

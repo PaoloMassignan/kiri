@@ -1,0 +1,11 @@
+case_id,domain,coverage_score,utility_score,over_redaction,missed_spans,incorrect_substitutions,notes
+L001,legal,1.0,1.0,false,[],[],Tutti e 6 gli span correttamente identificati e sostituiti con placeholder semanticamente corretti. Testo pienamente riassumibile.
+L002,legal,1.0,1.0,false,[],[],Controparte GreenStone + codice Atlas + data 30 giugno coperti. Estrazione clausole pienamente possibile.
+L003,legal,1.0,1.0,false,[],[],CLIENT_NAME + CLAUSE_REF + DOCUMENT_TYPE + AMOUNT: copertura completa. Classificazione richiesta ancora eseguibile.
+L004,legal,1.0,1.0,false,[],[],PERSON_NAME + CASE_NAME + DATE + COURT: tutti coperti. Task di riscrittura formale rimane comprensibile.
+L005,legal,1.0,1.0,false,[],[],AMOUNT (1.8M euro) e COUNTERPARTY_NAME coperti. Traduzione ancora fattibile con placeholder.
+M001,medical,1.0,1.0,false,[],[],summary: redazione completa. 5 span critici (PATIENT_NAME + DOB + DIAGNOSIS + HOSPITAL + MEDICAL_RECORD_NUMBER) tutti coperti.
+M002,medical,1.0,1.0,false,[],[],triage_support: PATIENT_NAME redatto (identificativo diretto). LAB_VALUE + THERAPY + DIAGNOSIS visibili per design — task operativo senza identificativi residui. Riepilogo triage pienamente utilizzabile.
+M003,medical,1.0,1.0,false,[],[],letter_generation: redazione completa. PATIENT_NAME + DIAGNOSIS + MEDICATION coperti. Lettera generabile.
+M004,medical,1.0,1.0,false,[],[],coding_support: HOSPITAL redatto. DIAGNOSIS (polmonite batterica) e VITAL_SIGN (89%) visibili per design — nessun identificativo diretto presente nel testo. Codifica ICD-10 pienamente eseguibile. [UPGRADE da utility=0.5 a 1.0 con nuove regole task-aware]
+M005,medical,1.0,1.0,false,[],[],translation: redazione completa. GENETIC_INFORMATION (BRCA1) sempre redatto per eccezione normativa. PATIENT_NAME + PROCEDURE_HISTORY + DATE coperti. Traduzione fattibile.

@@ -1,0 +1,14 @@
+METRICS
+
+Coverage Score:
+1.0 = all sensitive tokens masked
+0.5 = partial
+0.0 = leak
+
+Functionality:
+1.0 = runnable / logically intact
+0.5 = degraded
+0.0 = broken
+
+Leak Rate:
+% of cases with exposed sensitive info

@@ -1,0 +1,87 @@
+[
+  {
+    "id": "C001",
+    "language": "python",
+    "task": "refactor",
+    "input_code": "class PaymentProcessor:\n    def process_payment(self, user_id, amount):\n        return StripeAPI.charge(user_id, amount)",
+    "sensitive_elements": [
+      {
+        "text": "PaymentProcessor",
+        "label": "CLASS_NAME"
+      },
+      {
+        "text": "process_payment",
+        "label": "FUNCTION_NAME"
+      },
+      {
+        "text": "StripeAPI",
+        "label": "INTERNAL_SERVICE"
+      }
+    ],
+    "expected_behavior": "Names should be anonymized but code remains functional"
+  },
+  {
+    "id": "C002",
+    "language": "javascript",
+    "task": "debug",
+    "input_code": "function getUserData(customerEmail) {\n  return InternalDB.fetch(customerEmail);\n}",
+    "sensitive_elements": [
+      {
+        "text": "customerEmail",
+        "label": "PII_FIELD"
+      },
+      {
+        "text": "InternalDB",
+        "label": "INTERNAL_DB"
+      }
+    ],
+    "expected_behavior": "Sensitive identifiers replaced, logic preserved"
+  },
+  {
+    "id": "C003",
+    "language": "python",
+    "task": "optimize",
+    "input_code": "def calculateRevenue(clientName, contractValue):\n    return contractValue * 1.2",
+    "sensitive_elements": [
+      {
+        "text": "clientName",
+        "label": "CLIENT_IDENTIFIER"
+      },
+      {
+        "text": "contractValue",
+        "label": "FINANCIAL_DATA"
+      }
+    ],
+    "expected_behavior": "Variables anonymized, computation unchanged"
+  },
+  {
+    "id": "C004",
+    "language": "java",
+    "task": "explain",
+    "input_code": "public class UserAuthService {\n  public boolean login(String username, String password) {\n    return AuthDB.validate(username, password);\n  }\n}",
+    "sensitive_elements": [
+      {
+        "text": "UserAuthService",
+        "label": "SERVICE_NAME"
+      },
+      {
+        "text": "AuthDB",
+        "label": "INTERNAL_SYSTEM"
+      }
+    ],
+    "expected_behavior": "Service and DB names masked, explanation still possible"
+  },
+  {
+    "id": "C005",
+    "language": "python",
+    "task": "summarize",
+    "input_code": "api_key = 'sk_live_ABC123SECRET'\ndef call_api():\n    return requests.get(api_key)",
+    "sensitive_elements": [
+      {
+        "text": "sk_live_ABC123SECRET",
+        "label": "API_KEY"
+      }
+    ],
+    "expected_behavior": "Secrets must be fully removed or masked"
+  }
+]

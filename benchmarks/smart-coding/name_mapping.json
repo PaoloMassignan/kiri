@@ -1,0 +1,70 @@
+{
+  "version": "2.0",
+  "strategy": "semantic_substitution",
+  "description": "Mappa di sostituzione coerente per coding_dataset_v2. Ogni token sensibile viene rimpiazzato con un nome valido sintatticamente, dello stesso tipo (classe→classe, metodo→metodo, variabile→variabile), deterministico e privo di informazioni sul dominio reale.",
+  "rules": [
+    "Il replacement deve essere dello stesso tipo sintattico dell'originale.",
+    "Il replacement non deve contenere riferimenti al dominio reale.",
+    "La mappa è deterministica: stesso token → stesso replacement in tutto il codebase.",
+    "La sostituzione avviene per sottostringa (ordinata per lunghezza decrescente) su codice E test.",
+    "I token NON in sensitive_elements vengono lasciati invariati.",
+    "Per i segreti (API_KEY), il replacement è chiaramente non-funzionale (prefisso REDACTED_).",
+    "La mappa è reversibile: apply(apply(text, forward), reverse) == text."
+  ],
+  "mappings": [
+    {
+      "case_id": "C001",
+      "original": "PaymentProcessor",
+      "replacement": "DataProcessor",
+      "label": "CLASS_NAME"
+    },
+    {
+      "case_id": "C001",
+      "original": "process_payment",
+      "replacement": "execute_task",
+      "label": "FUNCTION_NAME"
+    },
+    {
+      "case_id": "C002",
+      "original": "InternalDB",
+      "replacement": "DataRepository",
+      "label": "INTERNAL_DB"
+    },
+    {
+      "case_id": "C002",
+      "original": "customerEmail",
+      "replacement": "inputIdentifier",
+      "label": "PII_FIELD"
+    },
+    {
+      "case_id": "C003",
+      "original": "contractValue",
+      "replacement": "numericInput",
+      "label": "FINANCIAL_DATA"
+    },
+    {
+      "case_id": "C003",
+      "original": "clientName",
+      "replacement": "entityId",
+      "label": "CLIENT_IDENTIFIER"
+    },
+    {
+      "case_id": "C004",
+      "original": "UserAuthService",
+      "replacement": "AccessController",
+      "label": "SERVICE_NAME"
+    },
+    {
+      "case_id": "C004",
+      "original": "AuthDB",
+      "replacement": "SystemStore",
+      "label": "INTERNAL_SYSTEM"
+    },
+    {
+      "case_id": "C005",
+      "original": "sk_live_ABC123SECRET",
+      "replacement": "REDACTED_TOKEN_XXXX",
+      "label": "API_KEY"
+    }
+  ]
+}

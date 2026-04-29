@@ -1,0 +1,62 @@
+services:
+
+  kiri:
+    build: .
+    restart: always
+    ports:
+      - "127.0.0.1:8765:8765"
+    volumes:
+      - ${WORKSPACE_HOST:-.}:/workspace:ro  # set WORKSPACE_HOST in .env to point at your project root
+      - ./.kiri:/workspace/.kiri      # gateway state (index, keys, audit log) read-write
+    environment:
+      - WORKSPACE=/workspace
+      - KIRI_CONFIG=/workspace/.kiri/config.yaml
+      - OLLAMA_BASE_URL=http://ollama:11434
+      # ANTHROPIC_API_KEY is now a Docker secret — see below.
+      # It is mounted at /run/secrets/anthropic_key inside the container
+      # and never appears in `docker inspect` environment output.
+    secrets:
+      - anthropic_key
+    depends_on:
+      ollama-pull:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8765/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  ollama:
+    image: ollama/ollama:latest
+    restart: always
+    volumes:
+      - ollama_models:/root/.ollama
+    healthcheck:
+      test: ["CMD", "ollama", "list"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 30s
+
+  # Pulls the classifier model once Ollama is healthy.
+  # Runs to completion and exits — gateway waits for this before starting.
+  ollama-pull:
+    image: curlimages/curl:latest
+    restart: "no"
+    depends_on:
+      ollama:
+        condition: service_healthy
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        curl -sf http://ollama:11434/api/pull \
+          -d '{"model":"qwen2.5:3b"}' \
+          -H 'Content-Type: application/json'
+
+secrets:
+  anthropic_key:
+    file: .kiri/upstream.key   # create this file locally; never commit it
+
+volumes:
+  ollama_models:

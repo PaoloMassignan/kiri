@@ -1,0 +1,125 @@
+{
+  "summary": {
+    "run_at": "2026-04-03T16:45:38.044738",
+    "cases_total": 10,
+    "comment_coverage_rate": 1.0,
+    "comment_utility_rate": 1.0,
+    "code_integrity_rate": 1.0,
+    "comment_leak_rate": 0.0,
+    "over_removal_rate": 0.0,
+    "full_comment_protection_rate": 1.0,
+    "high_risk_comment_miss_rate": 0.0
+  },
+  "cases": [
+    {
+      "case_id": "CM001",
+      "language": "python",
+      "comment_coverage_score": 1.0,
+      "comment_utility_score": 1.0,
+      "code_integrity_score": 1.0,
+      "over_removal": false,
+      "comment_leak": false,
+      "missed_comment_elements": [],
+      "notes": "covered=3/3 spans | leak=False | integrity=code body identical | strict_mode=False"
+    },
+    {
+      "case_id": "CM002",
+      "language": "javascript",
+      "comment_coverage_score": 1.0,
+      "comment_utility_score": 1.0,
+      "code_integrity_score": 1.0,
+      "over_removal": false,
+      "comment_leak": false,
+      "missed_comment_elements": [],
+      "notes": "covered=3/3 spans | leak=False | integrity=code body identical | strict_mode=False"
+    },
+    {
+      "case_id": "CM003",
+      "language": "java",
+      "comment_coverage_score": 1.0,
+      "comment_utility_score": 1.0,
+      "code_integrity_score": 1.0,
+      "over_removal": false,
+      "comment_leak": false,
+      "missed_comment_elements": [],
+      "notes": "covered=3/3 spans | leak=False | integrity=code body identical | strict_mode=False"
+    },
+    {
+      "case_id": "CM004",
+      "language": "typescript",
+      "comment_coverage_score": 1.0,
+      "comment_utility_score": 1.0,
+      "code_integrity_score": 1.0,
+      "over_removal": false,
+      "comment_leak": false,
+      "missed_comment_elements": [],
+      "notes": "covered=5/5 spans | leak=False | integrity=code body identical | strict_mode=False"
+    },
+    {
+      "case_id": "CM005",
+      "language": "python",
+      "comment_coverage_score": 1.0,
+      "comment_utility_score": 1.0,
+      "code_integrity_score": 1.0,
+      "over_removal": false,
+      "comment_leak": false,
+      "missed_comment_elements": [],
+      "notes": "covered=4/4 spans | leak=False | integrity=code body identical | strict_mode=True"
+    },
+    {
+      "case_id": "CM006",
+      "language": "go",
+      "comment_coverage_score": 1.0,
+      "comment_utility_score": 1.0,
+      "code_integrity_score": 1.0,
+      "over_removal": false,
+      "comment_leak": false,
+      "missed_comment_elements": [],
+      "notes": "covered=4/4 spans | leak=False | integrity=code body identical | strict_mode=False"
+    },
+    {
+      "case_id": "CM007",
+      "language": "ruby",
+      "comment_coverage_score": 1.0,
+      "comment_utility_score": 1.0,
+      "code_integrity_score": 1.0,
+      "over_removal": false,
+      "comment_leak": false,
+      "missed_comment_elements": [],
+      "notes": "covered=3/3 spans | leak=False | integrity=code body identical | strict_mode=False"
+    },
+    {
+      "case_id": "CM008",
+      "language": "csharp",
+      "comment_coverage_score": 1.0,
+      "comment_utility_score": 1.0,
+      "code_integrity_score": 1.0,
+      "over_removal": false,
+      "comment_leak": false,
+      "missed_comment_elements": [],
+      "notes": "covered=3/3 spans | leak=False | integrity=code body identical | strict_mode=True"
+    },
+    {
+      "case_id": "CM009",
+      "language": "sql",
+      "comment_coverage_score": 1.0,
+      "comment_utility_score": 1.0,
+      "code_integrity_score": 1.0,
+      "over_removal": false,
+      "comment_leak": false,
+      "missed_comment_elements": [],
+      "notes": "covered=3/3 spans | leak=False | integrity=code body identical | strict_mode=False"
+    },
+    {
+      "case_id": "CM010",
+      "language": "bash",
+      "comment_coverage_score": 1.0,
+      "comment_utility_score": 1.0,
+      "code_integrity_score": 1.0,
+      "over_removal": false,
+      "comment_leak": false,
+      "missed_comment_elements": [],
+      "notes": "covered=4/4 spans | leak=False | integrity=code body identical | strict_mode=True"
+    }
+  ]
+}

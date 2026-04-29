@@ -1,0 +1,147 @@
+[
+  {
+    "id": "CM001",
+    "language": "python",
+    "task": "Refactor this class without changing behavior. Sanitize comments so no sensitive information leaves the company.",
+    "input_code": "# Workaround for ACME payroll export bug in Project Phoenix\nclass ExportService:\n    def run(self, value):\n        # retry because internal billing API is flaky\n        return value * 2\n",
+    "sensitive_comment_spans": [
+      { "text": "ACME",                "label": "CLIENT_NAME" },
+      { "text": "Project Phoenix",     "label": "INTERNAL_PROJECT" },
+      { "text": "internal billing API","label": "INTERNAL_SYSTEM" }
+    ],
+    "expected_comment_policy": "Generalize or remove sensitive comments, preserve only generic technical meaning where useful.",
+    "model_output_code": "# Workaround for payroll export edge case\nclass ExportService:\n    def run(self, value):\n        # retry logic for flaky upstream dependency\n        return value * 2\n",
+    "sanitization_notes": "CLIENT_NAME e INTERNAL_PROJECT rimossi. INTERNAL_SYSTEM generalizzato in 'upstream dependency'. Hint tecnico del retry preservato in forma generica."
+  },
+  {
+    "id": "CM002",
+    "language": "javascript",
+    "task": "Clean up the function but remove sensitive operational details from comments.",
+    "input_code": "// TODO: temporary bypass for BetaBank production tenant\nfunction validate(user) {\n  // call fraud-engine-v2 before approval\n  return !!user;\n}\nmodule.exports = { validate };\n",
+    "sensitive_comment_spans": [
+      { "text": "BetaBank",          "label": "CLIENT_NAME" },
+      { "text": "production tenant", "label": "ENVIRONMENT_INFO" },
+      { "text": "fraud-engine-v2",   "label": "INTERNAL_SERVICE" }
+    ],
+    "expected_comment_policy": "Remove or generalize client, environment, and internal service references.",
+    "model_output_code": "// TODO: remove temporary bypass after fix is deployed\nfunction validate(user) {\n  // call fraud check service before approval\n  return !!user;\n}\nmodule.exports = { validate };\n",
+    "sanitization_notes": "CLIENT_NAME e ENVIRONMENT_INFO rimossi dal TODO. INTERNAL_SERVICE generalizzato in 'fraud check service'. Il TODO come reminder tecnico generico è preservato."
+  },
+  {
+    "id": "CM003",
+    "language": "java",
+    "task": "Refactor for readability. Sensitive comments must not survive verbatim.",
+    "input_code": "public class ClaimsLogic {\n    // Special rule for customer Delta Insurance after legal escalation\n    public int score(int x) {\n        // Mirrors behavior of internal risk matrix\n        return x > 10 ? 1 : 0;\n    }\n}\n",
+    "sensitive_comment_spans": [
+      { "text": "Delta Insurance",    "label": "CLIENT_NAME" },
+      { "text": "legal escalation",   "label": "LEGAL_EVENT" },
+      { "text": "internal risk matrix","label": "INTERNAL_LOGIC" }
+    ],
+    "expected_comment_policy": "Generalize comment intent, remove client/legal/internal references.",
+    "model_output_code": "public class ClaimsLogic {\n    // Special scoring rule for specific customer segment\n    public int score(int x) {\n        // Threshold-based classification\n        return x > 10 ? 1 : 0;\n    }\n}\n",
+    "sanitization_notes": "CLIENT_NAME e LEGAL_EVENT rimossi. INTERNAL_LOGIC generalizzato in 'Threshold-based classification'. Intenzione tecnica preservata senza rivelare logica proprietaria."
+  },
+  {
+    "id": "CM004",
+    "language": "typescript",
+    "task": "Improve maintainability while sanitizing docstrings and inline comments.",
+    "input_code": "/**\n * Syncs medical records for San Carlo oncology backlog.\n * Uses internal bridge MedLinkX and workaround from incident INC-4432.\n */\nexport function syncRecords(ids: string[]) {\n  // skip malformed IDs to avoid alert storm on clinic pipeline\n  return ids.filter(Boolean);\n}\n",
+    "sensitive_comment_spans": [
+      { "text": "San Carlo",        "label": "HOSPITAL_NAME" },
+      { "text": "oncology backlog", "label": "MEDICAL_CONTEXT" },
+      { "text": "MedLinkX",         "label": "INTERNAL_BRIDGE" },
+      { "text": "INC-4432",          "label": "INCIDENT_ID" },
+      { "text": "clinic pipeline",   "label": "INTERNAL_PIPELINE" }
+    ],
+    "expected_comment_policy": "Docstrings/comments may remain, but sensitive organization-specific references must be generalized or removed.",
+    "model_output_code": "/**\n * Syncs a batch of record IDs.\n * Filters out malformed entries before processing.\n */\nexport function syncRecords(ids: string[]) {\n  // skip malformed IDs to avoid downstream alert noise\n  return ids.filter(Boolean);\n}\n",
+    "sanitization_notes": "HOSPITAL_NAME, MEDICAL_CONTEXT, INTERNAL_BRIDGE, INCIDENT_ID e INTERNAL_PIPELINE tutti rimossi. Docstring riscritta genericamente. L'inline comment preserva il hint tecnico ('malformed IDs', 'alert noise') senza rivelare il contesto medico o la pipeline interna."
+  },
+  {
+    "id": "CM005",
+    "language": "python",
+    "task": "Refactor this function. Remove sensitive security notes from comments but preserve safe technical hints.",
+    "input_code": "def normalize(payload):\n    # bypass auth here for admin support team until PROD-221 is fixed\n    # remove nulls before sending to /internal/audit/normalize\n    return {k: v for k, v in payload.items() if v is not None}\n",
+    "sensitive_comment_spans": [
+      { "text": "bypass auth",              "label": "SECURITY_BYPASS" },
+      { "text": "admin support team",       "label": "INTERNAL_ROLE" },
+      { "text": "PROD-221",                 "label": "INCIDENT_ID" },
+      { "text": "/internal/audit/normalize","label": "INTERNAL_ENDPOINT" }
+    ],
+    "expected_comment_policy": "Security-sensitive comment should be dropped or heavily sanitized; generic data-cleaning comment may remain in generalized form.",
+    "model_output_code": "def normalize(payload):\n    # remove null values before downstream processing\n    return {k: v for k, v in payload.items() if v is not None}\n",
+    "sanitization_notes": "SECURITY_BYPASS, INTERNAL_ROLE e INCIDENT_ID: intera prima riga rimossa (troppo rischiosa da generalizzare — documenterebbe un bypass di sicurezza). INTERNAL_ENDPOINT rimosso. Il hint tecnico sul filtraggio dei null è preservato in forma generica ('downstream processing')."
+  },
+  {
+    "id": "CM006",
+    "language": "go",
+    "task": "Simplify code without leaking business knowledge in comments.",
+    "input_code": "package source\n\n// Hedge fund client override for Atlas strategy\nfunc Score(v int) int {\n    // Matches proprietary threshold from portfolio engine\n    if v > 100 {\n        return 1\n    }\n    return 0\n}\n",
+    "sensitive_comment_spans": [
+      { "text": "Hedge fund client",   "label": "CLIENT_TYPE" },
+      { "text": "Atlas strategy",      "label": "STRATEGY_NAME" },
+      { "text": "proprietary threshold","label": "PROPRIETARY_LOGIC" },
+      { "text": "portfolio engine",     "label": "INTERNAL_SYSTEM" }
+    ],
+    "expected_comment_policy": "Business and proprietary comments should be generalized or removed.",
+    "model_output_code": "package source\n\n// Score returns 1 if v exceeds the threshold, 0 otherwise\nfunc Score(v int) int {\n    if v > 100 {\n        return 1\n    }\n    return 0\n}\n",
+    "sanitization_notes": "CLIENT_TYPE, STRATEGY_NAME, PROPRIETARY_LOGIC e INTERNAL_SYSTEM tutti rimossi. Commento sostituito con descrizione funzionale neutra della funzione, senza rivelare contesto business o logica proprietaria."
+  },
+  {
+    "id": "CM007",
+    "language": "ruby",
+    "task": "Preserve behavior but sanitize comments, including TODOs and notes.",
+    "input_code": "class Mailer\n  # TODO: remove special handling for client Omega after migration cutover\n  def send_now(address)\n    # uses internal SMTP relay cluster\n    !!address\n  end\nend\n",
+    "sensitive_comment_spans": [
+      { "text": "client Omega",              "label": "CLIENT_NAME" },
+      { "text": "migration cutover",         "label": "CHANGE_EVENT" },
+      { "text": "internal SMTP relay cluster","label": "INFRASTRUCTURE_DETAIL" }
+    ],
+    "expected_comment_policy": "Keep the maintenance hint in generic form; remove client and infrastructure specificity.",
+    "model_output_code": "class Mailer\n  # TODO: remove temporary special handling after migration completes\n  def send_now(address)\n    !!address\n  end\nend\n",
+    "sanitization_notes": "CLIENT_NAME rimosso. CHANGE_EVENT generalizzato ('after migration completes'). INFRASTRUCTURE_DETAIL rimosso interamente. Il TODO come promemoria tecnico è preservato in forma generica."
+  },
+  {
+    "id": "CM008",
+    "language": "csharp",
+    "task": "Refactor and sanitize comments in a strict enterprise-safe mode.",
+    "input_code": "public class AuthFlow\n{\n    // Quick fix after pentest finding P-17\n    public bool IsAllowed(bool isAdmin)\n    {\n        // temporary elevated path for finance ops\n        return isAdmin;\n    }\n}\n",
+    "sensitive_comment_spans": [
+      { "text": "pentest finding P-17",    "label": "SECURITY_FINDING" },
+      { "text": "temporary elevated path", "label": "PRIVILEGE_ESCALATION_HINT" },
+      { "text": "finance ops",            "label": "INTERNAL_TEAM" }
+    ],
+    "expected_comment_policy": "In strict mode, comments may be dropped entirely if they expose security posture or privilege details.",
+    "model_output_code": "public class AuthFlow\n{\n    public bool IsAllowed(bool isAdmin)\n    {\n        return isAdmin;\n    }\n}\n",
+    "sanitization_notes": "Modalita' enterprise-safe: entrambi i commenti rimossi interamente. SECURITY_FINDING (pentest ID) e PRIVILEGE_ESCALATION_HINT sono troppo rischiosi da generalizzare — documenterebbero la postura di sicurezza. Il codice resta integro e leggibile senza commenti."
+  },
+  {
+    "id": "CM009",
+    "language": "sql",
+    "task": "Rewrite for readability; comments must not leak table purpose or regulated context.",
+    "input_code": "-- oncology export for private clinic reconciliation\nSELECT id, total\nFROM invoices\n-- joins internal reimbursement staging later\nWHERE paid = 1;\n",
+    "sensitive_comment_spans": [
+      { "text": "oncology export",              "label": "MEDICAL_CONTEXT" },
+      { "text": "private clinic reconciliation","label": "BUSINESS_PROCESS" },
+      { "text": "internal reimbursement staging","label": "INTERNAL_TABLE_PURPOSE" }
+    ],
+    "expected_comment_policy": "Either remove comments or keep only generic SQL intent comments.",
+    "model_output_code": "-- Retrieve paid invoice records\nSELECT id, total\nFROM invoices\nWHERE paid = 1;\n",
+    "sanitization_notes": "MEDICAL_CONTEXT, BUSINESS_PROCESS e INTERNAL_TABLE_PURPOSE rimossi. Il secondo commento ('joins internal reimbursement staging') era anche architetturalmente rivelante — rimosso. Sostituito con un commento SQL generico che descrive solo il risultato della query."
+  },
+  {
+    "id": "CM010",
+    "language": "bash",
+    "task": "Sanitize shell comments before external LLM processing.",
+    "input_code": "# copy archive to phoenix-dr node in Milan DC\n# uses break-glass account during incident response\ntar -czf backup.tar.gz /srv/app\n",
+    "sensitive_comment_spans": [
+      { "text": "phoenix-dr",        "label": "INTERNAL_NODE" },
+      { "text": "Milan DC",           "label": "DATACENTER_LOCATION" },
+      { "text": "break-glass account","label": "SECURITY_PROCEDURE" },
+      { "text": "incident response",  "label": "SECURITY_CONTEXT" }
+    ],
+    "expected_comment_policy": "Operational and security-sensitive comments should be removed or heavily generalized.",
+    "model_output_code": "# create compressed archive of application directory\ntar -czf backup.tar.gz /srv/app\n",
+    "sanitization_notes": "INTERNAL_NODE, DATACENTER_LOCATION, SECURITY_PROCEDURE e SECURITY_CONTEXT: entrambe le righe di commento rimosse. La seconda riga ('break-glass account') è security-critical — non generalizzabile. Sostituita con un commento tecnico neutro che descrive solo l'operazione tar."
+  }
+]

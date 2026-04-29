@@ -1,0 +1,308 @@
+id,language,task,source_code,tests,expected_property
+SE001,python,Refactor this class without changing behavior. All tests must still pass with the same outputs.,"class DiscountCalculator:
+    def calculate_total(self, items, discount_percent):
+        subtotal = 0
+        for price in items:
+            subtotal += price
+        discount_value = subtotal * (discount_percent / 100)
+        return round(subtotal - discount_value, 2)
+","def test_no_discount():
+    calc = DiscountCalculator()
+    assert calc.calculate_total([10, 20, 30], 0) == 60.0
+
+def test_regular_discount():
+    calc = DiscountCalculator()
+    assert calc.calculate_total([50, 50], 10) == 90.0
+
+def test_rounding():
+    calc = DiscountCalculator()
+    assert calc.calculate_total([19.99, 5.01], 10) == 22.5
+",Behavioral equivalence under refactoring
+SE002,python,Improve readability and naming only. Do not change outputs.,"def normalize_email(value):
+    value = value.strip()
+    value = value.lower()
+    if ""+"" in value:
+        local, domain = value.split(""@"")
+        local = local.split(""+"")[0]
+        value = local + ""@"" + domain
+    return value
+","def test_basic_lowercase():
+    assert normalize_email(""TEST@EXAMPLE.COM"") == ""test@example.com""
+
+def test_strip_spaces():
+    assert normalize_email(""  user@example.com  "") == ""user@example.com""
+
+def test_plus_alias():
+    assert normalize_email(""john+promo@example.com"") == ""john@example.com""
+",Same normalization results
+SE003,javascript,Refactor this function for clarity but preserve all outputs.,"function groupByStatus(tasks) {
+  const result = {};
+  for (const task of tasks) {
+    if (!result[task.status]) {
+      result[task.status] = [];
+    }
+    result[task.status].push(task.id);
+  }
+  return result;
+}
+
+module.exports = { groupByStatus };
+","const { groupByStatus } = require(""./source"");
+
+test(""groups ids by status"", () => {
+  expect(groupByStatus([
+    { id: 1, status: ""open"" },
+    { id: 2, status: ""done"" },
+    { id: 3, status: ""open"" }
+  ])).toEqual({ open: [1, 3], done: [2] });
+});
+
+test(""returns empty object on empty input"", () => {
+  expect(groupByStatus([])).toEqual({});
+});
+",Same object structure and values
+SE004,typescript,Refactor this class to be cleaner. Public behavior must remain identical.,"export class RetryPolicy {
+  execute<T>(fn: () => T, retries: number): T {
+    let attempts = 0;
+    while (true) {
+      try {
+        return fn();
+      } catch (err) {
+        attempts++;
+        if (attempts > retries) {
+          throw err;
+        }
+      }
+    }
+  }
+}
+","import { RetryPolicy } from ""./source"";
+
+test(""returns successful result"", () => {
+  const policy = new RetryPolicy();
+  expect(policy.execute(() => 42, 2)).toBe(42);
+});
+
+test(""retries before succeeding"", () => {
+  const policy = new RetryPolicy();
+  let calls = 0;
+  const result = policy.execute(() => {
+    calls++;
+    if (calls < 3) throw new Error(""fail"");
+    return ""ok"";
+  }, 3);
+  expect(result).toBe(""ok"");
+  expect(calls).toBe(3);
+});
+
+test(""throws after max retries"", () => {
+  const policy = new RetryPolicy();
+  expect(() => policy.execute(() => { throw new Error(""boom""); }, 1)).toThrow(""boom"");
+});
+",Identical retry semantics
+SE005,java,Refactor this method to improve readability without changing outputs.,"public class ShippingCalculator {
+    public int fee(boolean express, int itemCount) {
+        int base = 5;
+        if (express) {
+            base = 15;
+        }
+        if (itemCount > 3) {
+            base += 2;
+        }
+        return base;
+    }
+}
+","import static org.junit.jupiter.api.Assertions.assertEquals;
+import org.junit.jupiter.api.Test;
+
+public class ShippingCalculatorTest {
+    @Test
+    void standardSmallOrder() {
+        assertEquals(5, new ShippingCalculator().fee(false, 1));
+    }
+
+    @Test
+    void expressSmallOrder() {
+        assertEquals(15, new ShippingCalculator().fee(true, 2));
+    }
+
+    @Test
+    void expressLargeOrder() {
+        assertEquals(17, new ShippingCalculator().fee(true, 5));
+    }
+}
+",Same fee calculation
+SE006,go,Refactor for clarity; tests must keep passing unchanged.,"package source
+
+func CountActive(flags []bool) int {
+    count := 0
+    for _, flag := range flags {
+        if flag {
+            count++
+        }
+    }
+    return count
+}
+","package source
+
+import ""testing""
+
+func TestCountActive(t *testing.T) {
+    if CountActive([]bool{true, false, true, true}) != 3 {
+        t.Fatal(""expected 3"")
+    }
+}
+
+func TestCountActiveEmpty(t *testing.T) {
+    if CountActive([]bool{}) != 0 {
+        t.Fatal(""expected 0"")
+    }
+}
+",Same count values
+SE007,csharp,Refactor internals only. Output behavior must stay the same.,"public class PasswordPolicy
+{
+    public bool IsValid(string password)
+    {
+        if (password.Length < 8) return false;
+        bool hasDigit = false;
+        foreach (char c in password)
+        {
+            if (char.IsDigit(c))
+            {
+                hasDigit = true;
+            }
+        }
+        return hasDigit;
+    }
+}
+","using Xunit;
+
+public class PasswordPolicyTests
+{
+    [Fact]
+    public void RejectsShortPassword()
+    {
+        Assert.False(new PasswordPolicy().IsValid(""a1b2""));
+    }
+
+    [Fact]
+    public void RejectsNoDigit()
+    {
+        Assert.False(new PasswordPolicy().IsValid(""abcdefgh""));
+    }
+
+    [Fact]
+    public void AcceptsValidPassword()
+    {
+        Assert.True(new PasswordPolicy().IsValid(""abcd1234""));
+    }
+}
+",Same acceptance/rejection results
+SE008,ruby,Refactor and clean up. Do not change outputs or edge-case behavior.,"class Slugifier
+  def self.slugify(text)
+    text = text.downcase.strip
+    text = text.gsub("" "", ""-"")
+    text = text.gsub(/[^a-z0-9\-]/, """")
+    text
+  end
+end
+","require_relative ""source""
+require ""minitest/autorun""
+
+class SlugifierTest < Minitest::Test
+  def test_basic
+    assert_equal ""hello-world"", Slugifier.slugify(""Hello World"")
+  end
+
+  def test_strip
+    assert_equal ""hello"", Slugifier.slugify(""  Hello  "")
+  end
+
+  def test_symbols_removed
+    assert_equal ""hello-world"", Slugifier.slugify(""Hello @ World!"")
+  end
+end
+",Same slug strings
+SE009,php,Refactor this function while preserving exact return values.,"<?php
+function status_label($active, $verified) {
+    if (!$active) {
+        return ""inactive"";
+    }
+    if ($verified) {
+        return ""active_verified"";
+    }
+    return ""active_pending"";
+}
+","<?php
+use PHPUnit\Framework\TestCase;
+
+final class StatusLabelTest extends TestCase {
+    public function testInactive() {
+        $this->assertSame(""inactive"", status_label(false, false));
+    }
+
+    public function testVerified() {
+        $this->assertSame(""active_verified"", status_label(true, true));
+    }
+
+    public function testPending() {
+        $this->assertSame(""active_pending"", status_label(true, false));
+    }
+}
+",Same label mapping
+SE010,rust,"Refactor for idiomatic style, preserving output behavior.","pub fn first_non_empty(values: Vec<&str>) -> Option<String> {
+    for value in values {
+        if !value.is_empty() {
+            return Some(value.to_string());
+        }
+    }
+    None
+}
+","use source::first_non_empty;
+
+#[test]
+fn finds_first_non_empty() {
+    assert_eq!(first_non_empty(vec!["""", ""a"", ""b""]), Some(""a"".to_string()));
+}
+
+#[test]
+fn returns_none_when_all_empty() {
+    assert_eq!(first_non_empty(vec!["""", """"]), None);
+}
+",Same option results
+SE011,sql,"Optimize or rewrite this query, but the result set must remain the same.","SELECT department, COUNT(*) AS total
+FROM employees
+WHERE active = 1
+GROUP BY department
+ORDER BY department;
+","-- Given employees:
+-- (1, 'sales', 1), (2, 'sales', 0), (3, 'it', 1), (4, 'it', 1)
+-- Expected result:
+-- department | total
+-- it         | 2
+-- sales      | 1
+",Same result set and ordering
+SE012,kotlin,Refactor this method without changing business behavior.,"class LoyaltyPoints {
+    fun award(amount: Int): Int {
+        var points = amount / 10
+        if (amount > 100) {
+            points += 5
+        }
+        return points
+    }
+}
+","import kotlin.test.Test
+import kotlin.test.assertEquals
+
+class LoyaltyPointsTest {
+    @Test
+    fun basePoints() {
+        assertEquals(5, LoyaltyPoints().award(50))
+    }
+
+    @Test
+    fun bonusPoints() {
+        assertEquals(17, LoyaltyPoints().award(120))
+    }
+}
+",Same points calculation

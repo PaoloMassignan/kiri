@@ -1,0 +1,75 @@
+id,language,task,input_code,expected_comment_policy
+CM001,python,Refactor this class without changing behavior. Sanitize comments so no sensitive information leaves the company.,"# Workaround for ACME payroll export bug in Project Phoenix
+class ExportService:
+    def run(self, value):
+        # retry because internal billing API is flaky
+        return value * 2
+","Generalize or remove sensitive comments, preserve only generic technical meaning where useful."
+CM002,javascript,Clean up the function but remove sensitive operational details from comments.,"// TODO: temporary bypass for BetaBank production tenant
+function validate(user) {
+  // call fraud-engine-v2 before approval
+  return !!user;
+}
+module.exports = { validate };
+","Remove or generalize client, environment, and internal service references."
+CM003,java,Refactor for readability. Sensitive comments must not survive verbatim.,"public class ClaimsLogic {
+    // Special rule for customer Delta Insurance after legal escalation
+    public int score(int x) {
+        // Mirrors behavior of internal risk matrix
+        return x > 10 ? 1 : 0;
+    }
+}
+","Generalize comment intent, remove client/legal/internal references."
+CM004,typescript,Improve maintainability while sanitizing docstrings and inline comments.,"/**
+ * Syncs medical records for San Carlo oncology backlog.
+ * Uses internal bridge MedLinkX and workaround from incident INC-4432.
+ */
+export function syncRecords(ids: string[]) {
+  // skip malformed IDs to avoid alert storm on clinic pipeline
+  return ids.filter(Boolean);
+}
+","Docstrings/comments may remain, but sensitive organization-specific references must be generalized or removed."
+CM005,python,Refactor this function. Remove sensitive security notes from comments but preserve safe technical hints.,"def normalize(payload):
+    # bypass auth here for admin support team until PROD-221 is fixed
+    # remove nulls before sending to /internal/audit/normalize
+    return {k: v for k, v in payload.items() if v is not None}
+",Security-sensitive comment should be dropped or heavily sanitized; generic data-cleaning comment may remain in generalized form.
+CM006,go,Simplify code without leaking business knowledge in comments.,"package source
+
+// Hedge fund client override for Atlas strategy
+func Score(v int) int {
+    // Matches proprietary threshold from portfolio engine
+    if v > 100 {
+        return 1
+    }
+    return 0
+}
+",Business and proprietary comments should be generalized or removed.
+CM007,ruby,"Preserve behavior but sanitize comments, including TODOs and notes.","class Mailer
+  # TODO: remove special handling for client Omega after migration cutover
+  def send_now(address)
+    # uses internal SMTP relay cluster
+    !!address
+  end
+end
+",Keep the maintenance hint in generic form; remove client and infrastructure specificity.
+CM008,csharp,Refactor and sanitize comments in a strict enterprise-safe mode.,"public class AuthFlow
+{
+    // Quick fix after pentest finding P-17
+    public bool IsAllowed(bool isAdmin)
+    {
+        // temporary elevated path for finance ops
+        return isAdmin;
+    }
+}
+","In strict mode, comments may be dropped entirely if they expose security posture or privilege details."
+CM009,sql,Rewrite for readability; comments must not leak table purpose or regulated context.,"-- oncology export for private clinic reconciliation
+SELECT id, total
+FROM invoices
+-- joins internal reimbursement staging later
+WHERE paid = 1;
+",Either remove comments or keep only generic SQL intent comments.
+CM010,bash,Sanitize shell comments before external LLM processing.,"# copy archive to phoenix-dr node in Milan DC
+# uses break-glass account during incident response
+tar -czf backup.tar.gz /srv/app
+",Operational and security-sensitive comments should be removed or heavily generalized.

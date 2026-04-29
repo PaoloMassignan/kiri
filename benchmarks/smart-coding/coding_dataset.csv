@@ -1,0 +1,17 @@
+id,language,task,input_code,expected_behavior
+C001,python,refactor,"class PaymentProcessor:
+    def process_payment(self, user_id, amount):
+        return StripeAPI.charge(user_id, amount)",Names should be anonymized but code remains functional
+C002,javascript,debug,"function getUserData(customerEmail) {
+  return InternalDB.fetch(customerEmail);
+}","Sensitive identifiers replaced, logic preserved"
+C003,python,optimize,"def calculateRevenue(clientName, contractValue):
+    return contractValue * 1.2","Variables anonymized, computation unchanged"
+C004,java,explain,"public class UserAuthService {
+  public boolean login(String username, String password) {
+    return AuthDB.validate(username, password);
+  }
+}","Service and DB names masked, explanation still possible"
+C005,python,summarize,"api_key = 'sk_live_ABC123SECRET'
+def call_api():
+    return requests.get(api_key)",Secrets must be fully removed or masked

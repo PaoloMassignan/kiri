@@ -1,0 +1,133 @@
+[
+  {
+    "id": "L001",
+    "domain": "legal",
+    "task_type": "summary",
+    "sensitivity_level": "high",
+    "input_text": "Riassumi il contratto di consulenza tra Alfa Advisory S.r.l. e Beta Manufacturing S.p.A. firmato il 12 marzo 2025, valore complessivo 480.000 euro, con clausola penale del 15% e riferimento al progetto interno Falcon.",
+    "sensitive_spans": [
+      {
+        "text": "Alfa Advisory S.r.l.",
+        "label": "CLIENT_NAME"
+      },
+      {
+        "text": "Beta Manufacturing S.p.A.",
+        "label": "COUNTERPARTY_NAME"
+      },
+      {
+        "text": "12 marzo 2025",
+        "label": "DATE"
+      },
+      {
+        "text": "480.000 euro",
+        "label": "AMOUNT"
+      },
+      {
+        "text": "15%",
+        "label": "PENALTY_RATE"
+      },
+      {
+        "text": "Falcon",
+        "label": "INTERNAL_PROJECT"
+      }
+    ],
+    "expected_redacted_text": "Riassumi il contratto di consulenza tra [CLIENT_NAME] e [COUNTERPARTY_NAME] firmato il [DATE], valore complessivo [AMOUNT], con clausola penale del [PENALTY_RATE] e riferimento al progetto interno [INTERNAL_PROJECT].",
+    "utility_goal": "Il testo deve restare riassumibile senza esporre entità sensibili."
+  },
+  {
+    "id": "L002",
+    "domain": "legal",
+    "task_type": "clause_extraction",
+    "sensitivity_level": "high",
+    "input_text": "Estrai le clausole di riservatezza dall'NDA con GreenStone Capital LLP, relativo all'operazione M&A Atlas, accesso alla data room fino al 30 giugno 2025.",
+    "sensitive_spans": [
+      {
+        "text": "GreenStone Capital LLP",
+        "label": "COUNTERPARTY_NAME"
+      },
+      {
+        "text": "Atlas",
+        "label": "TRANSACTION_CODE"
+      },
+      {
+        "text": "30 giugno 2025",
+        "label": "DATE"
+      }
+    ],
+    "expected_redacted_text": "Estrai le clausole di riservatezza dall'NDA con [COUNTERPARTY_NAME], relativo all'operazione M&A [TRANSACTION_CODE], accesso alla data room fino al [DATE].",
+    "utility_goal": "L'utente deve ancora poter chiedere l'estrazione delle clausole."
+  },
+  {
+    "id": "L003",
+    "domain": "legal",
+    "task_type": "classification",
+    "sensitivity_level": "medium",
+    "input_text": "Classifica questa richiesta: il cliente Omega Retail chiede modifica dell'articolo 7 del Master Service Agreement e riduzione della liability cap a 200.000 euro.",
+    "sensitive_spans": [
+      {
+        "text": "Omega Retail",
+        "label": "CLIENT_NAME"
+      },
+      {
+        "text": "articolo 7",
+        "label": "CLAUSE_REF"
+      },
+      {
+        "text": "Master Service Agreement",
+        "label": "DOCUMENT_TYPE"
+      },
+      {
+        "text": "200.000 euro",
+        "label": "AMOUNT"
+      }
+    ],
+    "expected_redacted_text": "Classifica questa richiesta: il cliente [CLIENT_NAME] chiede modifica della [CLAUSE_REF] del [DOCUMENT_TYPE] e riduzione della liability cap a [AMOUNT].",
+    "utility_goal": "La classificazione deve restare possibile."
+  },
+  {
+    "id": "L004",
+    "domain": "legal",
+    "task_type": "rewrite",
+    "sensitivity_level": "medium",
+    "input_text": "Riscrivi in tono più formale la mail al partner Luca Bianchi sul contenzioso Rossi c. Delta Energy, udienza del 4 aprile 2026 presso il Tribunale di Milano.",
+    "sensitive_spans": [
+      {
+        "text": "Luca Bianchi",
+        "label": "PERSON_NAME"
+      },
+      {
+        "text": "Rossi c. Delta Energy",
+        "label": "CASE_NAME"
+      },
+      {
+        "text": "4 aprile 2026",
+        "label": "DATE"
+      },
+      {
+        "text": "Tribunale di Milano",
+        "label": "COURT"
+      }
+    ],
+    "expected_redacted_text": "Riscrivi in tono più formale la mail al partner [PERSON_NAME] sul contenzioso [CASE_NAME], udienza del [DATE] presso il [COURT].",
+    "utility_goal": "La richiesta di riscrittura deve rimanere comprensibile."
+  },
+  {
+    "id": "L005",
+    "domain": "legal",
+    "task_type": "translation",
+    "sensitivity_level": "high",
+    "input_text": "Traduci in inglese la clausola sul corrispettivo minimo garantito di 1,8 milioni di euro prevista nel contratto quadro con Nova Infrastrutture S.r.l.",
+    "sensitive_spans": [
+      {
+        "text": "1,8 milioni di euro",
+        "label": "AMOUNT"
+      },
+      {
+        "text": "Nova Infrastrutture S.r.l.",
+        "label": "COUNTERPARTY_NAME"
+      }
+    ],
+    "expected_redacted_text": "Traduci in inglese la clausola sul corrispettivo minimo garantito di [AMOUNT] prevista nel contratto quadro con [COUNTERPARTY_NAME].",
+    "utility_goal": "La traduzione deve restare fattibile anche con i placeholder."
+  }
+]

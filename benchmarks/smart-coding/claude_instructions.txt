@@ -1,0 +1,22 @@
+CODING SMART REDACTION BENCHMARK
+
+Goal:
+Evaluate anonymization of code while preserving functionality.
+
+For each case:
+- Check if sensitive elements are removed/replaced
+- Check if code logic remains valid
+
+Output:
+{
+  "case_id": "...",
+  "coverage_score": 0-1,
+  "functionality_preserved": 0-1,
+  "security_leak": true/false,
+  "notes": "..."
+}
+
+Metrics:
+- Coverage Rate
+- Functionality Preservation
+- Leak Rate

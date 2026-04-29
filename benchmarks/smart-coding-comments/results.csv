@@ -1,0 +1,11 @@
+case_id,language,comment_coverage_score,comment_utility_score,code_integrity_score,over_removal,comment_leak,missed_comment_elements,notes
+CM001,python,1.0,1.0,1.0,False,False,"","covered=3/3 spans | leak=False | integrity=code body identical | strict_mode=False"
+CM002,javascript,1.0,1.0,1.0,False,False,"","covered=3/3 spans | leak=False | integrity=code body identical | strict_mode=False"
+CM003,java,1.0,1.0,1.0,False,False,"","covered=3/3 spans | leak=False | integrity=code body identical | strict_mode=False"
+CM004,typescript,1.0,1.0,1.0,False,False,"","covered=5/5 spans | leak=False | integrity=code body identical | strict_mode=False"
+CM005,python,1.0,1.0,1.0,False,False,"","covered=4/4 spans | leak=False | integrity=code body identical | strict_mode=True"
+CM006,go,1.0,1.0,1.0,False,False,"","covered=4/4 spans | leak=False | integrity=code body identical | strict_mode=False"
+CM007,ruby,1.0,1.0,1.0,False,False,"","covered=3/3 spans | leak=False | integrity=code body identical | strict_mode=False"
+CM008,csharp,1.0,1.0,1.0,False,False,"","covered=3/3 spans | leak=False | integrity=code body identical | strict_mode=True"
+CM009,sql,1.0,1.0,1.0,False,False,"","covered=3/3 spans | leak=False | integrity=code body identical | strict_mode=False"
+CM010,bash,1.0,1.0,1.0,False,False,"","covered=4/4 spans | leak=False | integrity=code body identical | strict_mode=True"
