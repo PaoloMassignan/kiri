@@ -182,3 +182,43 @@ before forwarding the request to upstream.
 **User story:** US-02 (note), US-07
 **ADR:** [ADR-006](../adr/ADR-006-redact-vs-block.md)
 **Tests:** `tests/unit/test_redaction.py`, `tests/unit/test_pipeline.py`
+
+---
+
+## REQ-F-011: Summary management
+
+```
+WHEN a developer runs "kiri summary list",
+the gateway SHALL display all protected symbols that have a stored summary,
+showing: symbol name, source (ollama/manual), and the first line of the summary.
+WHEN no summaries exist, the gateway SHALL display "(no summaries)".
+
+WHEN a developer runs "kiri summary show <symbol>",
+the gateway SHALL display the full current summary for that symbol,
+including source and updated timestamp.
+WHEN the symbol has no summary, the gateway SHALL exit with code 1
+and display "No summary found for: <symbol>".
+
+WHEN a developer runs "kiri summary set <symbol> <text>",
+the gateway SHALL store the text as the manual summary for that symbol,
+marking source=manual and recording the current UTC timestamp.
+WHEN the text contains numeric literals that may reveal proprietary constants,
+the gateway SHALL emit a warning before storing.
+
+WHEN a developer runs "kiri summary reset <symbol>",
+the gateway SHALL remove the manual override for that symbol if one exists
+and fall back to the Ollama-generated summary.
+WHEN no Ollama summary exists, the gateway SHALL attempt to regenerate via Ollama
+using the stored chunk text.
+WHEN Ollama is unavailable during reset, the gateway SHALL exit with code 1
+and preserve the existing summary unchanged.
+
+WHEN a developer runs "kiri summary reset --all",
+the gateway SHALL regenerate all summaries via Ollama for all indexed chunks.
+
+In the REDACT engine, manual summaries SHALL take priority over
+Ollama-generated summaries for the same symbol.
+```
+
+**User story:** US-13
+**Tests:** `tests/unit/test_summary_cli.py`

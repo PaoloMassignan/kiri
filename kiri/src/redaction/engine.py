@@ -250,8 +250,22 @@ class RedactionEngine:
     # ------------------------------------------------------------------
 
     def _find_summary(self, symbol: str) -> str | None:
-        """Look up a summary that mentions *symbol* across all stored chunks."""
+        """Look up a summary for *symbol*, preferring manual overrides.
+
+        Priority: manual__ entries > ollama entries.
+        Manual entries are set via ``kiri summary set`` and keyed as
+        ``manual__<symbol>``; they represent a deliberate human correction
+        and always win over Ollama-generated ones.
+        """
+        # 1. Check for a manual override first
+        manual = self._summaries.get(f"manual__{symbol}")
+        if manual:
+            return manual
+
+        # 2. Fall back to Ollama-generated entries that mention the symbol
         for chunk_id in self._summaries.all_chunk_ids():
+            if chunk_id.startswith("manual__"):
+                continue
             summary = self._summaries.get(chunk_id)
             if summary and symbol in summary:
                 return summary

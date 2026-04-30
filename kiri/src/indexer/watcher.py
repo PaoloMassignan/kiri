@@ -79,7 +79,12 @@ class Watcher:
                 # algorithms or magic numbers).
                 try:
                     summary = self._summary_generator.generate(doc_id, chunk.text, symbol_name)
-                    self._summary_store.save(doc_id, summary)
+                    self._summary_store.save(
+                        doc_id,
+                        summary,
+                        chunk_text=chunk.text,
+                        symbol_name=symbol_name,
+                    )
                 except SummaryGenerationError:
                     logger.warning("watcher: summary generation failed for chunk %s", doc_id)
 

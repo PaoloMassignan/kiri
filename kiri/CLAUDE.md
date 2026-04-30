@@ -69,6 +69,39 @@ Output shows: Decision (PASS / BLOCK / REDACT), Reason, top similarity score,
 matched symbols (if any), and — with `--show-redacted` on REDACT — the
 complete forwarded prompt with protected code stripped.
 
+### Managing protection summaries
+
+When the gateway REDACTs a function, it replaces the body with an Ollama-generated
+summary. Use these commands to inspect and correct what the LLM sees.
+
+**"what does the LLM see for RiskScorer?"** / **"show the summary for calculate_final_price"**
+
+Run: `kiri summary show <symbol>`
+
+**"list all summaries"** / **"show me all redacted symbols"**
+
+Run: `kiri summary list`
+
+**"fix the summary for RiskScorer"** / **"set a custom description for calculate_final_price"**
+
+Run: `kiri summary set <symbol> "<text>"`
+
+Kiri warns if the text contains numeric literals that may reveal proprietary constants.
+Manual summaries always take priority over Ollama-generated ones.
+
+**"regenerate the summary for RiskScorer"** / **"reset to auto-generated"**
+
+Run: `kiri summary reset <symbol>`
+
+Removes the manual override and falls back to the Ollama-generated summary.
+If no Ollama summary exists, re-generates it.
+
+**"regenerate all summaries"**
+
+Run: `kiri summary reset --all`
+
+---
+
 ### Audit log
 
 **"show blocked requests"** / **"who tried to exfiltrate?"**

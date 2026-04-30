@@ -10,12 +10,14 @@ from src.cli.commands import index as cmd_index
 from src.cli.commands import inspect as cmd_inspect
 from src.cli.commands import remove as cmd_remove
 from src.cli.commands import status as cmd_status
+from src.cli.commands.summary import app as summary_app
 from src.config.settings import Settings
 
 app = typer.Typer(name="kiri", help="Kiri management CLI")
 
 key_app = typer.Typer(help="Manage kiri API keys")
 app.add_typer(key_app, name="key")
+app.add_typer(summary_app, name="summary")
 
 
 def _settings() -> Settings:

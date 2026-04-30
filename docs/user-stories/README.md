@@ -18,6 +18,7 @@ Each file describes one user story: actor, goal, acceptance criteria, and notes.
 | [US-10](US-10-initial-index.md) | Initial index on startup | Implemented |
 | [US-11](US-11-openai-protocol.md) | OpenAI protocol (Cursor) | Implemented |
 | [US-12](US-12-rate-limiting.md) | Per-key rate limiting | Implemented |
+| [US-13](US-13-summary-management.md) | View and edit protection summaries | Implemented |
 
 ## Format
 
