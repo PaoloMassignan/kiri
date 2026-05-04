@@ -294,5 +294,323 @@
       {"text": "customerId", "label": "PII_FIELD"}
     ],
     "expected_behavior": "Compliance service names and customer identifier anonymized; eligibility logic preserved"
+  },
+  {
+    "id": "C026",
+    "language": "swift",
+    "task": "refactor",
+    "input_code": "class ProfileManager {\n    func fetchProfile(userId: String) -> UserProfile? {\n        return ApolloGraphClient.shared.query(userId: userId)\n    }\n}",
+    "sensitive_elements": [
+      {"text": "ProfileManager", "label": "CLASS_NAME"},
+      {"text": "ApolloGraphClient", "label": "INTERNAL_SERVICE"},
+      {"text": "userId", "label": "USER_IDENTIFIER"}
+    ],
+    "expected_behavior": "Class and client names anonymized; query pattern preserved"
+  },
+  {
+    "id": "C027",
+    "language": "scala",
+    "task": "optimize",
+    "input_code": "object RevenueAggregator {\n  def aggregate(records: Seq[SalesRecord]): Double =\n    records.map(_.netValue).sum * REVENUE_COEFFICIENT\n}",
+    "sensitive_elements": [
+      {"text": "RevenueAggregator", "label": "CLASS_NAME"},
+      {"text": "REVENUE_COEFFICIENT", "label": "PROPRIETARY_CONSTANT"},
+      {"text": "netValue", "label": "FINANCIAL_DATA"}
+    ],
+    "expected_behavior": "Object name and proprietary coefficient anonymized; aggregation logic preserved"
+  },
+  {
+    "id": "C028",
+    "language": "python",
+    "task": "explain",
+    "input_code": "def serve_prediction(request_id: str, payload: dict) -> dict:\n    vector = EmbeddingCache.get_or_compute(payload)\n    return InferenceCluster.predict(vector, model_version=PROD_MODEL_VERSION)",
+    "sensitive_elements": [
+      {"text": "EmbeddingCache", "label": "INTERNAL_SERVICE"},
+      {"text": "InferenceCluster", "label": "INTERNAL_SERVICE"},
+      {"text": "PROD_MODEL_VERSION", "label": "INTERNAL_CONFIG"},
+      {"text": "request_id", "label": "BUSINESS_IDENTIFIER"}
+    ],
+    "expected_behavior": "ML serving infrastructure names and config anonymized; prediction flow preserved"
+  },
+  {
+    "id": "C029",
+    "language": "go",
+    "task": "refactor",
+    "input_code": "func SubmitTransaction(walletId string, amount int64) (string, error) {\n\treturn LedgerNode.Broadcast(walletId, amount, ChainID)\n}",
+    "sensitive_elements": [
+      {"text": "LedgerNode", "label": "INTERNAL_SERVICE"},
+      {"text": "ChainID", "label": "INTERNAL_CONFIG"},
+      {"text": "walletId", "label": "USER_IDENTIFIER"}
+    ],
+    "expected_behavior": "Ledger service and chain config anonymized; transaction dispatch logic preserved"
+  },
+  {
+    "id": "C030",
+    "language": "java",
+    "task": "debug",
+    "input_code": "public class SensorGateway {\n    public void ingest(String deviceEui, byte[] payload) {\n        LoRaWANBroker.publish(deviceEui, payload, NETWORK_SERVER_KEY);\n    }\n}",
+    "sensitive_elements": [
+      {"text": "SensorGateway", "label": "CLASS_NAME"},
+      {"text": "LoRaWANBroker", "label": "INTERNAL_SERVICE"},
+      {"text": "NETWORK_SERVER_KEY", "label": "API_KEY"},
+      {"text": "deviceEui", "label": "DEVICE_IDENTIFIER"}
+    ],
+    "expected_behavior": "IoT broker name and network key fully redacted; ingestion logic preserved"
+  },
+  {
+    "id": "C031",
+    "language": "typescript",
+    "task": "refactor",
+    "input_code": "export async function fetchPatientRecord(fhirId: string): Promise<FhirBundle> {\n  return HeliosEHR.getBundle(fhirId, { include: ['Condition', 'MedicationRequest'] });\n}",
+    "sensitive_elements": [
+      {"text": "HeliosEHR", "label": "INTERNAL_SERVICE"},
+      {"text": "fhirId", "label": "PII_FIELD"},
+      {"text": "FhirBundle", "label": "INTERNAL_TYPE"}
+    ],
+    "expected_behavior": "EHR system name and patient identifier anonymized; FHIR fetch pattern preserved"
+  },
+  {
+    "id": "C032",
+    "language": "python",
+    "task": "optimize",
+    "input_code": "def dispatch_load_event(meter_id: str, kwh: float) -> None:\n    if kwh > PEAK_THRESHOLD_KWH:\n        GridControlBus.alert(meter_id, severity='HIGH')\n    else:\n        GridControlBus.record(meter_id, kwh)",
+    "sensitive_elements": [
+      {"text": "GridControlBus", "label": "INTERNAL_SERVICE"},
+      {"text": "PEAK_THRESHOLD_KWH", "label": "PROPRIETARY_CONSTANT"},
+      {"text": "meter_id", "label": "DEVICE_IDENTIFIER"}
+    ],
+    "expected_behavior": "Grid service and threshold constant anonymized; load dispatch logic preserved"
+  },
+  {
+    "id": "C033",
+    "language": "rust",
+    "task": "debug",
+    "input_code": "pub fn write_register(addr: u16, val: u8) -> Result<(), HalError> {\n    FirmwareBus::spi_write(CHIP_SELECT_PIN, addr, val)\n}",
+    "sensitive_elements": [
+      {"text": "FirmwareBus", "label": "INTERNAL_SERVICE"},
+      {"text": "CHIP_SELECT_PIN", "label": "INTERNAL_CONFIG"},
+      {"text": "HalError", "label": "INTERNAL_TYPE"}
+    ],
+    "expected_behavior": "Firmware bus and pin constant anonymized; register write pattern preserved"
+  },
+  {
+    "id": "C034",
+    "language": "csharp",
+    "task": "summarize",
+    "input_code": "public class CitizenVerifier\n{\n    public bool Verify(string taxCode, string documentId)\n    {\n        return NationalIdRegistry.Validate(taxCode, documentId, AGENCY_CERT_THUMBPRINT);\n    }\n}",
+    "sensitive_elements": [
+      {"text": "CitizenVerifier", "label": "CLASS_NAME"},
+      {"text": "NationalIdRegistry", "label": "INTERNAL_SYSTEM"},
+      {"text": "AGENCY_CERT_THUMBPRINT", "label": "API_KEY"},
+      {"text": "taxCode", "label": "PII_FIELD"},
+      {"text": "documentId", "label": "PII_FIELD"}
+    ],
+    "expected_behavior": "Registry name, certificate thumbprint, and PII field names anonymized"
+  },
+  {
+    "id": "C035",
+    "language": "ruby",
+    "task": "refactor",
+    "input_code": "class WarehouseAllocator\n  def allocate(sku, quantity)\n    slot = VortexWMS.find_slot(sku, quantity)\n    VortexWMS.reserve(slot, PRIORITY_LANE_ID)\n  end\nend",
+    "sensitive_elements": [
+      {"text": "WarehouseAllocator", "label": "CLASS_NAME"},
+      {"text": "VortexWMS", "label": "INTERNAL_SERVICE"},
+      {"text": "PRIORITY_LANE_ID", "label": "INTERNAL_CONFIG"}
+    ],
+    "expected_behavior": "WMS service and lane config anonymized; slot allocation logic preserved"
+  },
+  {
+    "id": "C036",
+    "language": "php",
+    "task": "debug",
+    "input_code": "<?php\nfunction sync_inventory(string $storeId, array $skus): int {\n    return RetailOpsAPI::push($storeId, $skus, CHANNEL_PARTNER_TOKEN);\n}",
+    "sensitive_elements": [
+      {"text": "RetailOpsAPI", "label": "INTERNAL_SERVICE"},
+      {"text": "CHANNEL_PARTNER_TOKEN", "label": "API_KEY"},
+      {"text": "storeId", "label": "BUSINESS_IDENTIFIER"}
+    ],
+    "expected_behavior": "Retail API name and partner token fully redacted; sync logic preserved"
+  },
+  {
+    "id": "C037",
+    "language": "kotlin",
+    "task": "explain",
+    "input_code": "class NotificationDispatcher {\n    fun push(deviceToken: String, event: AppEvent) {\n        FirebaseAdmin.sendToDevice(deviceToken, event.toFcmPayload(), APP_NAMESPACE)\n    }\n}",
+    "sensitive_elements": [
+      {"text": "NotificationDispatcher", "label": "CLASS_NAME"},
+      {"text": "APP_NAMESPACE", "label": "INTERNAL_CONFIG"},
+      {"text": "AppEvent", "label": "INTERNAL_TYPE"},
+      {"text": "deviceToken", "label": "DEVICE_IDENTIFIER"}
+    ],
+    "expected_behavior": "App namespace and device token anonymized; push dispatch logic preserved"
+  },
+  {
+    "id": "C038",
+    "language": "python",
+    "task": "refactor",
+    "input_code": "def enrich_ioc(ioc_value: str, ioc_type: str) -> dict:\n    reputation = ThreatIntelFeed.query(ioc_value, ioc_type, api_key=TI_API_KEY)\n    return SandboxOrchestrator.detonate(ioc_value) | reputation",
+    "sensitive_elements": [
+      {"text": "ThreatIntelFeed", "label": "INTERNAL_SERVICE"},
+      {"text": "SandboxOrchestrator", "label": "INTERNAL_SERVICE"},
+      {"text": "TI_API_KEY", "label": "API_KEY"}
+    ],
+    "expected_behavior": "Threat intel service names and API key anonymized; enrichment pipeline preserved"
+  },
+  {
+    "id": "C039",
+    "language": "java",
+    "task": "optimize",
+    "input_code": "public class OrderRouter {\n    public void route(Order order) {\n        if (order.value() > DARK_POOL_THRESHOLD) {\n            DarkPoolConnector.submit(order, VENUE_CODE);\n        } else {\n            LitExchangeAdapter.send(order);\n        }\n    }\n}",
+    "sensitive_elements": [
+      {"text": "OrderRouter", "label": "CLASS_NAME"},
+      {"text": "DARK_POOL_THRESHOLD", "label": "PROPRIETARY_CONSTANT"},
+      {"text": "DarkPoolConnector", "label": "INTERNAL_SERVICE"},
+      {"text": "VENUE_CODE", "label": "INTERNAL_CONFIG"},
+      {"text": "LitExchangeAdapter", "label": "INTERNAL_SERVICE"}
+    ],
+    "expected_behavior": "Trading venue names and threshold constant anonymized; routing logic preserved"
+  },
+  {
+    "id": "C040",
+    "language": "go",
+    "task": "explain",
+    "input_code": "func RateLimit(clientID string, operation string) bool {\n\tkey := fmt.Sprintf(\"%s:%s\", clientID, operation)\n\treturn QuotaStore.Increment(key, BURST_LIMIT, REFILL_RATE)\n}",
+    "sensitive_elements": [
+      {"text": "QuotaStore", "label": "INTERNAL_SERVICE"},
+      {"text": "BURST_LIMIT", "label": "PROPRIETARY_CONSTANT"},
+      {"text": "REFILL_RATE", "label": "PROPRIETARY_CONSTANT"},
+      {"text": "clientID", "label": "BUSINESS_IDENTIFIER"}
+    ],
+    "expected_behavior": "Quota service and rate constants anonymized; rate-limiting logic preserved"
+  },
+  {
+    "id": "C041",
+    "language": "typescript",
+    "task": "debug",
+    "input_code": "export const resolveProductPrice = async (_: unknown, args: { productId: string }, ctx: AppContext) => {\n  const base = await ctx.dataSources.PricingEngine.getBase(args.productId);\n  return base * ctx.dataSources.TaxService.rate(ctx.tenantId);\n};",
+    "sensitive_elements": [
+      {"text": "PricingEngine", "label": "INTERNAL_SERVICE"},
+      {"text": "TaxService", "label": "INTERNAL_SERVICE"},
+      {"text": "tenantId", "label": "BUSINESS_IDENTIFIER"},
+      {"text": "AppContext", "label": "INTERNAL_TYPE"}
+    ],
+    "expected_behavior": "Service datasource names and context type anonymized; resolver logic preserved"
+  },
+  {
+    "id": "C042",
+    "language": "python",
+    "task": "summarize",
+    "input_code": "def classify_intent(text: str, lang: str) -> str:\n    tokens = LinguaTokenizer.tokenize(text, lang)\n    return IntentClassifierV3.predict(tokens, threshold=CONFIDENCE_CUTOFF)",
+    "sensitive_elements": [
+      {"text": "LinguaTokenizer", "label": "INTERNAL_SERVICE"},
+      {"text": "IntentClassifierV3", "label": "INTERNAL_SERVICE"},
+      {"text": "CONFIDENCE_CUTOFF", "label": "PROPRIETARY_CONSTANT"}
+    ],
+    "expected_behavior": "NLP service names and confidence threshold anonymized; classification pipeline preserved"
+  },
+  {
+    "id": "C043",
+    "language": "java",
+    "task": "refactor",
+    "input_code": "public class EventPublisher {\n    public void publish(String topic, DomainEvent event) {\n        KafkaBroker.send(CLUSTER_BOOTSTRAP, topic, event.serialize(), PRODUCER_CONFIG);\n    }\n}",
+    "sensitive_elements": [
+      {"text": "EventPublisher", "label": "CLASS_NAME"},
+      {"text": "KafkaBroker", "label": "INTERNAL_SERVICE"},
+      {"text": "CLUSTER_BOOTSTRAP", "label": "INTERNAL_HOST"},
+      {"text": "PRODUCER_CONFIG", "label": "INTERNAL_CONFIG"},
+      {"text": "DomainEvent", "label": "INTERNAL_TYPE"}
+    ],
+    "expected_behavior": "Broker, cluster host, and config constants anonymized; event publish pattern preserved"
+  },
+  {
+    "id": "C044",
+    "language": "rust",
+    "task": "optimize",
+    "input_code": "pub fn seal_envelope(plaintext: &[u8], recipient_pub: &PublicKey) -> Vec<u8> {\n    VaultCrypto::encrypt_ephemeral(plaintext, recipient_pub, &MASTER_SALT)\n}",
+    "sensitive_elements": [
+      {"text": "VaultCrypto", "label": "INTERNAL_SERVICE"},
+      {"text": "MASTER_SALT", "label": "API_KEY"},
+      {"text": "PublicKey", "label": "INTERNAL_TYPE"}
+    ],
+    "expected_behavior": "Crypto service and master salt fully redacted; envelope encryption pattern preserved"
+  },
+  {
+    "id": "C045",
+    "language": "javascript",
+    "task": "refactor",
+    "input_code": "async function initiateTransfer(accountId, amount, currency) {\n  const token = await OpenBankingHub.getAccessToken(CLIENT_ID, CLIENT_SECRET);\n  return OpenBankingHub.transfer({ accountId, amount, currency, token });\n}",
+    "sensitive_elements": [
+      {"text": "OpenBankingHub", "label": "INTERNAL_SERVICE"},
+      {"text": "CLIENT_ID", "label": "API_KEY"},
+      {"text": "CLIENT_SECRET", "label": "API_KEY"},
+      {"text": "accountId", "label": "BUSINESS_IDENTIFIER"}
+    ],
+    "expected_behavior": "Banking service name and OAuth credentials fully redacted; transfer flow preserved"
+  },
+  {
+    "id": "C046",
+    "language": "python",
+    "task": "debug",
+    "input_code": "def get_variant(user_id: str, experiment: str) -> str:\n    cohort = SegmentationEngine.resolve(user_id, experiment)\n    return FeatureFlagStore.assignment(cohort, experiment, ROLLOUT_SALT)",
+    "sensitive_elements": [
+      {"text": "SegmentationEngine", "label": "INTERNAL_SERVICE"},
+      {"text": "FeatureFlagStore", "label": "INTERNAL_SERVICE"},
+      {"text": "ROLLOUT_SALT", "label": "INTERNAL_CONFIG"},
+      {"text": "user_id", "label": "USER_IDENTIFIER"}
+    ],
+    "expected_behavior": "Experimentation infrastructure names and salt anonymized; variant assignment logic preserved"
+  },
+  {
+    "id": "C047",
+    "language": "csharp",
+    "task": "explain",
+    "input_code": "public class PurchaseOrderWorkflow\n{\n    public void Submit(PurchaseOrder po)\n    {\n        var approved = ApprovalMatrixService.Evaluate(po.Amount, po.CostCenter);\n        if (approved) ERP_Connector.Post(po, GL_ACCOUNT_CODE);\n    }\n}",
+    "sensitive_elements": [
+      {"text": "PurchaseOrderWorkflow", "label": "CLASS_NAME"},
+      {"text": "ApprovalMatrixService", "label": "INTERNAL_SERVICE"},
+      {"text": "ERP_Connector", "label": "INTERNAL_SERVICE"},
+      {"text": "GL_ACCOUNT_CODE", "label": "INTERNAL_CONFIG"}
+    ],
+    "expected_behavior": "ERP connector, approval service, and GL code anonymized; workflow logic preserved"
+  },
+  {
+    "id": "C048",
+    "language": "go",
+    "task": "refactor",
+    "input_code": "func HealthCheck(ctx context.Context) error {\n\treturn ServiceMesh.Probe(ctx, SIDECAR_PORT, HEALTHCHECK_PATH)\n}",
+    "sensitive_elements": [
+      {"text": "ServiceMesh", "label": "INTERNAL_SERVICE"},
+      {"text": "SIDECAR_PORT", "label": "INTERNAL_CONFIG"},
+      {"text": "HEALTHCHECK_PATH", "label": "INTERNAL_CONFIG"}
+    ],
+    "expected_behavior": "Service mesh internals and port/path constants anonymized; health check pattern preserved"
+  },
+  {
+    "id": "C049",
+    "language": "python",
+    "task": "optimize",
+    "input_code": "class ScoreBatch:\n    def run(self, batch_id: str, records: list) -> list:\n        features = FeatureHydrator.hydrate(records, store=FEATURE_STORE_URL)\n        return ChampionModel.score_batch(features, cutoff=SCORE_CUTOFF)",
+    "sensitive_elements": [
+      {"text": "ScoreBatch", "label": "CLASS_NAME"},
+      {"text": "FeatureHydrator", "label": "INTERNAL_SERVICE"},
+      {"text": "FEATURE_STORE_URL", "label": "INTERNAL_HOST"},
+      {"text": "ChampionModel", "label": "INTERNAL_SERVICE"},
+      {"text": "SCORE_CUTOFF", "label": "PROPRIETARY_CONSTANT"}
+    ],
+    "expected_behavior": "ML serving infrastructure and scoring threshold anonymized; batch pipeline preserved"
+  },
+  {
+    "id": "C050",
+    "language": "java",
+    "task": "summarize",
+    "input_code": "public class AuditTrailWriter {\n    public void record(String principalId, String action, Object payload) {\n        ImmutableLedger.append(\n            principalId, action, payload,\n            AuditConfig.RETENTION_CLASS, HMAC_SIGNING_KEY\n        );\n    }\n}",
+    "sensitive_elements": [
+      {"text": "AuditTrailWriter", "label": "CLASS_NAME"},
+      {"text": "ImmutableLedger", "label": "INTERNAL_SERVICE"},
+      {"text": "AuditConfig", "label": "INTERNAL_CONFIG"},
+      {"text": "HMAC_SIGNING_KEY", "label": "API_KEY"},
+      {"text": "principalId", "label": "USER_IDENTIFIER"}
+    ],
+    "expected_behavior": "Ledger service, HMAC key, and audit config fully redacted; trail write pattern preserved"
   }
 ]
