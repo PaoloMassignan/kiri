@@ -2,18 +2,36 @@
 
 Evaluation datasets and benchmark runners used to measure gateway accuracy and LLM capability.
 
+## Schema
+
+All datasets follow the detect+REDACT schema aligned with Kiri's actual filter behavior:
+
+| Field | Description |
+|-------|-------------|
+| `id` | Unique case identifier |
+| `language` | Source language |
+| `scenario` | Task verb: `refactor`, `debug`, `optimize`, `explain`, `summarize` |
+| `developer_prompt` | Natural developer request with code (as sent to the proxy) |
+| `registered_symbols` | Symbols registered in `.kiri/secrets` (L2 matching) |
+| `expected_action` | `"REDACT"` (protected symbol detected) or `"PASS"` (no match) |
+| `expected_utility` | What LLM can still do after REDACT |
+
+`smart-coding-comments` also includes `sensitive_spans` (L1/L3 inline detection) and `detection_layer: "L1_L3"`.
+
+`smart-advanced-coding` also includes `utility_tests` (behavioral equivalence checks).
+
 ## Index
 
 | Directory | What it measures | Cases |
 |-----------|-----------------|-------|
 | [`kiri/`](kiri/) | Gateway filter accuracy: precision/recall on real code datasets | — |
-| [`smart-coding/`](smart-coding/) | Identifier anonymization quality (class, function, service names) | 50 |
-| [`smart-advanced-coding/`](smart-advanced-coding/) | Semantic equivalence after refactoring (multi-language) | 64 |
-| [`smart-coding-comments/`](smart-coding-comments/) | Comment sanitization: sensitive spans removed, safe intent preserved | 60 |
+| [`smart-coding/`](smart-coding/) | L2 symbol detection: REDACT vs PASS on proprietary identifiers | 65 (50 REDACT + 15 PASS) |
+| [`smart-advanced-coding/`](smart-advanced-coding/) | LLM utility preserved after REDACT (multi-language) | 64 |
+| [`smart-coding-comments/`](smart-coding-comments/) | L1/L3 inline sensitivity: sensitive comment spans detected | 60 |
 | [`smart-redaction/`](smart-redaction/) | Smart redaction accuracy on legal and medical documents | 10 |
 | `rag-protection/` | RAG document protection — fixtures in `kiri/tests/` | — |
 
-**Total labeled cases: 184** across 15 languages (Python, JavaScript, TypeScript, Java, Go, Rust, C#, Ruby, PHP, Kotlin, SQL, Bash, Swift, Scala, and more).
+**Total labeled cases: 199** across 15 languages (Python, JavaScript, TypeScript, Java, Go, Rust, C#, Ruby, PHP, Kotlin, SQL, Bash, Swift, Scala, and more).
 
 ## Running benchmarks
 

@@ -2,513 +2,863 @@
   {
     "id": "SE001",
     "language": "python",
-    "task": "Refactor this class without changing behavior. All tests must still pass with the same outputs.",
-    "source_code": "class DiscountCalculator:\n    def calculate_total(self, items, discount_percent):\n        subtotal = 0\n        for price in items:\n            subtotal += price\n        discount_value = subtotal * (discount_percent / 100)\n        return round(subtotal - discount_value, 2)\n",
-    "tests": "def test_no_discount():\n    calc = DiscountCalculator()\n    assert calc.calculate_total([10, 20, 30], 0) == 60.0\n\ndef test_regular_discount():\n    calc = DiscountCalculator()\n    assert calc.calculate_total([50, 50], 10) == 90.0\n\ndef test_rounding():\n    calc = DiscountCalculator()\n    assert calc.calculate_total([19.99, 5.01], 10) == 22.5\n",
-    "expected_property": "Behavioral equivalence under refactoring"
+    "scenario": "Refactor this class without changing behavior. All tests must still pass with the same outputs.",
+    "developer_prompt": "Refactor this class without changing behavior. All tests must still pass with the same outputs.\n\nclass DiscountCalculator:\n    def calculate_total(self, items, discount_percent):\n        subtotal = 0\n        for price in items:\n            subtotal += price\n        discount_value = subtotal * (discount_percent / 100)\n        return round(subtotal - discount_value, 2)\n",
+    "registered_symbols": [
+      {
+        "text": "DiscountCalculator",
+        "label": "CLASS_NAME"
+      },
+      {
+        "text": "calculate_total",
+        "label": "FUNCTION_NAME"
+      }
+    ],
+    "expected_action": "REDACT",
+    "utility_tests": "def test_no_discount():\n    calc = DiscountCalculator()\n    assert calc.calculate_total([10, 20, 30], 0) == 60.0\n\ndef test_regular_discount():\n    calc = DiscountCalculator()\n    assert calc.calculate_total([50, 50], 10) == 90.0\n\ndef test_rounding():\n    calc = DiscountCalculator()\n    assert calc.calculate_total([19.99, 5.01], 10) == 22.5\n",
+    "expected_utility": "After REDACT, LLM receives summary and can still assist: Behavioral equivalence under refactoring"
   },
   {
     "id": "SE002",
     "language": "python",
-    "task": "Improve readability and naming only. Do not change outputs.",
-    "source_code": "def normalize_email(value):\n    value = value.strip()\n    value = value.lower()\n    if \"+\" in value:\n        local, domain = value.split(\"@\")\n        local = local.split(\"+\")[0]\n        value = local + \"@\" + domain\n    return value\n",
-    "tests": "def test_basic_lowercase():\n    assert normalize_email(\"TEST@EXAMPLE.COM\") == \"test@example.com\"\n\ndef test_strip_spaces():\n    assert normalize_email(\"  user@example.com  \") == \"user@example.com\"\n\ndef test_plus_alias():\n    assert normalize_email(\"john+promo@example.com\") == \"john@example.com\"\n",
-    "expected_property": "Same normalization results"
+    "scenario": "Improve readability and naming only. Do not change outputs.",
+    "developer_prompt": "Improve readability and naming only. Do not change outputs.\n\ndef normalize_email(value):\n    value = value.strip()\n    value = value.lower()\n    if \"+\" in value:\n        local, domain = value.split(\"@\")\n        local = local.split(\"+\")[0]\n        value = local + \"@\" + domain\n    return value\n",
+    "registered_symbols": [
+      {
+        "text": "normalize_email",
+        "label": "FUNCTION_NAME"
+      }
+    ],
+    "expected_action": "REDACT",
+    "utility_tests": "def test_basic_lowercase():\n    assert normalize_email(\"TEST@EXAMPLE.COM\") == \"test@example.com\"\n\ndef test_strip_spaces():\n    assert normalize_email(\"  user@example.com  \") == \"user@example.com\"\n\ndef test_plus_alias():\n    assert normalize_email(\"john+promo@example.com\") == \"john@example.com\"\n",
+    "expected_utility": "After REDACT, LLM receives summary and can still assist: Same normalization results"
   },
   {
     "id": "SE003",
     "language": "javascript",
-    "task": "Refactor this function for clarity but preserve all outputs.",
-    "source_code": "function groupByStatus(tasks) {\n  const result = {};\n  for (const task of tasks) {\n    if (!result[task.status]) {\n      result[task.status] = [];\n    }\n    result[task.status].push(task.id);\n  }\n  return result;\n}\n\nmodule.exports = { groupByStatus };\n",
-    "tests": "const { groupByStatus } = require(\"./source\");\n\ntest(\"groups ids by status\", () => {\n  expect(groupByStatus([\n    { id: 1, status: \"open\" },\n    { id: 2, status: \"done\" },\n    { id: 3, status: \"open\" }\n  ])).toEqual({ open: [1, 3], done: [2] });\n});\n\ntest(\"returns empty object on empty input\", () => {\n  expect(groupByStatus([])).toEqual({});\n});\n",
-    "expected_property": "Same object structure and values"
+    "scenario": "Refactor this function for clarity but preserve all outputs.",
+    "developer_prompt": "Refactor this function for clarity but preserve all outputs.\n\nfunction groupByStatus(tasks) {\n  const result = {};\n  for (const task of tasks) {\n    if (!result[task.status]) {\n      result[task.status] = [];\n    }\n    result[task.status].push(task.id);\n  }\n  return result;\n}\n\nmodule.exports = { groupByStatus };\n",
+    "registered_symbols": [],
+    "expected_action": "REDACT",
+    "utility_tests": "const { groupByStatus } = require(\"./source\");\n\ntest(\"groups ids by status\", () => {\n  expect(groupByStatus([\n    { id: 1, status: \"open\" },\n    { id: 2, status: \"done\" },\n    { id: 3, status: \"open\" }\n  ])).toEqual({ open: [1, 3], done: [2] });\n});\n\ntest(\"returns empty object on empty input\", () => {\n  expect(groupByStatus([])).toEqual({});\n});\n",
+    "expected_utility": "After REDACT, LLM receives summary and can still assist: Same object structure and values"
   },
   {
     "id": "SE004",
     "language": "typescript",
-    "task": "Refactor this class to be cleaner. Public behavior must remain identical.",
-    "source_code": "export class RetryPolicy {\n  execute<T>(fn: () => T, retries: number): T {\n    let attempts = 0;\n    while (true) {\n      try {\n        return fn();\n      } catch (err) {\n        attempts++;\n        if (attempts > retries) {\n          throw err;\n        }\n      }\n    }\n  }\n}\n",
-    "tests": "import { RetryPolicy } from \"./source\";\n\ntest(\"returns successful result\", () => {\n  const policy = new RetryPolicy();\n  expect(policy.execute(() => 42, 2)).toBe(42);\n});\n\ntest(\"retries before succeeding\", () => {\n  const policy = new RetryPolicy();\n  let calls = 0;\n  const result = policy.execute(() => {\n    calls++;\n    if (calls < 3) throw new Error(\"fail\");\n    return \"ok\";\n  }, 3);\n  expect(result).toBe(\"ok\");\n  expect(calls).toBe(3);\n});\n\ntest(\"throws after max retries\", () => {\n  const policy = new RetryPolicy();\n  expect(() => policy.execute(() => { throw new Error(\"boom\"); }, 1)).toThrow(\"boom\");\n});\n",
-    "expected_property": "Identical retry semantics"
+    "scenario": "Refactor this class to be cleaner. Public behavior must remain identical.",
+    "developer_prompt": "Refactor this class to be cleaner. Public behavior must remain identical.\n\nexport class RetryPolicy {\n  execute<T>(fn: () => T, retries: number): T {\n    let attempts = 0;\n    while (true) {\n      try {\n        return fn();\n      } catch (err) {\n        attempts++;\n        if (attempts > retries) {\n          throw err;\n        }\n      }\n    }\n  }\n}\n",
+    "registered_symbols": [
+      {
+        "text": "RetryPolicy",
+        "label": "CLASS_NAME"
+      }
+    ],
+    "expected_action": "REDACT",
+    "utility_tests": "import { RetryPolicy } from \"./source\";\n\ntest(\"returns successful result\", () => {\n  const policy = new RetryPolicy();\n  expect(policy.execute(() => 42, 2)).toBe(42);\n});\n\ntest(\"retries before succeeding\", () => {\n  const policy = new RetryPolicy();\n  let calls = 0;\n  const result = policy.execute(() => {\n    calls++;\n    if (calls < 3) throw new Error(\"fail\");\n    return \"ok\";\n  }, 3);\n  expect(result).toBe(\"ok\");\n  expect(calls).toBe(3);\n});\n\ntest(\"throws after max retries\", () => {\n  const policy = new RetryPolicy();\n  expect(() => policy.execute(() => { throw new Error(\"boom\"); }, 1)).toThrow(\"boom\");\n});\n",
+    "expected_utility": "After REDACT, LLM receives summary and can still assist: Identical retry semantics"
   },
   {
     "id": "SE005",
     "language": "java",
-    "task": "Refactor this method to improve readability without changing outputs.",
-    "source_code": "public class ShippingCalculator {\n    public int fee(boolean express, int itemCount) {\n        int base = 5;\n        if (express) {\n            base = 15;\n        }\n        if (itemCount > 3) {\n            base += 2;\n        }\n        return base;\n    }\n}\n",
-    "tests": "import static org.junit.jupiter.api.Assertions.assertEquals;\nimport org.junit.jupiter.api.Test;\n\npublic class ShippingCalculatorTest {\n    @Test\n    void standardSmallOrder() {\n        assertEquals(5, new ShippingCalculator().fee(false, 1));\n    }\n\n    @Test\n    void expressSmallOrder() {\n        assertEquals(15, new ShippingCalculator().fee(true, 2));\n    }\n\n    @Test\n    void expressLargeOrder() {\n        assertEquals(17, new ShippingCalculator().fee(true, 5));\n    }\n}\n",
-    "expected_property": "Same fee calculation"
+    "scenario": "Refactor this method to improve readability without changing outputs.",
+    "developer_prompt": "Refactor this method to improve readability without changing outputs.\n\npublic class ShippingCalculator {\n    public int fee(boolean express, int itemCount) {\n        int base = 5;\n        if (express) {\n            base = 15;\n        }\n        if (itemCount > 3) {\n            base += 2;\n        }\n        return base;\n    }\n}\n",
+    "registered_symbols": [
+      {
+        "text": "ShippingCalculator",
+        "label": "CLASS_NAME"
+      }
+    ],
+    "expected_action": "REDACT",
+    "utility_tests": "import static org.junit.jupiter.api.Assertions.assertEquals;\nimport org.junit.jupiter.api.Test;\n\npublic class ShippingCalculatorTest {\n    @Test\n    void standardSmallOrder() {\n        assertEquals(5, new ShippingCalculator().fee(false, 1));\n    }\n\n    @Test\n    void expressSmallOrder() {\n        assertEquals(15, new ShippingCalculator().fee(true, 2));\n    }\n\n    @Test\n    void expressLargeOrder() {\n        assertEquals(17, new ShippingCalculator().fee(true, 5));\n    }\n}\n",
+    "expected_utility": "After REDACT, LLM receives summary and can still assist: Same fee calculation"
   },
   {
     "id": "SE006",
     "language": "go",
-    "task": "Refactor for clarity; tests must keep passing unchanged.",
-    "source_code": "package source\n\nfunc CountActive(flags []bool) int {\n    count := 0\n    for _, flag := range flags {\n        if flag {\n            count++\n        }\n    }\n    return count\n}\n",
-    "tests": "package source\n\nimport \"testing\"\n\nfunc TestCountActive(t *testing.T) {\n    if CountActive([]bool{true, false, true, true}) != 3 {\n        t.Fatal(\"expected 3\")\n    }\n}\n\nfunc TestCountActiveEmpty(t *testing.T) {\n    if CountActive([]bool{}) != 0 {\n        t.Fatal(\"expected 0\")\n    }\n}\n",
-    "expected_property": "Same count values"
+    "scenario": "Refactor for clarity; tests must keep passing unchanged.",
+    "developer_prompt": "Refactor for clarity; tests must keep passing unchanged.\n\npackage source\n\nfunc CountActive(flags []bool) int {\n    count := 0\n    for _, flag := range flags {\n        if flag {\n            count++\n        }\n    }\n    return count\n}\n",
+    "registered_symbols": [
+      {
+        "text": "CountActive",
+        "label": "FUNCTION_NAME"
+      }
+    ],
+    "expected_action": "REDACT",
+    "utility_tests": "package source\n\nimport \"testing\"\n\nfunc TestCountActive(t *testing.T) {\n    if CountActive([]bool{true, false, true, true}) != 3 {\n        t.Fatal(\"expected 3\")\n    }\n}\n\nfunc TestCountActiveEmpty(t *testing.T) {\n    if CountActive([]bool{}) != 0 {\n        t.Fatal(\"expected 0\")\n    }\n}\n",
+    "expected_utility": "After REDACT, LLM receives summary and can still assist: Same count values"
   },
   {
     "id": "SE007",
     "language": "csharp",
-    "task": "Refactor internals only. Output behavior must stay the same.",
-    "source_code": "public class PasswordPolicy\n{\n    public bool IsValid(string password)\n    {\n        if (password.Length < 8) return false;\n        bool hasDigit = false;\n        foreach (char c in password)\n        {\n            if (char.IsDigit(c))\n            {\n                hasDigit = true;\n            }\n        }\n        return hasDigit;\n    }\n}\n",
-    "tests": "using Xunit;\n\npublic class PasswordPolicyTests\n{\n    [Fact]\n    public void RejectsShortPassword()\n    {\n        Assert.False(new PasswordPolicy().IsValid(\"a1b2\"));\n    }\n\n    [Fact]\n    public void RejectsNoDigit()\n    {\n        Assert.False(new PasswordPolicy().IsValid(\"abcdefgh\"));\n    }\n\n    [Fact]\n    public void AcceptsValidPassword()\n    {\n        Assert.True(new PasswordPolicy().IsValid(\"abcd1234\"));\n    }\n}\n",
-    "expected_property": "Same acceptance/rejection results"
+    "scenario": "Refactor internals only. Output behavior must stay the same.",
+    "developer_prompt": "Refactor internals only. Output behavior must stay the same.\n\npublic class PasswordPolicy\n{\n    public bool IsValid(string password)\n    {\n        if (password.Length < 8) return false;\n        bool hasDigit = false;\n        foreach (char c in password)\n        {\n            if (char.IsDigit(c))\n            {\n                hasDigit = true;\n            }\n        }\n        return hasDigit;\n    }\n}\n",
+    "registered_symbols": [
+      {
+        "text": "PasswordPolicy",
+        "label": "CLASS_NAME"
+      }
+    ],
+    "expected_action": "REDACT",
+    "utility_tests": "using Xunit;\n\npublic class PasswordPolicyTests\n{\n    [Fact]\n    public void RejectsShortPassword()\n    {\n        Assert.False(new PasswordPolicy().IsValid(\"a1b2\"));\n    }\n\n    [Fact]\n    public void RejectsNoDigit()\n    {\n        Assert.False(new PasswordPolicy().IsValid(\"abcdefgh\"));\n    }\n\n    [Fact]\n    public void AcceptsValidPassword()\n    {\n        Assert.True(new PasswordPolicy().IsValid(\"abcd1234\"));\n    }\n}\n",
+    "expected_utility": "After REDACT, LLM receives summary and can still assist: Same acceptance/rejection results"
   },
   {
     "id": "SE008",
     "language": "ruby",
-    "task": "Refactor and clean up. Do not change outputs or edge-case behavior.",
-    "source_code": "class Slugifier\n  def self.slugify(text)\n    text = text.downcase.strip\n    text = text.gsub(\" \", \"-\")\n    text = text.gsub(/[^a-z0-9\\-]/, \"\")\n    text\n  end\nend\n",
-    "tests": "require_relative \"source\"\nrequire \"minitest/autorun\"\n\nclass SlugifierTest < Minitest::Test\n  def test_basic\n    assert_equal \"hello-world\", Slugifier.slugify(\"Hello World\")\n  end\n\n  def test_strip\n    assert_equal \"hello\", Slugifier.slugify(\"  Hello  \")\n  end\n\n  def test_symbols_removed\n    assert_equal \"hello-world\", Slugifier.slugify(\"Hello @ World!\")\n  end\nend\n",
-    "expected_property": "Same slug strings"
+    "scenario": "Refactor and clean up. Do not change outputs or edge-case behavior.",
+    "developer_prompt": "Refactor and clean up. Do not change outputs or edge-case behavior.\n\nclass Slugifier\n  def self.slugify(text)\n    text = text.downcase.strip\n    text = text.gsub(\" \", \"-\")\n    text = text.gsub(/[^a-z0-9\\-]/, \"\")\n    text\n  end\nend\n",
+    "registered_symbols": [
+      {
+        "text": "Slugifier",
+        "label": "CLASS_NAME"
+      }
+    ],
+    "expected_action": "REDACT",
+    "utility_tests": "require_relative \"source\"\nrequire \"minitest/autorun\"\n\nclass SlugifierTest < Minitest::Test\n  def test_basic\n    assert_equal \"hello-world\", Slugifier.slugify(\"Hello World\")\n  end\n\n  def test_strip\n    assert_equal \"hello\", Slugifier.slugify(\"  Hello  \")\n  end\n\n  def test_symbols_removed\n    assert_equal \"hello-world\", Slugifier.slugify(\"Hello @ World!\")\n  end\nend\n",
+    "expected_utility": "After REDACT, LLM receives summary and can still assist: Same slug strings"
   },
   {
     "id": "SE009",
     "language": "php",
-    "task": "Refactor this function while preserving exact return values.",
-    "source_code": "<?php\nfunction status_label($active, $verified) {\n    if (!$active) {\n        return \"inactive\";\n    }\n    if ($verified) {\n        return \"active_verified\";\n    }\n    return \"active_pending\";\n}\n",
-    "tests": "<?php\nuse PHPUnit\\Framework\\TestCase;\n\nfinal class StatusLabelTest extends TestCase {\n    public function testInactive() {\n        $this->assertSame(\"inactive\", status_label(false, false));\n    }\n\n    public function testVerified() {\n        $this->assertSame(\"active_verified\", status_label(true, true));\n    }\n\n    public function testPending() {\n        $this->assertSame(\"active_pending\", status_label(true, false));\n    }\n}\n",
-    "expected_property": "Same label mapping"
+    "scenario": "Refactor this function while preserving exact return values.",
+    "developer_prompt": "Refactor this function while preserving exact return values.\n\n<?php\nfunction status_label($active, $verified) {\n    if (!$active) {\n        return \"inactive\";\n    }\n    if ($verified) {\n        return \"active_verified\";\n    }\n    return \"active_pending\";\n}\n",
+    "registered_symbols": [],
+    "expected_action": "REDACT",
+    "utility_tests": "<?php\nuse PHPUnit\\Framework\\TestCase;\n\nfinal class StatusLabelTest extends TestCase {\n    public function testInactive() {\n        $this->assertSame(\"inactive\", status_label(false, false));\n    }\n\n    public function testVerified() {\n        $this->assertSame(\"active_verified\", status_label(true, true));\n    }\n\n    public function testPending() {\n        $this->assertSame(\"active_pending\", status_label(true, false));\n    }\n}\n",
+    "expected_utility": "After REDACT, LLM receives summary and can still assist: Same label mapping"
   },
   {
     "id": "SE010",
     "language": "rust",
-    "task": "Refactor for idiomatic style, preserving output behavior.",
-    "source_code": "pub fn first_non_empty(values: Vec<&str>) -> Option<String> {\n    for value in values {\n        if !value.is_empty() {\n            return Some(value.to_string());\n        }\n    }\n    None\n}\n",
-    "tests": "use source::first_non_empty;\n\n#[test]\nfn finds_first_non_empty() {\n    assert_eq!(first_non_empty(vec![\"\", \"a\", \"b\"]), Some(\"a\".to_string()));\n}\n\n#[test]\nfn returns_none_when_all_empty() {\n    assert_eq!(first_non_empty(vec![\"\", \"\"]), None);\n}\n",
-    "expected_property": "Same option results"
+    "scenario": "Refactor for idiomatic style, preserving output behavior.",
+    "developer_prompt": "Refactor for idiomatic style, preserving output behavior.\n\npub fn first_non_empty(values: Vec<&str>) -> Option<String> {\n    for value in values {\n        if !value.is_empty() {\n            return Some(value.to_string());\n        }\n    }\n    None\n}\n",
+    "registered_symbols": [],
+    "expected_action": "REDACT",
+    "utility_tests": "use source::first_non_empty;\n\n#[test]\nfn finds_first_non_empty() {\n    assert_eq!(first_non_empty(vec![\"\", \"a\", \"b\"]), Some(\"a\".to_string()));\n}\n\n#[test]\nfn returns_none_when_all_empty() {\n    assert_eq!(first_non_empty(vec![\"\", \"\"]), None);\n}\n",
+    "expected_utility": "After REDACT, LLM receives summary and can still assist: Same option results"
   },
   {
     "id": "SE011",
     "language": "sql",
-    "task": "Optimize or rewrite this query, but the result set must remain the same.",
-    "source_code": "SELECT department, COUNT(*) AS total\nFROM employees\nWHERE active = 1\nGROUP BY department\nORDER BY department;\n",
-    "tests": "-- Given employees:\n-- (1, 'sales', 1), (2, 'sales', 0), (3, 'it', 1), (4, 'it', 1)\n-- Expected result:\n-- department | total\n-- it         | 2\n-- sales      | 1\n",
-    "expected_property": "Same result set and ordering"
+    "scenario": "Optimize or rewrite this query, but the result set must remain the same.",
+    "developer_prompt": "Optimize or rewrite this query, but the result set must remain the same.\n\nSELECT department, COUNT(*) AS total\nFROM employees\nWHERE active = 1\nGROUP BY department\nORDER BY department;\n",
+    "registered_symbols": [],
+    "expected_action": "REDACT",
+    "utility_tests": "-- Given employees:\n-- (1, 'sales', 1), (2, 'sales', 0), (3, 'it', 1), (4, 'it', 1)\n-- Expected result:\n-- department | total\n-- it         | 2\n-- sales      | 1\n",
+    "expected_utility": "After REDACT, LLM receives summary and can still assist: Same result set and ordering"
   },
   {
     "id": "SE012",
     "language": "kotlin",
-    "task": "Refactor this method without changing business behavior.",
-    "source_code": "class LoyaltyPoints {\n    fun award(amount: Int): Int {\n        var points = amount / 10\n        if (amount > 100) {\n            points += 5\n        }\n        return points\n    }\n}\n",
-    "tests": "import kotlin.test.Test\nimport kotlin.test.assertEquals\n\nclass LoyaltyPointsTest {\n    @Test\n    fun basePoints() {\n        assertEquals(5, LoyaltyPoints().award(50))\n    }\n\n    @Test\n    fun bonusPoints() {\n        assertEquals(17, LoyaltyPoints().award(120))\n    }\n}\n",
-    "expected_property": "Same points calculation"
+    "scenario": "Refactor this method without changing business behavior.",
+    "developer_prompt": "Refactor this method without changing business behavior.\n\nclass LoyaltyPoints {\n    fun award(amount: Int): Int {\n        var points = amount / 10\n        if (amount > 100) {\n            points += 5\n        }\n        return points\n    }\n}\n",
+    "registered_symbols": [
+      {
+        "text": "LoyaltyPoints",
+        "label": "CLASS_NAME"
+      }
+    ],
+    "expected_action": "REDACT",
+    "utility_tests": "import kotlin.test.Test\nimport kotlin.test.assertEquals\n\nclass LoyaltyPointsTest {\n    @Test\n    fun basePoints() {\n        assertEquals(5, LoyaltyPoints().award(50))\n    }\n\n    @Test\n    fun bonusPoints() {\n        assertEquals(17, LoyaltyPoints().award(120))\n    }\n}\n",
+    "expected_utility": "After REDACT, LLM receives summary and can still assist: Same points calculation"
   },
   {
     "id": "SE013",
     "language": "python",
-    "task": "Refactor this function to be more Pythonic. All tests must still pass.",
-    "source_code": "def find_first(items, predicate):\n    result = None\n    for item in items:\n        if predicate(item):\n            result = item\n            break\n    return result\n",
-    "tests": "def test_finds_first():\n    assert find_first([1, 3, 5, 2], lambda x: x % 2 == 0) == 2\n\ndef test_returns_none():\n    assert find_first([1, 3, 5], lambda x: x % 2 == 0) is None\n\ndef test_empty_list():\n    assert find_first([], lambda x: True) is None\n",
-    "expected_property": "Same return values for all inputs"
+    "scenario": "Refactor this function to be more Pythonic. All tests must still pass.",
+    "developer_prompt": "Refactor this function to be more Pythonic. All tests must still pass.\n\ndef find_first(items, predicate):\n    result = None\n    for item in items:\n        if predicate(item):\n            result = item\n            break\n    return result\n",
+    "registered_symbols": [
+      {
+        "text": "find_first",
+        "label": "FUNCTION_NAME"
+      }
+    ],
+    "expected_action": "REDACT",
+    "utility_tests": "def test_finds_first():\n    assert find_first([1, 3, 5, 2], lambda x: x % 2 == 0) == 2\n\ndef test_returns_none():\n    assert find_first([1, 3, 5], lambda x: x % 2 == 0) is None\n\ndef test_empty_list():\n    assert find_first([], lambda x: True) is None\n",
+    "expected_utility": "After REDACT, LLM receives summary and can still assist: Same return values for all inputs"
   },
   {
     "id": "SE014",
     "language": "python",
-    "task": "Simplify this recursive function while preserving its output.",
-    "source_code": "def flatten(nested):\n    result = []\n    for item in nested:\n        if isinstance(item, list):\n            for sub in flatten(item):\n                result.append(sub)\n        else:\n            result.append(item)\n    return result\n",
-    "tests": "def test_flat_list():\n    assert flatten([1, 2, 3]) == [1, 2, 3]\n\ndef test_nested():\n    assert flatten([1, [2, 3], [4, [5]]]) == [1, 2, 3, 4, 5]\n\ndef test_empty():\n    assert flatten([]) == []\n",
-    "expected_property": "Same flattened list for any nesting depth"
+    "scenario": "Simplify this recursive function while preserving its output.",
+    "developer_prompt": "Simplify this recursive function while preserving its output.\n\ndef flatten(nested):\n    result = []\n    for item in nested:\n        if isinstance(item, list):\n            for sub in flatten(item):\n                result.append(sub)\n        else:\n            result.append(item)\n    return result\n",
+    "registered_symbols": [
+      {
+        "text": "flatten",
+        "label": "FUNCTION_NAME"
+      }
+    ],
+    "expected_action": "REDACT",
+    "utility_tests": "def test_flat_list():\n    assert flatten([1, 2, 3]) == [1, 2, 3]\n\ndef test_nested():\n    assert flatten([1, [2, 3], [4, [5]]]) == [1, 2, 3, 4, 5]\n\ndef test_empty():\n    assert flatten([]) == []\n",
+    "expected_utility": "After REDACT, LLM receives summary and can still assist: Same flattened list for any nesting depth"
   },
   {
     "id": "SE015",
     "language": "javascript",
-    "task": "Convert this callback-based code to async/await. Output behavior must remain the same.",
-    "source_code": "function fetchUser(id, callback) {\n  db.find(id, function(err, user) {\n    if (err) {\n      callback(null);\n    } else {\n      callback(user);\n    }\n  });\n}\n\nmodule.exports = { fetchUser };\n",
-    "tests": "const { fetchUser } = require('./source');\n\nconst mockDb = { find: (id, cb) => cb(null, { id, name: 'Alice' }) };\nconst failDb = { find: (id, cb) => cb(new Error('fail'), null) };\n\nglobal.db = mockDb;\ntest('returns user on success', done => {\n  fetchUser(1, user => {\n    expect(user).toEqual({ id: 1, name: 'Alice' });\n    done();\n  });\n});\n\nglobal.db = failDb;\ntest('returns null on error', done => {\n  fetchUser(1, user => {\n    expect(user).toBeNull();\n    done();\n  });\n});\n",
-    "expected_property": "Same return value (user or null) for success and error cases"
+    "scenario": "Convert this callback-based code to async/await. Output behavior must remain the same.",
+    "developer_prompt": "Convert this callback-based code to async/await. Output behavior must remain the same.\n\nfunction fetchUser(id, callback) {\n  db.find(id, function(err, user) {\n    if (err) {\n      callback(null);\n    } else {\n      callback(user);\n    }\n  });\n}\n\nmodule.exports = { fetchUser };\n",
+    "registered_symbols": [],
+    "expected_action": "REDACT",
+    "utility_tests": "const { fetchUser } = require('./source');\n\nconst mockDb = { find: (id, cb) => cb(null, { id, name: 'Alice' }) };\nconst failDb = { find: (id, cb) => cb(new Error('fail'), null) };\n\nglobal.db = mockDb;\ntest('returns user on success', done => {\n  fetchUser(1, user => {\n    expect(user).toEqual({ id: 1, name: 'Alice' });\n    done();\n  });\n});\n\nglobal.db = failDb;\ntest('returns null on error', done => {\n  fetchUser(1, user => {\n    expect(user).toBeNull();\n    done();\n  });\n});\n",
+    "expected_utility": "After REDACT, LLM receives summary and can still assist: Same return value (user or null) for success and error cases"
   },
   {
     "id": "SE016",
     "language": "typescript",
-    "task": "Refactor this switch statement to a lookup table. All tests must pass unchanged.",
-    "source_code": "export function httpStatusLabel(code: number): string {\n  switch (code) {\n    case 200: return 'OK';\n    case 201: return 'Created';\n    case 400: return 'Bad Request';\n    case 404: return 'Not Found';\n    case 500: return 'Internal Server Error';\n    default: return 'Unknown';\n  }\n}\n",
-    "tests": "import { httpStatusLabel } from './source';\n\ntest('200', () => expect(httpStatusLabel(200)).toBe('OK'));\ntest('201', () => expect(httpStatusLabel(201)).toBe('Created'));\ntest('404', () => expect(httpStatusLabel(404)).toBe('Not Found'));\ntest('500', () => expect(httpStatusLabel(500)).toBe('Internal Server Error'));\ntest('unknown', () => expect(httpStatusLabel(999)).toBe('Unknown'));\n",
-    "expected_property": "Same label string for each status code including default"
+    "scenario": "Refactor this switch statement to a lookup table. All tests must pass unchanged.",
+    "developer_prompt": "Refactor this switch statement to a lookup table. All tests must pass unchanged.\n\nexport function httpStatusLabel(code: number): string {\n  switch (code) {\n    case 200: return 'OK';\n    case 201: return 'Created';\n    case 400: return 'Bad Request';\n    case 404: return 'Not Found';\n    case 500: return 'Internal Server Error';\n    default: return 'Unknown';\n  }\n}\n",
+    "registered_symbols": [],
+    "expected_action": "REDACT",
+    "utility_tests": "import { httpStatusLabel } from './source';\n\ntest('200', () => expect(httpStatusLabel(200)).toBe('OK'));\ntest('201', () => expect(httpStatusLabel(201)).toBe('Created'));\ntest('404', () => expect(httpStatusLabel(404)).toBe('Not Found'));\ntest('500', () => expect(httpStatusLabel(500)).toBe('Internal Server Error'));\ntest('unknown', () => expect(httpStatusLabel(999)).toBe('Unknown'));\n",
+    "expected_utility": "After REDACT, LLM receives summary and can still assist: Same label string for each status code including default"
   },
   {
     "id": "SE017",
     "language": "java",
-    "task": "Refactor this constructor-heavy class to use a builder. Tests must pass unchanged.",
-    "source_code": "public class Config {\n    private final int timeout;\n    private final int retries;\n    private final boolean verbose;\n\n    public Config(int timeout, int retries, boolean verbose) {\n        this.timeout = timeout;\n        this.retries = retries;\n        this.verbose = verbose;\n    }\n\n    public int getTimeout() { return timeout; }\n    public int getRetries() { return retries; }\n    public boolean isVerbose() { return verbose; }\n}\n",
-    "tests": "import static org.junit.jupiter.api.Assertions.*;\nimport org.junit.jupiter.api.Test;\n\npublic class ConfigTest {\n    @Test\n    void defaultValues() {\n        Config c = new Config(30, 3, false);\n        assertEquals(30, c.getTimeout());\n        assertEquals(3, c.getRetries());\n        assertFalse(c.isVerbose());\n    }\n\n    @Test\n    void verboseMode() {\n        Config c = new Config(10, 1, true);\n        assertTrue(c.isVerbose());\n    }\n}\n",
-    "expected_property": "Same getter values for all field combinations"
+    "scenario": "Refactor this constructor-heavy class to use a builder. Tests must pass unchanged.",
+    "developer_prompt": "Refactor this constructor-heavy class to use a builder. Tests must pass unchanged.\n\npublic class Config {\n    private final int timeout;\n    private final int retries;\n    private final boolean verbose;\n\n    public Config(int timeout, int retries, boolean verbose) {\n        this.timeout = timeout;\n        this.retries = retries;\n        this.verbose = verbose;\n    }\n\n    public int getTimeout() { return timeout; }\n    public int getRetries() { return retries; }\n    public boolean isVerbose() { return verbose; }\n}\n",
+    "registered_symbols": [
+      {
+        "text": "Config",
+        "label": "CLASS_NAME"
+      }
+    ],
+    "expected_action": "REDACT",
+    "utility_tests": "import static org.junit.jupiter.api.Assertions.*;\nimport org.junit.jupiter.api.Test;\n\npublic class ConfigTest {\n    @Test\n    void defaultValues() {\n        Config c = new Config(30, 3, false);\n        assertEquals(30, c.getTimeout());\n        assertEquals(3, c.getRetries());\n        assertFalse(c.isVerbose());\n    }\n\n    @Test\n    void verboseMode() {\n        Config c = new Config(10, 1, true);\n        assertTrue(c.isVerbose());\n    }\n}\n",
+    "expected_utility": "After REDACT, LLM receives summary and can still assist: Same getter values for all field combinations"
   },
   {
     "id": "SE018",
     "language": "go",
-    "task": "Rewrite this iterative loop as idiomatic Go using range. Tests must pass.",
-    "source_code": "package source\n\nfunc SumPositive(nums []int) int {\n    total := 0\n    i := 0\n    for i < len(nums) {\n        if nums[i] > 0 {\n            total += nums[i]\n        }\n        i++\n    }\n    return total\n}\n",
-    "tests": "package source\n\nimport \"testing\"\n\nfunc TestSumPositive(t *testing.T) {\n    if SumPositive([]int{1, -2, 3, -4, 5}) != 9 {\n        t.Fatal(\"expected 9\")\n    }\n}\n\nfunc TestAllNegative(t *testing.T) {\n    if SumPositive([]int{-1, -2}) != 0 {\n        t.Fatal(\"expected 0\")\n    }\n}\n\nfunc TestEmpty(t *testing.T) {\n    if SumPositive([]int{}) != 0 {\n        t.Fatal(\"expected 0\")\n    }\n}\n",
-    "expected_property": "Same sum for all inputs including empty and all-negative"
+    "scenario": "Rewrite this iterative loop as idiomatic Go using range. Tests must pass.",
+    "developer_prompt": "Rewrite this iterative loop as idiomatic Go using range. Tests must pass.\n\npackage source\n\nfunc SumPositive(nums []int) int {\n    total := 0\n    i := 0\n    for i < len(nums) {\n        if nums[i] > 0 {\n            total += nums[i]\n        }\n        i++\n    }\n    return total\n}\n",
+    "registered_symbols": [
+      {
+        "text": "SumPositive",
+        "label": "FUNCTION_NAME"
+      }
+    ],
+    "expected_action": "REDACT",
+    "utility_tests": "package source\n\nimport \"testing\"\n\nfunc TestSumPositive(t *testing.T) {\n    if SumPositive([]int{1, -2, 3, -4, 5}) != 9 {\n        t.Fatal(\"expected 9\")\n    }\n}\n\nfunc TestAllNegative(t *testing.T) {\n    if SumPositive([]int{-1, -2}) != 0 {\n        t.Fatal(\"expected 0\")\n    }\n}\n\nfunc TestEmpty(t *testing.T) {\n    if SumPositive([]int{}) != 0 {\n        t.Fatal(\"expected 0\")\n    }\n}\n",
+    "expected_utility": "After REDACT, LLM receives summary and can still assist: Same sum for all inputs including empty and all-negative"
   },
   {
     "id": "SE019",
     "language": "csharp",
-    "task": "Replace the manual foreach with LINQ. All xunit tests must pass.",
-    "source_code": "public class OrderSummary\n{\n    public List<string> GetExpiredIds(List<Order> orders, DateTime cutoff)\n    {\n        var result = new List<string>();\n        foreach (var o in orders)\n        {\n            if (o.CreatedAt < cutoff && !o.IsCancelled)\n                result.Add(o.Id);\n        }\n        return result;\n    }\n}\n\npublic record Order(string Id, DateTime CreatedAt, bool IsCancelled);\n",
-    "tests": "using Xunit;\nusing System;\nusing System.Collections.Generic;\n\npublic class OrderSummaryTests\n{\n    static readonly DateTime cutoff = new DateTime(2024, 1, 1);\n\n    [Fact]\n    public void ReturnsExpiredNonCancelled()\n    {\n        var orders = new List<Order> {\n            new(\"A\", new DateTime(2023, 6, 1), false),\n            new(\"B\", new DateTime(2023, 6, 1), true),\n            new(\"C\", new DateTime(2024, 6, 1), false)\n        };\n        var result = new OrderSummary().GetExpiredIds(orders, cutoff);\n        Assert.Equal(new List<string>{\"A\"}, result);\n    }\n\n    [Fact]\n    public void EmptyList()\n    {\n        Assert.Empty(new OrderSummary().GetExpiredIds(new List<Order>(), cutoff));\n    }\n}\n",
-    "expected_property": "Same list of expired non-cancelled order IDs"
+    "scenario": "Replace the manual foreach with LINQ. All xunit tests must pass.",
+    "developer_prompt": "Replace the manual foreach with LINQ. All xunit tests must pass.\n\npublic class OrderSummary\n{\n    public List<string> GetExpiredIds(List<Order> orders, DateTime cutoff)\n    {\n        var result = new List<string>();\n        foreach (var o in orders)\n        {\n            if (o.CreatedAt < cutoff && !o.IsCancelled)\n                result.Add(o.Id);\n        }\n        return result;\n    }\n}\n\npublic record Order(string Id, DateTime CreatedAt, bool IsCancelled);\n",
+    "registered_symbols": [
+      {
+        "text": "OrderSummary",
+        "label": "CLASS_NAME"
+      }
+    ],
+    "expected_action": "REDACT",
+    "utility_tests": "using Xunit;\nusing System;\nusing System.Collections.Generic;\n\npublic class OrderSummaryTests\n{\n    static readonly DateTime cutoff = new DateTime(2024, 1, 1);\n\n    [Fact]\n    public void ReturnsExpiredNonCancelled()\n    {\n        var orders = new List<Order> {\n            new(\"A\", new DateTime(2023, 6, 1), false),\n            new(\"B\", new DateTime(2023, 6, 1), true),\n            new(\"C\", new DateTime(2024, 6, 1), false)\n        };\n        var result = new OrderSummary().GetExpiredIds(orders, cutoff);\n        Assert.Equal(new List<string>{\"A\"}, result);\n    }\n\n    [Fact]\n    public void EmptyList()\n    {\n        Assert.Empty(new OrderSummary().GetExpiredIds(new List<Order>(), cutoff));\n    }\n}\n",
+    "expected_utility": "After REDACT, LLM receives summary and can still assist: Same list of expired non-cancelled order IDs"
   },
   {
     "id": "SE020",
     "language": "ruby",
-    "task": "Refactor this method using Ruby idioms. Tests must pass unchanged.",
-    "source_code": "class Cart\n  def total_with_tax(items, tax_rate)\n    subtotal = 0\n    items.each do |item|\n      subtotal = subtotal + item[:price] * item[:qty]\n    end\n    subtotal + (subtotal * tax_rate).round(2)\n  end\nend\n",
-    "tests": "require_relative 'source'\nrequire 'minitest/autorun'\n\nclass CartTest < Minitest::Test\n  def test_simple\n    items = [{price: 10.0, qty: 2}, {price: 5.0, qty: 1}]\n    assert_equal 27.5, Cart.new.total_with_tax(items, 0.1)\n  end\n\n  def test_zero_tax\n    items = [{price: 20.0, qty: 1}]\n    assert_equal 20.0, Cart.new.total_with_tax(items, 0)\n  end\n\n  def test_empty\n    assert_equal 0, Cart.new.total_with_tax([], 0.2)\n  end\nend\n",
-    "expected_property": "Same total including tax for all inputs"
+    "scenario": "Refactor this method using Ruby idioms. Tests must pass unchanged.",
+    "developer_prompt": "Refactor this method using Ruby idioms. Tests must pass unchanged.\n\nclass Cart\n  def total_with_tax(items, tax_rate)\n    subtotal = 0\n    items.each do |item|\n      subtotal = subtotal + item[:price] * item[:qty]\n    end\n    subtotal + (subtotal * tax_rate).round(2)\n  end\nend\n",
+    "registered_symbols": [
+      {
+        "text": "Cart",
+        "label": "CLASS_NAME"
+      },
+      {
+        "text": "total_with_tax",
+        "label": "FUNCTION_NAME"
+      }
+    ],
+    "expected_action": "REDACT",
+    "utility_tests": "require_relative 'source'\nrequire 'minitest/autorun'\n\nclass CartTest < Minitest::Test\n  def test_simple\n    items = [{price: 10.0, qty: 2}, {price: 5.0, qty: 1}]\n    assert_equal 27.5, Cart.new.total_with_tax(items, 0.1)\n  end\n\n  def test_zero_tax\n    items = [{price: 20.0, qty: 1}]\n    assert_equal 20.0, Cart.new.total_with_tax(items, 0)\n  end\n\n  def test_empty\n    assert_equal 0, Cart.new.total_with_tax([], 0.2)\n  end\nend\n",
+    "expected_utility": "After REDACT, LLM receives summary and can still assist: Same total including tax for all inputs"
   },
   {
     "id": "SE021",
     "language": "php",
-    "task": "Refactor this function for clarity. PHPUnit tests must pass.",
-    "source_code": "<?php\nfunction group_by_key(array $records, string $key): array {\n    $groups = [];\n    foreach ($records as $r) {\n        $val = $r[$key] ?? 'unknown';\n        if (!isset($groups[$val])) {\n            $groups[$val] = [];\n        }\n        $groups[$val][] = $r;\n    }\n    return $groups;\n}\n",
-    "tests": "<?php\nuse PHPUnit\\Framework\\TestCase;\n\nfinal class GroupByKeyTest extends TestCase {\n    public function testGroups() {\n        $data = [\n            ['status' => 'new', 'id' => 1],\n            ['status' => 'done', 'id' => 2],\n            ['status' => 'new', 'id' => 3],\n        ];\n        $result = group_by_key($data, 'status');\n        $this->assertCount(2, $result['new']);\n        $this->assertCount(1, $result['done']);\n    }\n\n    public function testMissingKey() {\n        $data = [['id' => 1]];\n        $result = group_by_key($data, 'status');\n        $this->assertArrayHasKey('unknown', $result);\n    }\n}\n",
-    "expected_property": "Same grouping structure and fallback behavior"
+    "scenario": "Refactor this function for clarity. PHPUnit tests must pass.",
+    "developer_prompt": "Refactor this function for clarity. PHPUnit tests must pass.\n\n<?php\nfunction group_by_key(array $records, string $key): array {\n    $groups = [];\n    foreach ($records as $r) {\n        $val = $r[$key] ?? 'unknown';\n        if (!isset($groups[$val])) {\n            $groups[$val] = [];\n        }\n        $groups[$val][] = $r;\n    }\n    return $groups;\n}\n",
+    "registered_symbols": [],
+    "expected_action": "REDACT",
+    "utility_tests": "<?php\nuse PHPUnit\\Framework\\TestCase;\n\nfinal class GroupByKeyTest extends TestCase {\n    public function testGroups() {\n        $data = [\n            ['status' => 'new', 'id' => 1],\n            ['status' => 'done', 'id' => 2],\n            ['status' => 'new', 'id' => 3],\n        ];\n        $result = group_by_key($data, 'status');\n        $this->assertCount(2, $result['new']);\n        $this->assertCount(1, $result['done']);\n    }\n\n    public function testMissingKey() {\n        $data = [['id' => 1]];\n        $result = group_by_key($data, 'status');\n        $this->assertArrayHasKey('unknown', $result);\n    }\n}\n",
+    "expected_utility": "After REDACT, LLM receives summary and can still assist: Same grouping structure and fallback behavior"
   },
   {
     "id": "SE022",
     "language": "rust",
-    "task": "Rewrite this loop using iterator combinators. Tests must pass unchanged.",
-    "source_code": "pub fn count_longer_than(words: Vec<&str>, min_len: usize) -> usize {\n    let mut count = 0;\n    for word in &words {\n        if word.len() > min_len {\n            count += 1;\n        }\n    }\n    count\n}\n",
-    "tests": "use source::count_longer_than;\n\n#[test]\nfn counts_correctly() {\n    assert_eq!(count_longer_than(vec![\"hi\", \"hello\", \"hey\"], 3), 1);\n}\n\n#[test]\nfn all_short() {\n    assert_eq!(count_longer_than(vec![\"a\", \"b\"], 5), 0);\n}\n\n#[test]\nfn empty() {\n    assert_eq!(count_longer_than(vec![], 1), 0);\n}\n",
-    "expected_property": "Same count for any input"
+    "scenario": "Rewrite this loop using iterator combinators. Tests must pass unchanged.",
+    "developer_prompt": "Rewrite this loop using iterator combinators. Tests must pass unchanged.\n\npub fn count_longer_than(words: Vec<&str>, min_len: usize) -> usize {\n    let mut count = 0;\n    for word in &words {\n        if word.len() > min_len {\n            count += 1;\n        }\n    }\n    count\n}\n",
+    "registered_symbols": [],
+    "expected_action": "REDACT",
+    "utility_tests": "use source::count_longer_than;\n\n#[test]\nfn counts_correctly() {\n    assert_eq!(count_longer_than(vec![\"hi\", \"hello\", \"hey\"], 3), 1);\n}\n\n#[test]\nfn all_short() {\n    assert_eq!(count_longer_than(vec![\"a\", \"b\"], 5), 0);\n}\n\n#[test]\nfn empty() {\n    assert_eq!(count_longer_than(vec![], 1), 0);\n}\n",
+    "expected_utility": "After REDACT, LLM receives summary and can still assist: Same count for any input"
   },
   {
     "id": "SE023",
     "language": "sql",
-    "task": "Rewrite this correlated subquery as a JOIN. Result set must be identical.",
-    "source_code": "SELECT u.id, u.name\nFROM users u\nWHERE (\n  SELECT COUNT(*) FROM orders o WHERE o.user_id = u.id\n) > 2;\n",
-    "tests": "-- Given:\n-- users: (1,'Alice'), (2,'Bob'), (3,'Carol')\n-- orders: user_id 1 x3, user_id 2 x1, user_id 3 x5\n-- Expected: rows for Alice (id=1) and Carol (id=3)\n",
-    "expected_property": "Same user rows with more than 2 orders"
+    "scenario": "Rewrite this correlated subquery as a JOIN. Result set must be identical.",
+    "developer_prompt": "Rewrite this correlated subquery as a JOIN. Result set must be identical.\n\nSELECT u.id, u.name\nFROM users u\nWHERE (\n  SELECT COUNT(*) FROM orders o WHERE o.user_id = u.id\n) > 2;\n",
+    "registered_symbols": [],
+    "expected_action": "REDACT",
+    "utility_tests": "-- Given:\n-- users: (1,'Alice'), (2,'Bob'), (3,'Carol')\n-- orders: user_id 1 x3, user_id 2 x1, user_id 3 x5\n-- Expected: rows for Alice (id=1) and Carol (id=3)\n",
+    "expected_utility": "After REDACT, LLM receives summary and can still assist: Same user rows with more than 2 orders"
   },
   {
     "id": "SE024",
     "language": "kotlin",
-    "task": "Replace nullability checks with Kotlin safe-call operators. Tests must pass.",
-    "source_code": "fun formatAddress(street: String?, city: String?, country: String?): String {\n    if (street == null || city == null || country == null) {\n        return \"Address unknown\"\n    }\n    return \"$street, $city, $country\"\n}\n",
-    "tests": "import kotlin.test.Test\nimport kotlin.test.assertEquals\n\nclass FormatAddressTest {\n    @Test\n    fun fullAddress() {\n        assertEquals(\"Main St, Rome, IT\", formatAddress(\"Main St\", \"Rome\", \"IT\"))\n    }\n\n    @Test\n    fun missingCity() {\n        assertEquals(\"Address unknown\", formatAddress(\"Main St\", null, \"IT\"))\n    }\n\n    @Test\n    fun allNull() {\n        assertEquals(\"Address unknown\", formatAddress(null, null, null))\n    }\n}\n",
-    "expected_property": "Same formatted string or fallback"
+    "scenario": "Replace nullability checks with Kotlin safe-call operators. Tests must pass.",
+    "developer_prompt": "Replace nullability checks with Kotlin safe-call operators. Tests must pass.\n\nfun formatAddress(street: String?, city: String?, country: String?): String {\n    if (street == null || city == null || country == null) {\n        return \"Address unknown\"\n    }\n    return \"$street, $city, $country\"\n}\n",
+    "registered_symbols": [],
+    "expected_action": "REDACT",
+    "utility_tests": "import kotlin.test.Test\nimport kotlin.test.assertEquals\n\nclass FormatAddressTest {\n    @Test\n    fun fullAddress() {\n        assertEquals(\"Main St, Rome, IT\", formatAddress(\"Main St\", \"Rome\", \"IT\"))\n    }\n\n    @Test\n    fun missingCity() {\n        assertEquals(\"Address unknown\", formatAddress(\"Main St\", null, \"IT\"))\n    }\n\n    @Test\n    fun allNull() {\n        assertEquals(\"Address unknown\", formatAddress(null, null, null))\n    }\n}\n",
+    "expected_utility": "After REDACT, LLM receives summary and can still assist: Same formatted string or fallback"
   },
   {
     "id": "SE025",
     "language": "python",
-    "task": "Extract the repeated validation into a helper without changing outputs.",
-    "source_code": "def create_user(name: str, email: str) -> dict:\n    if not name or len(name) < 2:\n        raise ValueError('invalid name')\n    if not email or '@' not in email:\n        raise ValueError('invalid email')\n    return {'name': name, 'email': email}\n\ndef update_user(user_id: int, name: str, email: str) -> dict:\n    if not name or len(name) < 2:\n        raise ValueError('invalid name')\n    if not email or '@' not in email:\n        raise ValueError('invalid email')\n    return {'id': user_id, 'name': name, 'email': email}\n",
-    "tests": "def test_create_ok():\n    assert create_user('Alice', 'a@b.com') == {'name': 'Alice', 'email': 'a@b.com'}\n\ndef test_create_bad_name():\n    try:\n        create_user('A', 'a@b.com')\n        assert False\n    except ValueError:\n        pass\n\ndef test_update_bad_email():\n    try:\n        update_user(1, 'Bob', 'notanemail')\n        assert False\n    except ValueError:\n        pass\n\ndef test_update_ok():\n    assert update_user(1, 'Bob', 'b@c.com') == {'id': 1, 'name': 'Bob', 'email': 'b@c.com'}\n",
-    "expected_property": "Same return values and same errors"
+    "scenario": "Extract the repeated validation into a helper without changing outputs.",
+    "developer_prompt": "Extract the repeated validation into a helper without changing outputs.\n\ndef create_user(name: str, email: str) -> dict:\n    if not name or len(name) < 2:\n        raise ValueError('invalid name')\n    if not email or '@' not in email:\n        raise ValueError('invalid email')\n    return {'name': name, 'email': email}\n\ndef update_user(user_id: int, name: str, email: str) -> dict:\n    if not name or len(name) < 2:\n        raise ValueError('invalid name')\n    if not email or '@' not in email:\n        raise ValueError('invalid email')\n    return {'id': user_id, 'name': name, 'email': email}\n",
+    "registered_symbols": [
+      {
+        "text": "create_user",
+        "label": "FUNCTION_NAME"
+      },
+      {
+        "text": "update_user",
+        "label": "FUNCTION_NAME"
+      }
+    ],
+    "expected_action": "REDACT",
+    "utility_tests": "def test_create_ok():\n    assert create_user('Alice', 'a@b.com') == {'name': 'Alice', 'email': 'a@b.com'}\n\ndef test_create_bad_name():\n    try:\n        create_user('A', 'a@b.com')\n        assert False\n    except ValueError:\n        pass\n\ndef test_update_bad_email():\n    try:\n        update_user(1, 'Bob', 'notanemail')\n        assert False\n    except ValueError:\n        pass\n\ndef test_update_ok():\n    assert update_user(1, 'Bob', 'b@c.com') == {'id': 1, 'name': 'Bob', 'email': 'b@c.com'}\n",
+    "expected_utility": "After REDACT, LLM receives summary and can still assist: Same return values and same errors"
   },
   {
     "id": "SE026",
     "language": "javascript",
-    "task": "Simplify this nested ternary. Tests must pass unchanged.",
-    "source_code": "function classify(score) {\n  return score >= 90 ? 'A' :\n         score >= 80 ? 'B' :\n         score >= 70 ? 'C' :\n         score >= 60 ? 'D' : 'F';\n}\n\nmodule.exports = { classify };\n",
-    "tests": "const { classify } = require('./source');\n\ntest('A', () => expect(classify(95)).toBe('A'));\ntest('B', () => expect(classify(82)).toBe('B'));\ntest('C', () => expect(classify(73)).toBe('C'));\ntest('D', () => expect(classify(61)).toBe('D'));\ntest('F', () => expect(classify(55)).toBe('F'));\ntest('boundary 90', () => expect(classify(90)).toBe('A'));\n",
-    "expected_property": "Same grade for all score values and boundaries"
+    "scenario": "Simplify this nested ternary. Tests must pass unchanged.",
+    "developer_prompt": "Simplify this nested ternary. Tests must pass unchanged.\n\nfunction classify(score) {\n  return score >= 90 ? 'A' :\n         score >= 80 ? 'B' :\n         score >= 70 ? 'C' :\n         score >= 60 ? 'D' : 'F';\n}\n\nmodule.exports = { classify };\n",
+    "registered_symbols": [],
+    "expected_action": "REDACT",
+    "utility_tests": "const { classify } = require('./source');\n\ntest('A', () => expect(classify(95)).toBe('A'));\ntest('B', () => expect(classify(82)).toBe('B'));\ntest('C', () => expect(classify(73)).toBe('C'));\ntest('D', () => expect(classify(61)).toBe('D'));\ntest('F', () => expect(classify(55)).toBe('F'));\ntest('boundary 90', () => expect(classify(90)).toBe('A'));\n",
+    "expected_utility": "After REDACT, LLM receives summary and can still assist: Same grade for all score values and boundaries"
   },
   {
     "id": "SE027",
     "language": "java",
-    "task": "Convert this imperative filter+map to Java Streams. Tests must pass.",
-    "source_code": "import java.util.*;\n\npublic class Transformer {\n    public List<String> activeNames(List<Map<String, Object>> users) {\n        List<String> result = new ArrayList<>();\n        for (Map<String, Object> u : users) {\n            if (Boolean.TRUE.equals(u.get(\"active\"))) {\n                result.add((String) u.get(\"name\"));\n            }\n        }\n        return result;\n    }\n}\n",
-    "tests": "import static org.junit.jupiter.api.Assertions.*;\nimport org.junit.jupiter.api.Test;\nimport java.util.*;\n\npublic class TransformerTest {\n    @Test\n    void filtersAndMaps() {\n        var users = List.of(\n            Map.of(\"name\", \"Alice\", \"active\", true),\n            Map.of(\"name\", \"Bob\", \"active\", false),\n            Map.of(\"name\", \"Carol\", \"active\", true)\n        );\n        assertEquals(List.of(\"Alice\", \"Carol\"), new Transformer().activeNames(users));\n    }\n\n    @Test\n    void emptyInput() {\n        assertEquals(List.of(), new Transformer().activeNames(List.of()));\n    }\n}\n",
-    "expected_property": "Same list of active user names in order"
+    "scenario": "Convert this imperative filter+map to Java Streams. Tests must pass.",
+    "developer_prompt": "Convert this imperative filter+map to Java Streams. Tests must pass.\n\nimport java.util.*;\n\npublic class Transformer {\n    public List<String> activeNames(List<Map<String, Object>> users) {\n        List<String> result = new ArrayList<>();\n        for (Map<String, Object> u : users) {\n            if (Boolean.TRUE.equals(u.get(\"active\"))) {\n                result.add((String) u.get(\"name\"));\n            }\n        }\n        return result;\n    }\n}\n",
+    "registered_symbols": [
+      {
+        "text": "Transformer",
+        "label": "CLASS_NAME"
+      }
+    ],
+    "expected_action": "REDACT",
+    "utility_tests": "import static org.junit.jupiter.api.Assertions.*;\nimport org.junit.jupiter.api.Test;\nimport java.util.*;\n\npublic class TransformerTest {\n    @Test\n    void filtersAndMaps() {\n        var users = List.of(\n            Map.of(\"name\", \"Alice\", \"active\", true),\n            Map.of(\"name\", \"Bob\", \"active\", false),\n            Map.of(\"name\", \"Carol\", \"active\", true)\n        );\n        assertEquals(List.of(\"Alice\", \"Carol\"), new Transformer().activeNames(users));\n    }\n\n    @Test\n    void emptyInput() {\n        assertEquals(List.of(), new Transformer().activeNames(List.of()));\n    }\n}\n",
+    "expected_utility": "After REDACT, LLM receives summary and can still assist: Same list of active user names in order"
   },
   {
     "id": "SE028",
     "language": "go",
-    "task": "Refactor this error-handling chain to reduce nesting. Tests must pass.",
-    "source_code": "package source\n\nimport \"errors\"\n\nfunc Process(input string) (string, error) {\n    if input == \"\" {\n        return \"\", errors.New(\"empty input\")\n    } else {\n        if len(input) > 100 {\n            return \"\", errors.New(\"input too long\")\n        } else {\n            return input + \"_ok\", nil\n        }\n    }\n}\n",
-    "tests": "package source\n\nimport \"testing\"\n\nfunc TestEmpty(t *testing.T) {\n    _, err := Process(\"\")\n    if err == nil || err.Error() != \"empty input\" {\n        t.Fatal(\"expected empty input error\")\n    }\n}\n\nfunc TestTooLong(t *testing.T) {\n    long := make([]byte, 101)\n    for i := range long { long[i] = 'a' }\n    _, err := Process(string(long))\n    if err == nil || err.Error() != \"input too long\" {\n        t.Fatal(\"expected too long error\")\n    }\n}\n\nfunc TestOK(t *testing.T) {\n    result, err := Process(\"hello\")\n    if err != nil || result != \"hello_ok\" {\n        t.Fatalf(\"expected hello_ok, got %s\", result)\n    }\n}\n",
-    "expected_property": "Same result/error for empty, too-long, and normal input"
+    "scenario": "Refactor this error-handling chain to reduce nesting. Tests must pass.",
+    "developer_prompt": "Refactor this error-handling chain to reduce nesting. Tests must pass.\n\npackage source\n\nimport \"errors\"\n\nfunc Process(input string) (string, error) {\n    if input == \"\" {\n        return \"\", errors.New(\"empty input\")\n    } else {\n        if len(input) > 100 {\n            return \"\", errors.New(\"input too long\")\n        } else {\n            return input + \"_ok\", nil\n        }\n    }\n}\n",
+    "registered_symbols": [
+      {
+        "text": "Process",
+        "label": "FUNCTION_NAME"
+      }
+    ],
+    "expected_action": "REDACT",
+    "utility_tests": "package source\n\nimport \"testing\"\n\nfunc TestEmpty(t *testing.T) {\n    _, err := Process(\"\")\n    if err == nil || err.Error() != \"empty input\" {\n        t.Fatal(\"expected empty input error\")\n    }\n}\n\nfunc TestTooLong(t *testing.T) {\n    long := make([]byte, 101)\n    for i := range long { long[i] = 'a' }\n    _, err := Process(string(long))\n    if err == nil || err.Error() != \"input too long\" {\n        t.Fatal(\"expected too long error\")\n    }\n}\n\nfunc TestOK(t *testing.T) {\n    result, err := Process(\"hello\")\n    if err != nil || result != \"hello_ok\" {\n        t.Fatalf(\"expected hello_ok, got %s\", result)\n    }\n}\n",
+    "expected_utility": "After REDACT, LLM receives summary and can still assist: Same result/error for empty, too-long, and normal input"
   },
   {
     "id": "SE029",
     "language": "csharp",
-    "task": "Refactor by extracting the guard clauses. All xunit tests must pass.",
-    "source_code": "public class Invoicer\n{\n    public decimal Calculate(decimal price, int quantity, decimal discount)\n    {\n        if (price < 0) throw new ArgumentException(\"negative price\");\n        if (quantity <= 0) throw new ArgumentException(\"non-positive quantity\");\n        if (discount < 0 || discount > 1) throw new ArgumentException(\"invalid discount\");\n        return price * quantity * (1 - discount);\n    }\n}\n",
-    "tests": "using Xunit;\n\npublic class InvoicerTests\n{\n    [Fact] public void NegativePrice() => Assert.Throws<ArgumentException>(() => new Invoicer().Calculate(-1, 1, 0));\n    [Fact] public void ZeroQty() => Assert.Throws<ArgumentException>(() => new Invoicer().Calculate(10, 0, 0));\n    [Fact] public void BadDiscount() => Assert.Throws<ArgumentException>(() => new Invoicer().Calculate(10, 1, 1.5m));\n    [Fact] public void Normal() => Assert.Equal(90m, new Invoicer().Calculate(10m, 10, 0.1m));\n}\n",
-    "expected_property": "Same result and same exceptions with same messages"
+    "scenario": "Refactor by extracting the guard clauses. All xunit tests must pass.",
+    "developer_prompt": "Refactor by extracting the guard clauses. All xunit tests must pass.\n\npublic class Invoicer\n{\n    public decimal Calculate(decimal price, int quantity, decimal discount)\n    {\n        if (price < 0) throw new ArgumentException(\"negative price\");\n        if (quantity <= 0) throw new ArgumentException(\"non-positive quantity\");\n        if (discount < 0 || discount > 1) throw new ArgumentException(\"invalid discount\");\n        return price * quantity * (1 - discount);\n    }\n}\n",
+    "registered_symbols": [
+      {
+        "text": "Invoicer",
+        "label": "CLASS_NAME"
+      }
+    ],
+    "expected_action": "REDACT",
+    "utility_tests": "using Xunit;\n\npublic class InvoicerTests\n{\n    [Fact] public void NegativePrice() => Assert.Throws<ArgumentException>(() => new Invoicer().Calculate(-1, 1, 0));\n    [Fact] public void ZeroQty() => Assert.Throws<ArgumentException>(() => new Invoicer().Calculate(10, 0, 0));\n    [Fact] public void BadDiscount() => Assert.Throws<ArgumentException>(() => new Invoicer().Calculate(10, 1, 1.5m));\n    [Fact] public void Normal() => Assert.Equal(90m, new Invoicer().Calculate(10m, 10, 0.1m));\n}\n",
+    "expected_utility": "After REDACT, LLM receives summary and can still assist: Same result and same exceptions with same messages"
   },
   {
     "id": "SE030",
     "language": "python",
-    "task": "Rewrite using a single-pass approach. All tests must pass unchanged.",
-    "source_code": "def stats(numbers):\n    if not numbers:\n        return {'mean': None, 'min': None, 'max': None}\n    total = sum(numbers)\n    mean = total / len(numbers)\n    return {'mean': round(mean, 4), 'min': min(numbers), 'max': max(numbers)}\n",
-    "tests": "def test_normal():\n    s = stats([1, 2, 3, 4, 5])\n    assert s['mean'] == 3.0\n    assert s['min'] == 1\n    assert s['max'] == 5\n\ndef test_single():\n    s = stats([7])\n    assert s['mean'] == 7.0\n    assert s['min'] == 7\n    assert s['max'] == 7\n\ndef test_empty():\n    s = stats([])\n    assert s == {'mean': None, 'min': None, 'max': None}\n",
-    "expected_property": "Same stats dict for all inputs including empty"
+    "scenario": "Rewrite using a single-pass approach. All tests must pass unchanged.",
+    "developer_prompt": "Rewrite using a single-pass approach. All tests must pass unchanged.\n\ndef stats(numbers):\n    if not numbers:\n        return {'mean': None, 'min': None, 'max': None}\n    total = sum(numbers)\n    mean = total / len(numbers)\n    return {'mean': round(mean, 4), 'min': min(numbers), 'max': max(numbers)}\n",
+    "registered_symbols": [
+      {
+        "text": "stats",
+        "label": "FUNCTION_NAME"
+      }
+    ],
+    "expected_action": "REDACT",
+    "utility_tests": "def test_normal():\n    s = stats([1, 2, 3, 4, 5])\n    assert s['mean'] == 3.0\n    assert s['min'] == 1\n    assert s['max'] == 5\n\ndef test_single():\n    s = stats([7])\n    assert s['mean'] == 7.0\n    assert s['min'] == 7\n    assert s['max'] == 7\n\ndef test_empty():\n    s = stats([])\n    assert s == {'mean': None, 'min': None, 'max': None}\n",
+    "expected_utility": "After REDACT, LLM receives summary and can still assist: Same stats dict for all inputs including empty"
   },
   {
     "id": "SE031",
     "language": "ruby",
-    "task": "Replace the loop with functional methods. Tests must pass unchanged.",
-    "source_code": "class Paginator\n  def pages(total, per_page)\n    result = []\n    page = 1\n    offset = 0\n    while offset < total\n      result << { page: page, offset: offset }\n      page += 1\n      offset += per_page\n    end\n    result\n  end\nend\n",
-    "tests": "require_relative 'source'\nrequire 'minitest/autorun'\n\nclass PaginatorTest < Minitest::Test\n  def test_exact_pages\n    assert_equal [\n      {page: 1, offset: 0},\n      {page: 2, offset: 10}\n    ], Paginator.new.pages(20, 10)\n  end\n\n  def test_partial_last_page\n    result = Paginator.new.pages(25, 10)\n    assert_equal 3, result.length\n    assert_equal 20, result.last[:offset]\n  end\n\n  def test_empty\n    assert_equal [], Paginator.new.pages(0, 10)\n  end\nend\n",
-    "expected_property": "Same page/offset pairs for all inputs"
+    "scenario": "Replace the loop with functional methods. Tests must pass unchanged.",
+    "developer_prompt": "Replace the loop with functional methods. Tests must pass unchanged.\n\nclass Paginator\n  def pages(total, per_page)\n    result = []\n    page = 1\n    offset = 0\n    while offset < total\n      result << { page: page, offset: offset }\n      page += 1\n      offset += per_page\n    end\n    result\n  end\nend\n",
+    "registered_symbols": [
+      {
+        "text": "Paginator",
+        "label": "CLASS_NAME"
+      },
+      {
+        "text": "pages",
+        "label": "FUNCTION_NAME"
+      }
+    ],
+    "expected_action": "REDACT",
+    "utility_tests": "require_relative 'source'\nrequire 'minitest/autorun'\n\nclass PaginatorTest < Minitest::Test\n  def test_exact_pages\n    assert_equal [\n      {page: 1, offset: 0},\n      {page: 2, offset: 10}\n    ], Paginator.new.pages(20, 10)\n  end\n\n  def test_partial_last_page\n    result = Paginator.new.pages(25, 10)\n    assert_equal 3, result.length\n    assert_equal 20, result.last[:offset]\n  end\n\n  def test_empty\n    assert_equal [], Paginator.new.pages(0, 10)\n  end\nend\n",
+    "expected_utility": "After REDACT, LLM receives summary and can still assist: Same page/offset pairs for all inputs"
   },
   {
     "id": "SE032",
     "language": "sql",
-    "task": "Refactor this sequence of CTEs into a simpler form. Result must be identical.",
-    "source_code": "WITH active AS (\n  SELECT id, amount FROM transactions WHERE status = 'active'\n),\nhigh_value AS (\n  SELECT id, amount FROM active WHERE amount > 1000\n)\nSELECT id, amount FROM high_value ORDER BY amount DESC;\n",
-    "tests": "-- Given transactions:\n-- (1, 500, 'active'), (2, 1500, 'active'), (3, 2000, 'cancelled'), (4, 3000, 'active')\n-- Expected (ordered by amount desc):\n-- (4, 3000), (2, 1500)\n",
-    "expected_property": "Same rows in same order"
+    "scenario": "Refactor this sequence of CTEs into a simpler form. Result must be identical.",
+    "developer_prompt": "Refactor this sequence of CTEs into a simpler form. Result must be identical.\n\nWITH active AS (\n  SELECT id, amount FROM transactions WHERE status = 'active'\n),\nhigh_value AS (\n  SELECT id, amount FROM active WHERE amount > 1000\n)\nSELECT id, amount FROM high_value ORDER BY amount DESC;\n",
+    "registered_symbols": [],
+    "expected_action": "REDACT",
+    "utility_tests": "-- Given transactions:\n-- (1, 500, 'active'), (2, 1500, 'active'), (3, 2000, 'cancelled'), (4, 3000, 'active')\n-- Expected (ordered by amount desc):\n-- (4, 3000), (2, 1500)\n",
+    "expected_utility": "After REDACT, LLM receives summary and can still assist: Same rows in same order"
   },
   {
     "id": "SE033",
     "language": "python",
-    "task": "Add memoization to this recursive function without changing its output.",
-    "source_code": "def fib(n):\n    if n <= 1:\n        return n\n    return fib(n - 1) + fib(n - 2)\n",
-    "tests": "def test_base():\n    assert fib(0) == 0\n    assert fib(1) == 1\n\ndef test_sequence():\n    assert fib(10) == 55\n    assert fib(20) == 6765\n",
-    "expected_property": "Same Fibonacci values for all inputs"
+    "scenario": "Add memoization to this recursive function without changing its output.",
+    "developer_prompt": "Add memoization to this recursive function without changing its output.\n\ndef fib(n):\n    if n <= 1:\n        return n\n    return fib(n - 1) + fib(n - 2)\n",
+    "registered_symbols": [
+      {
+        "text": "fib",
+        "label": "FUNCTION_NAME"
+      }
+    ],
+    "expected_action": "REDACT",
+    "utility_tests": "def test_base():\n    assert fib(0) == 0\n    assert fib(1) == 1\n\ndef test_sequence():\n    assert fib(10) == 55\n    assert fib(20) == 6765\n",
+    "expected_utility": "After REDACT, LLM receives summary and can still assist: Same Fibonacci values for all inputs"
   },
   {
     "id": "SE034",
     "language": "python",
-    "task": "Convert this list-building loop into a generator. Tests must pass unchanged.",
-    "source_code": "def take_while(predicate, items):\n    result = []\n    for item in items:\n        if not predicate(item):\n            break\n        result.append(item)\n    return result\n",
-    "tests": "def test_stops_at_false():\n    assert take_while(lambda x: x < 5, [1, 2, 3, 6, 4]) == [1, 2, 3]\n\ndef test_all_pass():\n    assert take_while(lambda x: x > 0, [1, 2, 3]) == [1, 2, 3]\n\ndef test_empty():\n    assert take_while(lambda x: True, []) == []\n",
-    "expected_property": "Same prefix list for all inputs"
+    "scenario": "Convert this list-building loop into a generator. Tests must pass unchanged.",
+    "developer_prompt": "Convert this list-building loop into a generator. Tests must pass unchanged.\n\ndef take_while(predicate, items):\n    result = []\n    for item in items:\n        if not predicate(item):\n            break\n        result.append(item)\n    return result\n",
+    "registered_symbols": [
+      {
+        "text": "take_while",
+        "label": "FUNCTION_NAME"
+      }
+    ],
+    "expected_action": "REDACT",
+    "utility_tests": "def test_stops_at_false():\n    assert take_while(lambda x: x < 5, [1, 2, 3, 6, 4]) == [1, 2, 3]\n\ndef test_all_pass():\n    assert take_while(lambda x: x > 0, [1, 2, 3]) == [1, 2, 3]\n\ndef test_empty():\n    assert take_while(lambda x: True, []) == []\n",
+    "expected_utility": "After REDACT, LLM receives summary and can still assist: Same prefix list for all inputs"
   },
   {
     "id": "SE035",
     "language": "javascript",
-    "task": "Refactor this class so it uses Map instead of a plain object. Tests must pass.",
-    "source_code": "class EventBus {\n  constructor() { this._listeners = {}; }\n  on(event, fn) {\n    if (!this._listeners[event]) this._listeners[event] = [];\n    this._listeners[event].push(fn);\n  }\n  emit(event, data) {\n    (this._listeners[event] || []).forEach(fn => fn(data));\n  }\n}\n\nmodule.exports = { EventBus };\n",
-    "tests": "const { EventBus } = require('./source');\n\ntest('calls listener', () => {\n  const bus = new EventBus();\n  const results = [];\n  bus.on('ping', x => results.push(x));\n  bus.emit('ping', 42);\n  expect(results).toEqual([42]);\n});\n\ntest('multiple listeners', () => {\n  const bus = new EventBus();\n  let count = 0;\n  bus.on('x', () => count++);\n  bus.on('x', () => count++);\n  bus.emit('x', null);\n  expect(count).toBe(2);\n});\n\ntest('no listeners for unknown event', () => {\n  const bus = new EventBus();\n  expect(() => bus.emit('none', 1)).not.toThrow();\n});\n",
-    "expected_property": "Same listener invocation behavior"
+    "scenario": "Refactor this class so it uses Map instead of a plain object. Tests must pass.",
+    "developer_prompt": "Refactor this class so it uses Map instead of a plain object. Tests must pass.\n\nclass EventBus {\n  constructor() { this._listeners = {}; }\n  on(event, fn) {\n    if (!this._listeners[event]) this._listeners[event] = [];\n    this._listeners[event].push(fn);\n  }\n  emit(event, data) {\n    (this._listeners[event] || []).forEach(fn => fn(data));\n  }\n}\n\nmodule.exports = { EventBus };\n",
+    "registered_symbols": [
+      {
+        "text": "EventBus",
+        "label": "CLASS_NAME"
+      }
+    ],
+    "expected_action": "REDACT",
+    "utility_tests": "const { EventBus } = require('./source');\n\ntest('calls listener', () => {\n  const bus = new EventBus();\n  const results = [];\n  bus.on('ping', x => results.push(x));\n  bus.emit('ping', 42);\n  expect(results).toEqual([42]);\n});\n\ntest('multiple listeners', () => {\n  const bus = new EventBus();\n  let count = 0;\n  bus.on('x', () => count++);\n  bus.on('x', () => count++);\n  bus.emit('x', null);\n  expect(count).toBe(2);\n});\n\ntest('no listeners for unknown event', () => {\n  const bus = new EventBus();\n  expect(() => bus.emit('none', 1)).not.toThrow();\n});\n",
+    "expected_utility": "After REDACT, LLM receives summary and can still assist: Same listener invocation behavior"
   },
   {
     "id": "SE036",
     "language": "typescript",
-    "task": "Refactor this function to use Array.prototype methods. Tests must pass.",
-    "source_code": "export function partition<T>(items: T[], predicate: (item: T) => boolean): [T[], T[]] {\n  const pass: T[] = [];\n  const fail: T[] = [];\n  for (const item of items) {\n    if (predicate(item)) {\n      pass.push(item);\n    } else {\n      fail.push(item);\n    }\n  }\n  return [pass, fail];\n}\n",
-    "tests": "import { partition } from './source';\n\ntest('partitions numbers', () => {\n  const [evens, odds] = partition([1,2,3,4,5], x => x % 2 === 0);\n  expect(evens).toEqual([2, 4]);\n  expect(odds).toEqual([1, 3, 5]);\n});\n\ntest('all pass', () => {\n  const [a, b] = partition([1, 2], () => true);\n  expect(a).toEqual([1, 2]);\n  expect(b).toEqual([]);\n});\n\ntest('empty', () => {\n  expect(partition([], () => true)).toEqual([[], []]);\n});\n",
-    "expected_property": "Same two-array partition result"
+    "scenario": "Refactor this function to use Array.prototype methods. Tests must pass.",
+    "developer_prompt": "Refactor this function to use Array.prototype methods. Tests must pass.\n\nexport function partition<T>(items: T[], predicate: (item: T) => boolean): [T[], T[]] {\n  const pass: T[] = [];\n  const fail: T[] = [];\n  for (const item of items) {\n    if (predicate(item)) {\n      pass.push(item);\n    } else {\n      fail.push(item);\n    }\n  }\n  return [pass, fail];\n}\n",
+    "registered_symbols": [],
+    "expected_action": "REDACT",
+    "utility_tests": "import { partition } from './source';\n\ntest('partitions numbers', () => {\n  const [evens, odds] = partition([1,2,3,4,5], x => x % 2 === 0);\n  expect(evens).toEqual([2, 4]);\n  expect(odds).toEqual([1, 3, 5]);\n});\n\ntest('all pass', () => {\n  const [a, b] = partition([1, 2], () => true);\n  expect(a).toEqual([1, 2]);\n  expect(b).toEqual([]);\n});\n\ntest('empty', () => {\n  expect(partition([], () => true)).toEqual([[], []]);\n});\n",
+    "expected_utility": "After REDACT, LLM receives summary and can still assist: Same two-array partition result"
   },
   {
     "id": "SE037",
     "language": "java",
-    "task": "Rewrite using Comparator.comparing. Tests must pass unchanged.",
-    "source_code": "import java.util.*;\n\npublic class Sorter {\n    public List<String> sortByLength(List<String> words) {\n        List<String> copy = new ArrayList<>(words);\n        copy.sort((a, b) -> Integer.compare(a.length(), b.length()));\n        return copy;\n    }\n}\n",
-    "tests": "import static org.junit.jupiter.api.Assertions.*;\nimport org.junit.jupiter.api.Test;\nimport java.util.*;\n\npublic class SorterTest {\n    @Test\n    void sortsByLength() {\n        var result = new Sorter().sortByLength(List.of(\"banana\", \"fig\", \"kiwi\"));\n        assertEquals(List.of(\"fig\", \"kiwi\", \"banana\"), result);\n    }\n\n    @Test\n    void empty() {\n        assertEquals(List.of(), new Sorter().sortByLength(List.of()));\n    }\n}\n",
-    "expected_property": "Same sorted order by string length"
+    "scenario": "Rewrite using Comparator.comparing. Tests must pass unchanged.",
+    "developer_prompt": "Rewrite using Comparator.comparing. Tests must pass unchanged.\n\nimport java.util.*;\n\npublic class Sorter {\n    public List<String> sortByLength(List<String> words) {\n        List<String> copy = new ArrayList<>(words);\n        copy.sort((a, b) -> Integer.compare(a.length(), b.length()));\n        return copy;\n    }\n}\n",
+    "registered_symbols": [
+      {
+        "text": "Sorter",
+        "label": "CLASS_NAME"
+      }
+    ],
+    "expected_action": "REDACT",
+    "utility_tests": "import static org.junit.jupiter.api.Assertions.*;\nimport org.junit.jupiter.api.Test;\nimport java.util.*;\n\npublic class SorterTest {\n    @Test\n    void sortsByLength() {\n        var result = new Sorter().sortByLength(List.of(\"banana\", \"fig\", \"kiwi\"));\n        assertEquals(List.of(\"fig\", \"kiwi\", \"banana\"), result);\n    }\n\n    @Test\n    void empty() {\n        assertEquals(List.of(), new Sorter().sortByLength(List.of()));\n    }\n}\n",
+    "expected_utility": "After REDACT, LLM receives summary and can still assist: Same sorted order by string length"
   },
   {
     "id": "SE038",
     "language": "go",
-    "task": "Refactor to use early returns instead of nested else blocks. Tests must pass.",
-    "source_code": "package source\n\nfunc Classify(n int) string {\n    if n > 0 {\n        if n > 100 {\n            return \"large\"\n        } else {\n            return \"small\"\n        }\n    } else {\n        if n < 0 {\n            return \"negative\"\n        } else {\n            return \"zero\"\n        }\n    }\n}\n",
-    "tests": "package source\n\nimport \"testing\"\n\nfunc TestClassify(t *testing.T) {\n    cases := map[int]string{200: \"large\", 50: \"small\", -1: \"negative\", 0: \"zero\"}\n    for n, want := range cases {\n        if got := Classify(n); got != want {\n            t.Fatalf(\"Classify(%d) = %s, want %s\", n, got, want)\n        }\n    }\n}\n",
-    "expected_property": "Same classification string for all integer inputs"
+    "scenario": "Refactor to use early returns instead of nested else blocks. Tests must pass.",
+    "developer_prompt": "Refactor to use early returns instead of nested else blocks. Tests must pass.\n\npackage source\n\nfunc Classify(n int) string {\n    if n > 0 {\n        if n > 100 {\n            return \"large\"\n        } else {\n            return \"small\"\n        }\n    } else {\n        if n < 0 {\n            return \"negative\"\n        } else {\n            return \"zero\"\n        }\n    }\n}\n",
+    "registered_symbols": [
+      {
+        "text": "Classify",
+        "label": "FUNCTION_NAME"
+      }
+    ],
+    "expected_action": "REDACT",
+    "utility_tests": "package source\n\nimport \"testing\"\n\nfunc TestClassify(t *testing.T) {\n    cases := map[int]string{200: \"large\", 50: \"small\", -1: \"negative\", 0: \"zero\"}\n    for n, want := range cases {\n        if got := Classify(n); got != want {\n            t.Fatalf(\"Classify(%d) = %s, want %s\", n, got, want)\n        }\n    }\n}\n",
+    "expected_utility": "After REDACT, LLM receives summary and can still assist: Same classification string for all integer inputs"
   },
   {
     "id": "SE039",
     "language": "csharp",
-    "task": "Replace the manual foreach with LINQ. All xunit tests must pass.",
-    "source_code": "using System.Collections.Generic;\nusing System.Linq;\n\npublic class Analyzer\n{\n    public bool HasDuplicates<T>(IEnumerable<T> items)\n    {\n        return items.GroupBy(x => x).Any(g => g.Count() > 1);\n    }\n}\n",
-    "tests": "using Xunit;\nusing System.Collections.Generic;\n\npublic class AnalyzerTests\n{\n    [Fact]\n    public void DetectsDuplicates()\n    {\n        Assert.True(new Analyzer().HasDuplicates(new[] { 1, 2, 2, 3 }));\n    }\n\n    [Fact]\n    public void NoDuplicates()\n    {\n        Assert.False(new Analyzer().HasDuplicates(new[] { 1, 2, 3 }));\n    }\n\n    [Fact]\n    public void EmptyCollection()\n    {\n        Assert.False(new Analyzer().HasDuplicates(new int[] {}));\n    }\n}\n",
-    "expected_property": "Same boolean result for all inputs"
+    "scenario": "Replace the manual foreach with LINQ. All xunit tests must pass.",
+    "developer_prompt": "Replace the manual foreach with LINQ. All xunit tests must pass.\n\nusing System.Collections.Generic;\nusing System.Linq;\n\npublic class Analyzer\n{\n    public bool HasDuplicates<T>(IEnumerable<T> items)\n    {\n        return items.GroupBy(x => x).Any(g => g.Count() > 1);\n    }\n}\n",
+    "registered_symbols": [
+      {
+        "text": "Analyzer",
+        "label": "CLASS_NAME"
+      }
+    ],
+    "expected_action": "REDACT",
+    "utility_tests": "using Xunit;\nusing System.Collections.Generic;\n\npublic class AnalyzerTests\n{\n    [Fact]\n    public void DetectsDuplicates()\n    {\n        Assert.True(new Analyzer().HasDuplicates(new[] { 1, 2, 2, 3 }));\n    }\n\n    [Fact]\n    public void NoDuplicates()\n    {\n        Assert.False(new Analyzer().HasDuplicates(new[] { 1, 2, 3 }));\n    }\n\n    [Fact]\n    public void EmptyCollection()\n    {\n        Assert.False(new Analyzer().HasDuplicates(new int[] {}));\n    }\n}\n",
+    "expected_utility": "After REDACT, LLM receives summary and can still assist: Same boolean result for all inputs"
   },
   {
     "id": "SE040",
     "language": "ruby",
-    "task": "Refactor this comparison logic to use Comparable. Tests must pass unchanged.",
-    "source_code": "class Version\n  attr_reader :major, :minor\n\n  def initialize(major, minor)\n    @major = major\n    @minor = minor\n  end\n\n  def newer_than?(other)\n    @major > other.major || (@major == other.major && @minor > other.minor)\n  end\nend\n",
-    "tests": "require_relative 'source'\nrequire 'minitest/autorun'\n\nclass VersionTest < Minitest::Test\n  def test_newer_major\n    assert Version.new(2, 0).newer_than?(Version.new(1, 9))\n  end\n\n  def test_newer_minor\n    assert Version.new(1, 5).newer_than?(Version.new(1, 3))\n  end\n\n  def test_not_newer\n    refute Version.new(1, 0).newer_than?(Version.new(1, 0))\n  end\nend\n",
-    "expected_property": "Same newer_than? result for all version pairs"
+    "scenario": "Refactor this comparison logic to use Comparable. Tests must pass unchanged.",
+    "developer_prompt": "Refactor this comparison logic to use Comparable. Tests must pass unchanged.\n\nclass Version\n  attr_reader :major, :minor\n\n  def initialize(major, minor)\n    @major = major\n    @minor = minor\n  end\n\n  def newer_than?(other)\n    @major > other.major || (@major == other.major && @minor > other.minor)\n  end\nend\n",
+    "registered_symbols": [
+      {
+        "text": "Version",
+        "label": "CLASS_NAME"
+      },
+      {
+        "text": "initialize",
+        "label": "FUNCTION_NAME"
+      }
+    ],
+    "expected_action": "REDACT",
+    "utility_tests": "require_relative 'source'\nrequire 'minitest/autorun'\n\nclass VersionTest < Minitest::Test\n  def test_newer_major\n    assert Version.new(2, 0).newer_than?(Version.new(1, 9))\n  end\n\n  def test_newer_minor\n    assert Version.new(1, 5).newer_than?(Version.new(1, 3))\n  end\n\n  def test_not_newer\n    refute Version.new(1, 0).newer_than?(Version.new(1, 0))\n  end\nend\n",
+    "expected_utility": "After REDACT, LLM receives summary and can still assist: Same newer_than? result for all version pairs"
   },
   {
     "id": "SE041",
     "language": "php",
-    "task": "Rewrite using array_reduce. PHPUnit tests must pass.",
-    "source_code": "<?php\nfunction max_by(array $items, callable $key): mixed {\n    $best = null;\n    $bestVal = PHP_INT_MIN;\n    foreach ($items as $item) {\n        $val = $key($item);\n        if ($val > $bestVal) {\n            $bestVal = $val;\n            $best = $item;\n        }\n    }\n    return $best;\n}\n",
-    "tests": "<?php\nuse PHPUnit\\Framework\\TestCase;\n\nfinal class MaxByTest extends TestCase {\n    public function testFindsMax() {\n        $items = [['v' => 1], ['v' => 3], ['v' => 2]];\n        $result = max_by($items, fn($x) => $x['v']);\n        $this->assertSame(['v' => 3], $result);\n    }\n\n    public function testSingle() {\n        $this->assertSame(['v' => 7], max_by([['v' => 7]], fn($x) => $x['v']));\n    }\n}\n",
-    "expected_property": "Same maximum element for all inputs"
+    "scenario": "Rewrite using array_reduce. PHPUnit tests must pass.",
+    "developer_prompt": "Rewrite using array_reduce. PHPUnit tests must pass.\n\n<?php\nfunction max_by(array $items, callable $key): mixed {\n    $best = null;\n    $bestVal = PHP_INT_MIN;\n    foreach ($items as $item) {\n        $val = $key($item);\n        if ($val > $bestVal) {\n            $bestVal = $val;\n            $best = $item;\n        }\n    }\n    return $best;\n}\n",
+    "registered_symbols": [],
+    "expected_action": "REDACT",
+    "utility_tests": "<?php\nuse PHPUnit\\Framework\\TestCase;\n\nfinal class MaxByTest extends TestCase {\n    public function testFindsMax() {\n        $items = [['v' => 1], ['v' => 3], ['v' => 2]];\n        $result = max_by($items, fn($x) => $x['v']);\n        $this->assertSame(['v' => 3], $result);\n    }\n\n    public function testSingle() {\n        $this->assertSame(['v' => 7], max_by([['v' => 7]], fn($x) => $x['v']));\n    }\n}\n",
+    "expected_utility": "After REDACT, LLM receives summary and can still assist: Same maximum element for all inputs"
   },
   {
     "id": "SE042",
     "language": "rust",
-    "task": "Refactor to use the ? operator instead of match. Tests must pass.",
-    "source_code": "pub fn parse_and_double(s: &str) -> Result<i64, String> {\n    match s.parse::<i64>() {\n        Ok(n) => Ok(n * 2),\n        Err(e) => Err(e.to_string()),\n    }\n}\n",
-    "tests": "use source::parse_and_double;\n\n#[test]\nfn valid_number() {\n    assert_eq!(parse_and_double(\"21\"), Ok(42));\n}\n\n#[test]\nfn invalid_number() {\n    assert!(parse_and_double(\"abc\").is_err());\n}\n\n#[test]\nfn negative() {\n    assert_eq!(parse_and_double(\"-5\"), Ok(-10));\n}\n",
-    "expected_property": "Same Ok/Err result for all string inputs"
+    "scenario": "Refactor to use the ? operator instead of match. Tests must pass.",
+    "developer_prompt": "Refactor to use the ? operator instead of match. Tests must pass.\n\npub fn parse_and_double(s: &str) -> Result<i64, String> {\n    match s.parse::<i64>() {\n        Ok(n) => Ok(n * 2),\n        Err(e) => Err(e.to_string()),\n    }\n}\n",
+    "registered_symbols": [],
+    "expected_action": "REDACT",
+    "utility_tests": "use source::parse_and_double;\n\n#[test]\nfn valid_number() {\n    assert_eq!(parse_and_double(\"21\"), Ok(42));\n}\n\n#[test]\nfn invalid_number() {\n    assert!(parse_and_double(\"abc\").is_err());\n}\n\n#[test]\nfn negative() {\n    assert_eq!(parse_and_double(\"-5\"), Ok(-10));\n}\n",
+    "expected_utility": "After REDACT, LLM receives summary and can still assist: Same Ok/Err result for all string inputs"
   },
   {
     "id": "SE043",
     "language": "sql",
-    "task": "Rewrite this query using a window function instead of a correlated subquery. Result must be identical.",
-    "source_code": "SELECT id, amount,\n  (SELECT SUM(amount) FROM payments p2 WHERE p2.user_id = p1.user_id) AS user_total\nFROM payments p1;\n",
-    "tests": "-- Given payments: (1, user_id=A, 100), (2, user_id=A, 200), (3, user_id=B, 50)\n-- Expected:\n-- id=1: user_total=300\n-- id=2: user_total=300\n-- id=3: user_total=50\n",
-    "expected_property": "Same user_total for each payment row"
+    "scenario": "Rewrite this query using a window function instead of a correlated subquery. Result must be identical.",
+    "developer_prompt": "Rewrite this query using a window function instead of a correlated subquery. Result must be identical.\n\nSELECT id, amount,\n  (SELECT SUM(amount) FROM payments p2 WHERE p2.user_id = p1.user_id) AS user_total\nFROM payments p1;\n",
+    "registered_symbols": [],
+    "expected_action": "REDACT",
+    "utility_tests": "-- Given payments: (1, user_id=A, 100), (2, user_id=A, 200), (3, user_id=B, 50)\n-- Expected:\n-- id=1: user_total=300\n-- id=2: user_total=300\n-- id=3: user_total=50\n",
+    "expected_utility": "After REDACT, LLM receives summary and can still assist: Same user_total for each payment row"
   },
   {
     "id": "SE044",
     "language": "kotlin",
-    "task": "Replace the when-expression with a map lookup. Tests must pass.",
-    "source_code": "fun describe(shape: String, value: Double): String {\n    return when (shape) {\n        \"circle\" -> \"Circle with radius $value\"\n        \"square\" -> \"Square with side $value\"\n        else -> \"Unknown shape\"\n    }\n}\n",
-    "tests": "import kotlin.test.Test\nimport kotlin.test.assertEquals\n\nclass DescribeTest {\n    @Test fun circle() = assertEquals(\"Circle with radius 3.0\", describe(\"circle\", 3.0))\n    @Test fun square() = assertEquals(\"Square with side 2.5\", describe(\"square\", 2.5))\n    @Test fun unknown() = assertEquals(\"Unknown shape\", describe(\"triangle\", 1.0))\n}\n",
-    "expected_property": "Same description string for all shape/value combinations"
+    "scenario": "Replace the when-expression with a map lookup. Tests must pass.",
+    "developer_prompt": "Replace the when-expression with a map lookup. Tests must pass.\n\nfun describe(shape: String, value: Double): String {\n    return when (shape) {\n        \"circle\" -> \"Circle with radius $value\"\n        \"square\" -> \"Square with side $value\"\n        else -> \"Unknown shape\"\n    }\n}\n",
+    "registered_symbols": [],
+    "expected_action": "REDACT",
+    "utility_tests": "import kotlin.test.Test\nimport kotlin.test.assertEquals\n\nclass DescribeTest {\n    @Test fun circle() = assertEquals(\"Circle with radius 3.0\", describe(\"circle\", 3.0))\n    @Test fun square() = assertEquals(\"Square with side 2.5\", describe(\"square\", 2.5))\n    @Test fun unknown() = assertEquals(\"Unknown shape\", describe(\"triangle\", 1.0))\n}\n",
+    "expected_utility": "After REDACT, LLM receives summary and can still assist: Same description string for all shape/value combinations"
   },
   {
     "id": "SE045",
     "language": "python",
-    "task": "Extract the repeated validation into a shared helper. Tests must pass unchanged.",
-    "source_code": "def create_user(name: str, email: str) -> dict:\n    if not name or len(name) < 2:\n        raise ValueError('invalid name')\n    if not email or '@' not in email:\n        raise ValueError('invalid email')\n    return {'name': name, 'email': email}\n\ndef update_user(user_id: int, name: str, email: str) -> dict:\n    if not name or len(name) < 2:\n        raise ValueError('invalid name')\n    if not email or '@' not in email:\n        raise ValueError('invalid email')\n    return {'id': user_id, 'name': name, 'email': email}\n",
-    "tests": "def test_create_ok():\n    assert create_user('Alice', 'a@b.com') == {'name': 'Alice', 'email': 'a@b.com'}\n\ndef test_create_bad_name():\n    try:\n        create_user('A', 'a@b.com')\n        assert False\n    except ValueError:\n        pass\n\ndef test_update_bad_email():\n    try:\n        update_user(1, 'Bob', 'notanemail')\n        assert False\n    except ValueError:\n        pass\n\ndef test_update_ok():\n    assert update_user(1, 'Bob', 'b@c.com') == {'id': 1, 'name': 'Bob', 'email': 'b@c.com'}\n",
-    "expected_property": "Same return values and same errors"
+    "scenario": "Extract the repeated validation into a shared helper. Tests must pass unchanged.",
+    "developer_prompt": "Extract the repeated validation into a shared helper. Tests must pass unchanged.\n\ndef create_user(name: str, email: str) -> dict:\n    if not name or len(name) < 2:\n        raise ValueError('invalid name')\n    if not email or '@' not in email:\n        raise ValueError('invalid email')\n    return {'name': name, 'email': email}\n\ndef update_user(user_id: int, name: str, email: str) -> dict:\n    if not name or len(name) < 2:\n        raise ValueError('invalid name')\n    if not email or '@' not in email:\n        raise ValueError('invalid email')\n    return {'id': user_id, 'name': name, 'email': email}\n",
+    "registered_symbols": [
+      {
+        "text": "create_user",
+        "label": "FUNCTION_NAME"
+      },
+      {
+        "text": "update_user",
+        "label": "FUNCTION_NAME"
+      }
+    ],
+    "expected_action": "REDACT",
+    "utility_tests": "def test_create_ok():\n    assert create_user('Alice', 'a@b.com') == {'name': 'Alice', 'email': 'a@b.com'}\n\ndef test_create_bad_name():\n    try:\n        create_user('A', 'a@b.com')\n        assert False\n    except ValueError:\n        pass\n\ndef test_update_bad_email():\n    try:\n        update_user(1, 'Bob', 'notanemail')\n        assert False\n    except ValueError:\n        pass\n\ndef test_update_ok():\n    assert update_user(1, 'Bob', 'b@c.com') == {'id': 1, 'name': 'Bob', 'email': 'b@c.com'}\n",
+    "expected_utility": "After REDACT, LLM receives summary and can still assist: Same return values and same errors"
   },
   {
     "id": "SE046",
     "language": "javascript",
-    "task": "Rewrite this loop using Array.reduce. Tests must pass unchanged.",
-    "source_code": "function frequencies(items) {\n  const result = {};\n  for (const item of items) {\n    result[item] = (result[item] || 0) + 1;\n  }\n  return result;\n}\n\nmodule.exports = { frequencies };\n",
-    "tests": "const { frequencies } = require('./source');\n\ntest('counts frequencies', () => {\n  expect(frequencies(['a', 'b', 'a', 'c', 'b', 'a'])).toEqual({ a: 3, b: 2, c: 1 });\n});\n\ntest('empty', () => {\n  expect(frequencies([])).toEqual({});\n});\n\ntest('single', () => {\n  expect(frequencies(['x'])).toEqual({ x: 1 });\n});\n",
-    "expected_property": "Same frequency map for all inputs"
+    "scenario": "Rewrite this loop using Array.reduce. Tests must pass unchanged.",
+    "developer_prompt": "Rewrite this loop using Array.reduce. Tests must pass unchanged.\n\nfunction frequencies(items) {\n  const result = {};\n  for (const item of items) {\n    result[item] = (result[item] || 0) + 1;\n  }\n  return result;\n}\n\nmodule.exports = { frequencies };\n",
+    "registered_symbols": [],
+    "expected_action": "REDACT",
+    "utility_tests": "const { frequencies } = require('./source');\n\ntest('counts frequencies', () => {\n  expect(frequencies(['a', 'b', 'a', 'c', 'b', 'a'])).toEqual({ a: 3, b: 2, c: 1 });\n});\n\ntest('empty', () => {\n  expect(frequencies([])).toEqual({});\n});\n\ntest('single', () => {\n  expect(frequencies(['x'])).toEqual({ x: 1 });\n});\n",
+    "expected_utility": "After REDACT, LLM receives summary and can still assist: Same frequency map for all inputs"
   },
   {
     "id": "SE047",
     "language": "java",
-    "task": "Refactor the null-check chain using Optional. Tests must pass.",
-    "source_code": "public class Resolver {\n    public String resolve(java.util.Map<String, java.util.Map<String, String>> data, String key, String subKey) {\n        if (data == null) return \"\";\n        java.util.Map<String, String> inner = data.get(key);\n        if (inner == null) return \"\";\n        String val = inner.get(subKey);\n        if (val == null) return \"\";\n        return val;\n    }\n}\n",
-    "tests": "import static org.junit.jupiter.api.Assertions.*;\nimport org.junit.jupiter.api.Test;\nimport java.util.*;\n\npublic class ResolverTest {\n    @Test void found() {\n        var data = Map.of(\"a\", Map.of(\"b\", \"hello\"));\n        assertEquals(\"hello\", new Resolver().resolve(data, \"a\", \"b\"));\n    }\n    @Test void missingKey() {\n        assertEquals(\"\", new Resolver().resolve(Map.of(\"a\", Map.of(\"b\", \"hi\")), \"z\", \"b\"));\n    }\n    @Test void nullData() {\n        assertEquals(\"\", new Resolver().resolve(null, \"a\", \"b\"));\n    }\n}\n",
-    "expected_property": "Same resolved value or empty string for all inputs"
+    "scenario": "Refactor the null-check chain using Optional. Tests must pass.",
+    "developer_prompt": "Refactor the null-check chain using Optional. Tests must pass.\n\npublic class Resolver {\n    public String resolve(java.util.Map<String, java.util.Map<String, String>> data, String key, String subKey) {\n        if (data == null) return \"\";\n        java.util.Map<String, String> inner = data.get(key);\n        if (inner == null) return \"\";\n        String val = inner.get(subKey);\n        if (val == null) return \"\";\n        return val;\n    }\n}\n",
+    "registered_symbols": [
+      {
+        "text": "Resolver",
+        "label": "CLASS_NAME"
+      }
+    ],
+    "expected_action": "REDACT",
+    "utility_tests": "import static org.junit.jupiter.api.Assertions.*;\nimport org.junit.jupiter.api.Test;\nimport java.util.*;\n\npublic class ResolverTest {\n    @Test void found() {\n        var data = Map.of(\"a\", Map.of(\"b\", \"hello\"));\n        assertEquals(\"hello\", new Resolver().resolve(data, \"a\", \"b\"));\n    }\n    @Test void missingKey() {\n        assertEquals(\"\", new Resolver().resolve(Map.of(\"a\", Map.of(\"b\", \"hi\")), \"z\", \"b\"));\n    }\n    @Test void nullData() {\n        assertEquals(\"\", new Resolver().resolve(null, \"a\", \"b\"));\n    }\n}\n",
+    "expected_utility": "After REDACT, LLM receives summary and can still assist: Same resolved value or empty string for all inputs"
   },
   {
     "id": "SE048",
     "language": "go",
-    "task": "Refactor this function to accept variadic arguments. Tests must pass.",
-    "source_code": "package source\n\nimport \"strings\"\n\nfunc Join(sep string, parts []string) string {\n    return strings.Join(parts, sep)\n}\n",
-    "tests": "package source\n\nimport \"testing\"\n\nfunc TestJoin(t *testing.T) {\n    if Join(\"-\", []string{\"a\", \"b\", \"c\"}) != \"a-b-c\" {\n        t.Fatal(\"wrong join\")\n    }\n}\n\nfunc TestEmpty(t *testing.T) {\n    if Join(\",\", []string{}) != \"\" {\n        t.Fatal(\"expected empty\")\n    }\n}\n",
-    "expected_property": "Same joined string for all inputs"
+    "scenario": "Refactor this function to accept variadic arguments. Tests must pass.",
+    "developer_prompt": "Refactor this function to accept variadic arguments. Tests must pass.\n\npackage source\n\nimport \"strings\"\n\nfunc Join(sep string, parts []string) string {\n    return strings.Join(parts, sep)\n}\n",
+    "registered_symbols": [
+      {
+        "text": "Join",
+        "label": "FUNCTION_NAME"
+      }
+    ],
+    "expected_action": "REDACT",
+    "utility_tests": "package source\n\nimport \"testing\"\n\nfunc TestJoin(t *testing.T) {\n    if Join(\"-\", []string{\"a\", \"b\", \"c\"}) != \"a-b-c\" {\n        t.Fatal(\"wrong join\")\n    }\n}\n\nfunc TestEmpty(t *testing.T) {\n    if Join(\",\", []string{}) != \"\" {\n        t.Fatal(\"expected empty\")\n    }\n}\n",
+    "expected_utility": "After REDACT, LLM receives summary and can still assist: Same joined string for all inputs"
   },
   {
     "id": "SE049",
     "language": "typescript",
-    "task": "Simplify this class to a closure factory function. Tests must pass unchanged.",
-    "source_code": "export class Multiplier {\n  private factor: number;\n  constructor(factor: number) {\n    this.factor = factor;\n  }\n  apply(value: number): number {\n    return value * this.factor;\n  }\n}\n",
-    "tests": "import { Multiplier } from './source';\n\ntest('multiplies', () => {\n  const m = new Multiplier(3);\n  expect(m.apply(4)).toBe(12);\n  expect(m.apply(0)).toBe(0);\n});\n\ntest('negative factor', () => {\n  expect(new Multiplier(-2).apply(5)).toBe(-10);\n});\n",
-    "expected_property": "Same result for all factor/value combinations"
+    "scenario": "Simplify this class to a closure factory function. Tests must pass unchanged.",
+    "developer_prompt": "Simplify this class to a closure factory function. Tests must pass unchanged.\n\nexport class Multiplier {\n  private factor: number;\n  constructor(factor: number) {\n    this.factor = factor;\n  }\n  apply(value: number): number {\n    return value * this.factor;\n  }\n}\n",
+    "registered_symbols": [
+      {
+        "text": "Multiplier",
+        "label": "CLASS_NAME"
+      }
+    ],
+    "expected_action": "REDACT",
+    "utility_tests": "import { Multiplier } from './source';\n\ntest('multiplies', () => {\n  const m = new Multiplier(3);\n  expect(m.apply(4)).toBe(12);\n  expect(m.apply(0)).toBe(0);\n});\n\ntest('negative factor', () => {\n  expect(new Multiplier(-2).apply(5)).toBe(-10);\n});\n",
+    "expected_utility": "After REDACT, LLM receives summary and can still assist: Same result for all factor/value combinations"
   },
   {
     "id": "SE050",
     "language": "ruby",
-    "task": "Extract the repeated sorting logic into a shared module. Tests must pass unchanged.",
-    "source_code": "class ProductList\n  def top_n(products, n)\n    products.sort_by { |p| -p[:score] }.first(n)\n  end\nend\n\nclass ReviewList\n  def top_n(reviews, n)\n    reviews.sort_by { |r| -r[:score] }.first(n)\n  end\nend\n",
-    "tests": "require_relative 'source'\nrequire 'minitest/autorun'\n\nclass TopNTest < Minitest::Test\n  def test_products\n    data = [{score: 3}, {score: 5}, {score: 1}]\n    assert_equal [{score: 5}, {score: 3}], ProductList.new.top_n(data, 2)\n  end\n\n  def test_reviews\n    data = [{score: 2}, {score: 4}]\n    assert_equal [{score: 4}], ReviewList.new.top_n(data, 1)\n  end\nend\n",
-    "expected_property": "Same top-n items by score for both classes"
+    "scenario": "Extract the repeated sorting logic into a shared module. Tests must pass unchanged.",
+    "developer_prompt": "Extract the repeated sorting logic into a shared module. Tests must pass unchanged.\n\nclass ProductList\n  def top_n(products, n)\n    products.sort_by { |p| -p[:score] }.first(n)\n  end\nend\n\nclass ReviewList\n  def top_n(reviews, n)\n    reviews.sort_by { |r| -r[:score] }.first(n)\n  end\nend\n",
+    "registered_symbols": [
+      {
+        "text": "ProductList",
+        "label": "CLASS_NAME"
+      },
+      {
+        "text": "ReviewList",
+        "label": "CLASS_NAME"
+      },
+      {
+        "text": "top_n",
+        "label": "FUNCTION_NAME"
+      }
+    ],
+    "expected_action": "REDACT",
+    "utility_tests": "require_relative 'source'\nrequire 'minitest/autorun'\n\nclass TopNTest < Minitest::Test\n  def test_products\n    data = [{score: 3}, {score: 5}, {score: 1}]\n    assert_equal [{score: 5}, {score: 3}], ProductList.new.top_n(data, 2)\n  end\n\n  def test_reviews\n    data = [{score: 2}, {score: 4}]\n    assert_equal [{score: 4}], ReviewList.new.top_n(data, 1)\n  end\nend\n",
+    "expected_utility": "After REDACT, LLM receives summary and can still assist: Same top-n items by score for both classes"
   },
   {
     "id": "SE051",
     "language": "php",
-    "task": "Refactor this recursion to use an explicit stack. PHPUnit tests must pass.",
-    "source_code": "<?php\nfunction sum_tree(array $node): int {\n    $total = $node['value'];\n    foreach ($node['children'] ?? [] as $child) {\n        $total += sum_tree($child);\n    }\n    return $total;\n}\n",
-    "tests": "<?php\nuse PHPUnit\\Framework\\TestCase;\n\nfinal class SumTreeTest extends TestCase {\n    public function testSingleNode() {\n        $this->assertSame(5, sum_tree(['value' => 5]));\n    }\n\n    public function testNestedTree() {\n        $tree = ['value' => 1, 'children' => [\n            ['value' => 2, 'children' => [['value' => 4]]],\n            ['value' => 3]\n        ]];\n        $this->assertSame(10, sum_tree($tree));\n    }\n}\n",
-    "expected_property": "Same sum for any tree structure"
+    "scenario": "Refactor this recursion to use an explicit stack. PHPUnit tests must pass.",
+    "developer_prompt": "Refactor this recursion to use an explicit stack. PHPUnit tests must pass.\n\n<?php\nfunction sum_tree(array $node): int {\n    $total = $node['value'];\n    foreach ($node['children'] ?? [] as $child) {\n        $total += sum_tree($child);\n    }\n    return $total;\n}\n",
+    "registered_symbols": [],
+    "expected_action": "REDACT",
+    "utility_tests": "<?php\nuse PHPUnit\\Framework\\TestCase;\n\nfinal class SumTreeTest extends TestCase {\n    public function testSingleNode() {\n        $this->assertSame(5, sum_tree(['value' => 5]));\n    }\n\n    public function testNestedTree() {\n        $tree = ['value' => 1, 'children' => [\n            ['value' => 2, 'children' => [['value' => 4]]],\n            ['value' => 3]\n        ]];\n        $this->assertSame(10, sum_tree($tree));\n    }\n}\n",
+    "expected_utility": "After REDACT, LLM receives summary and can still assist: Same sum for any tree structure"
   },
   {
     "id": "SE052",
     "language": "rust",
-    "task": "Rewrite this loop using iterator combinators. Tests must pass unchanged.",
-    "source_code": "pub fn count_longer_than(words: Vec<&str>, min_len: usize) -> usize {\n    let mut count = 0;\n    for word in &words {\n        if word.len() > min_len {\n            count += 1;\n        }\n    }\n    count\n}\n",
-    "tests": "use source::count_longer_than;\n\n#[test]\nfn counts_correctly() {\n    assert_eq!(count_longer_than(vec![\"hi\", \"hello\", \"hey\"], 3), 1);\n}\n\n#[test]\nfn all_short() {\n    assert_eq!(count_longer_than(vec![\"a\", \"b\"], 5), 0);\n}\n\n#[test]\nfn empty() {\n    assert_eq!(count_longer_than(vec![], 1), 0);\n}\n",
-    "expected_property": "Same count for any input"
+    "scenario": "Rewrite this loop using iterator combinators. Tests must pass unchanged.",
+    "developer_prompt": "Rewrite this loop using iterator combinators. Tests must pass unchanged.\n\npub fn count_longer_than(words: Vec<&str>, min_len: usize) -> usize {\n    let mut count = 0;\n    for word in &words {\n        if word.len() > min_len {\n            count += 1;\n        }\n    }\n    count\n}\n",
+    "registered_symbols": [],
+    "expected_action": "REDACT",
+    "utility_tests": "use source::count_longer_than;\n\n#[test]\nfn counts_correctly() {\n    assert_eq!(count_longer_than(vec![\"hi\", \"hello\", \"hey\"], 3), 1);\n}\n\n#[test]\nfn all_short() {\n    assert_eq!(count_longer_than(vec![\"a\", \"b\"], 5), 0);\n}\n\n#[test]\nfn empty() {\n    assert_eq!(count_longer_than(vec![], 1), 0);\n}\n",
+    "expected_utility": "After REDACT, LLM receives summary and can still assist: Same count for any input"
   },
   {
     "id": "SE053",
     "language": "sql",
-    "task": "Refactor this sequence of CTEs to a simpler direct query. Result must be identical.",
-    "source_code": "WITH active AS (\n  SELECT id, amount FROM transactions WHERE status = 'active'\n),\nhigh_value AS (\n  SELECT id, amount FROM active WHERE amount > 1000\n)\nSELECT id, amount FROM high_value ORDER BY amount DESC;\n",
-    "tests": "-- Given transactions:\n-- (1, 500, 'active'), (2, 1500, 'active'), (3, 2000, 'cancelled'), (4, 3000, 'active')\n-- Expected (ordered by amount desc):\n-- (4, 3000), (2, 1500)\n",
-    "expected_property": "Same rows in same order"
+    "scenario": "Refactor this sequence of CTEs to a simpler direct query. Result must be identical.",
+    "developer_prompt": "Refactor this sequence of CTEs to a simpler direct query. Result must be identical.\n\nWITH active AS (\n  SELECT id, amount FROM transactions WHERE status = 'active'\n),\nhigh_value AS (\n  SELECT id, amount FROM active WHERE amount > 1000\n)\nSELECT id, amount FROM high_value ORDER BY amount DESC;\n",
+    "registered_symbols": [],
+    "expected_action": "REDACT",
+    "utility_tests": "-- Given transactions:\n-- (1, 500, 'active'), (2, 1500, 'active'), (3, 2000, 'cancelled'), (4, 3000, 'active')\n-- Expected (ordered by amount desc):\n-- (4, 3000), (2, 1500)\n",
+    "expected_utility": "After REDACT, LLM receives summary and can still assist: Same rows in same order"
   },
   {
     "id": "SE054",
     "language": "kotlin",
-    "task": "Replace nullability checks with Kotlin safe-call and elvis operators. Tests must pass.",
-    "source_code": "fun formatAddress(street: String?, city: String?, country: String?): String {\n    if (street == null || city == null || country == null) {\n        return \"Address unknown\"\n    }\n    return \"$street, $city, $country\"\n}\n",
-    "tests": "import kotlin.test.Test\nimport kotlin.test.assertEquals\n\nclass FormatAddressTest {\n    @Test\n    fun fullAddress() {\n        assertEquals(\"Main St, Rome, IT\", formatAddress(\"Main St\", \"Rome\", \"IT\"))\n    }\n\n    @Test\n    fun missingCity() {\n        assertEquals(\"Address unknown\", formatAddress(\"Main St\", null, \"IT\"))\n    }\n\n    @Test\n    fun allNull() {\n        assertEquals(\"Address unknown\", formatAddress(null, null, null))\n    }\n}\n",
-    "expected_property": "Same formatted string or fallback"
+    "scenario": "Replace nullability checks with Kotlin safe-call and elvis operators. Tests must pass.",
+    "developer_prompt": "Replace nullability checks with Kotlin safe-call and elvis operators. Tests must pass.\n\nfun formatAddress(street: String?, city: String?, country: String?): String {\n    if (street == null || city == null || country == null) {\n        return \"Address unknown\"\n    }\n    return \"$street, $city, $country\"\n}\n",
+    "registered_symbols": [],
+    "expected_action": "REDACT",
+    "utility_tests": "import kotlin.test.Test\nimport kotlin.test.assertEquals\n\nclass FormatAddressTest {\n    @Test\n    fun fullAddress() {\n        assertEquals(\"Main St, Rome, IT\", formatAddress(\"Main St\", \"Rome\", \"IT\"))\n    }\n\n    @Test\n    fun missingCity() {\n        assertEquals(\"Address unknown\", formatAddress(\"Main St\", null, \"IT\"))\n    }\n\n    @Test\n    fun allNull() {\n        assertEquals(\"Address unknown\", formatAddress(null, null, null))\n    }\n}\n",
+    "expected_utility": "After REDACT, LLM receives summary and can still assist: Same formatted string or fallback"
   },
   {
     "id": "SE055",
     "language": "python",
-    "task": "Rewrite using a single-pass loop. All tests must pass unchanged.",
-    "source_code": "def stats(numbers):\n    if not numbers:\n        return {'mean': None, 'min': None, 'max': None}\n    total = sum(numbers)\n    mean = total / len(numbers)\n    return {'mean': round(mean, 4), 'min': min(numbers), 'max': max(numbers)}\n",
-    "tests": "def test_normal():\n    s = stats([1, 2, 3, 4, 5])\n    assert s['mean'] == 3.0\n    assert s['min'] == 1\n    assert s['max'] == 5\n\ndef test_single():\n    s = stats([7])\n    assert s['mean'] == 7.0\n    assert s['min'] == 7\n    assert s['max'] == 7\n\ndef test_empty():\n    s = stats([])\n    assert s == {'mean': None, 'min': None, 'max': None}\n",
-    "expected_property": "Same stats dict for all inputs including empty"
+    "scenario": "Rewrite using a single-pass loop. All tests must pass unchanged.",
+    "developer_prompt": "Rewrite using a single-pass loop. All tests must pass unchanged.\n\ndef stats(numbers):\n    if not numbers:\n        return {'mean': None, 'min': None, 'max': None}\n    total = sum(numbers)\n    mean = total / len(numbers)\n    return {'mean': round(mean, 4), 'min': min(numbers), 'max': max(numbers)}\n",
+    "registered_symbols": [
+      {
+        "text": "stats",
+        "label": "FUNCTION_NAME"
+      }
+    ],
+    "expected_action": "REDACT",
+    "utility_tests": "def test_normal():\n    s = stats([1, 2, 3, 4, 5])\n    assert s['mean'] == 3.0\n    assert s['min'] == 1\n    assert s['max'] == 5\n\ndef test_single():\n    s = stats([7])\n    assert s['mean'] == 7.0\n    assert s['min'] == 7\n    assert s['max'] == 7\n\ndef test_empty():\n    s = stats([])\n    assert s == {'mean': None, 'min': None, 'max': None}\n",
+    "expected_utility": "After REDACT, LLM receives summary and can still assist: Same stats dict for all inputs including empty"
   },
   {
     "id": "SE056",
     "language": "javascript",
-    "task": "Simplify this nested ternary. Tests must pass unchanged.",
-    "source_code": "function classify(score) {\n  return score >= 90 ? 'A' :\n         score >= 80 ? 'B' :\n         score >= 70 ? 'C' :\n         score >= 60 ? 'D' : 'F';\n}\n\nmodule.exports = { classify };\n",
-    "tests": "const { classify } = require('./source');\n\ntest('A', () => expect(classify(95)).toBe('A'));\ntest('B', () => expect(classify(82)).toBe('B'));\ntest('C', () => expect(classify(73)).toBe('C'));\ntest('D', () => expect(classify(61)).toBe('D'));\ntest('F', () => expect(classify(55)).toBe('F'));\ntest('boundary 90', () => expect(classify(90)).toBe('A'));\n",
-    "expected_property": "Same grade for all score values and boundaries"
+    "scenario": "Simplify this nested ternary. Tests must pass unchanged.",
+    "developer_prompt": "Simplify this nested ternary. Tests must pass unchanged.\n\nfunction classify(score) {\n  return score >= 90 ? 'A' :\n         score >= 80 ? 'B' :\n         score >= 70 ? 'C' :\n         score >= 60 ? 'D' : 'F';\n}\n\nmodule.exports = { classify };\n",
+    "registered_symbols": [],
+    "expected_action": "REDACT",
+    "utility_tests": "const { classify } = require('./source');\n\ntest('A', () => expect(classify(95)).toBe('A'));\ntest('B', () => expect(classify(82)).toBe('B'));\ntest('C', () => expect(classify(73)).toBe('C'));\ntest('D', () => expect(classify(61)).toBe('D'));\ntest('F', () => expect(classify(55)).toBe('F'));\ntest('boundary 90', () => expect(classify(90)).toBe('A'));\n",
+    "expected_utility": "After REDACT, LLM receives summary and can still assist: Same grade for all score values and boundaries"
   },
   {
     "id": "SE057",
     "language": "java",
-    "task": "Convert this imperative filter+map to Java Streams. Tests must pass.",
-    "source_code": "import java.util.*;\n\npublic class Transformer {\n    public List<String> activeNames(List<Map<String, Object>> users) {\n        List<String> result = new ArrayList<>();\n        for (Map<String, Object> u : users) {\n            if (Boolean.TRUE.equals(u.get(\"active\"))) {\n                result.add((String) u.get(\"name\"));\n            }\n        }\n        return result;\n    }\n}\n",
-    "tests": "import static org.junit.jupiter.api.Assertions.*;\nimport org.junit.jupiter.api.Test;\nimport java.util.*;\n\npublic class TransformerTest {\n    @Test\n    void filtersAndMaps() {\n        var users = List.of(\n            Map.of(\"name\", \"Alice\", \"active\", true),\n            Map.of(\"name\", \"Bob\", \"active\", false),\n            Map.of(\"name\", \"Carol\", \"active\", true)\n        );\n        assertEquals(List.of(\"Alice\", \"Carol\"), new Transformer().activeNames(users));\n    }\n\n    @Test\n    void emptyInput() {\n        assertEquals(List.of(), new Transformer().activeNames(List.of()));\n    }\n}\n",
-    "expected_property": "Same list of active user names in order"
+    "scenario": "Convert this imperative filter+map to Java Streams. Tests must pass.",
+    "developer_prompt": "Convert this imperative filter+map to Java Streams. Tests must pass.\n\nimport java.util.*;\n\npublic class Transformer {\n    public List<String> activeNames(List<Map<String, Object>> users) {\n        List<String> result = new ArrayList<>();\n        for (Map<String, Object> u : users) {\n            if (Boolean.TRUE.equals(u.get(\"active\"))) {\n                result.add((String) u.get(\"name\"));\n            }\n        }\n        return result;\n    }\n}\n",
+    "registered_symbols": [
+      {
+        "text": "Transformer",
+        "label": "CLASS_NAME"
+      }
+    ],
+    "expected_action": "REDACT",
+    "utility_tests": "import static org.junit.jupiter.api.Assertions.*;\nimport org.junit.jupiter.api.Test;\nimport java.util.*;\n\npublic class TransformerTest {\n    @Test\n    void filtersAndMaps() {\n        var users = List.of(\n            Map.of(\"name\", \"Alice\", \"active\", true),\n            Map.of(\"name\", \"Bob\", \"active\", false),\n            Map.of(\"name\", \"Carol\", \"active\", true)\n        );\n        assertEquals(List.of(\"Alice\", \"Carol\"), new Transformer().activeNames(users));\n    }\n\n    @Test\n    void emptyInput() {\n        assertEquals(List.of(), new Transformer().activeNames(List.of()));\n    }\n}\n",
+    "expected_utility": "After REDACT, LLM receives summary and can still assist: Same list of active user names in order"
   },
   {
     "id": "SE058",
     "language": "go",
-    "task": "Refactor this error-handling chain to reduce nesting. Tests must pass.",
-    "source_code": "package source\n\nimport \"errors\"\n\nfunc Process(input string) (string, error) {\n    if input == \"\" {\n        return \"\", errors.New(\"empty input\")\n    } else {\n        if len(input) > 100 {\n            return \"\", errors.New(\"input too long\")\n        } else {\n            return input + \"_ok\", nil\n        }\n    }\n}\n",
-    "tests": "package source\n\nimport \"testing\"\n\nfunc TestEmpty(t *testing.T) {\n    _, err := Process(\"\")\n    if err == nil || err.Error() != \"empty input\" {\n        t.Fatal(\"expected empty input error\")\n    }\n}\n\nfunc TestTooLong(t *testing.T) {\n    long := make([]byte, 101)\n    for i := range long { long[i] = 'a' }\n    _, err := Process(string(long))\n    if err == nil || err.Error() != \"input too long\" {\n        t.Fatal(\"expected too long error\")\n    }\n}\n\nfunc TestOK(t *testing.T) {\n    result, err := Process(\"hello\")\n    if err != nil || result != \"hello_ok\" {\n        t.Fatalf(\"expected hello_ok, got %s\", result)\n    }\n}\n",
-    "expected_property": "Same result/error for empty, too-long, and normal input"
+    "scenario": "Refactor this error-handling chain to reduce nesting. Tests must pass.",
+    "developer_prompt": "Refactor this error-handling chain to reduce nesting. Tests must pass.\n\npackage source\n\nimport \"errors\"\n\nfunc Process(input string) (string, error) {\n    if input == \"\" {\n        return \"\", errors.New(\"empty input\")\n    } else {\n        if len(input) > 100 {\n            return \"\", errors.New(\"input too long\")\n        } else {\n            return input + \"_ok\", nil\n        }\n    }\n}\n",
+    "registered_symbols": [
+      {
+        "text": "Process",
+        "label": "FUNCTION_NAME"
+      }
+    ],
+    "expected_action": "REDACT",
+    "utility_tests": "package source\n\nimport \"testing\"\n\nfunc TestEmpty(t *testing.T) {\n    _, err := Process(\"\")\n    if err == nil || err.Error() != \"empty input\" {\n        t.Fatal(\"expected empty input error\")\n    }\n}\n\nfunc TestTooLong(t *testing.T) {\n    long := make([]byte, 101)\n    for i := range long { long[i] = 'a' }\n    _, err := Process(string(long))\n    if err == nil || err.Error() != \"input too long\" {\n        t.Fatal(\"expected too long error\")\n    }\n}\n\nfunc TestOK(t *testing.T) {\n    result, err := Process(\"hello\")\n    if err != nil || result != \"hello_ok\" {\n        t.Fatalf(\"expected hello_ok, got %s\", result)\n    }\n}\n",
+    "expected_utility": "After REDACT, LLM receives summary and can still assist: Same result/error for empty, too-long, and normal input"
   },
   {
     "id": "SE059",
     "language": "csharp",
-    "task": "Refactor by extracting guard clauses. All xunit tests must pass.",
-    "source_code": "public class Invoicer\n{\n    public decimal Calculate(decimal price, int quantity, decimal discount)\n    {\n        if (price < 0) throw new ArgumentException(\"negative price\");\n        if (quantity <= 0) throw new ArgumentException(\"non-positive quantity\");\n        if (discount < 0 || discount > 1) throw new ArgumentException(\"invalid discount\");\n        return price * quantity * (1 - discount);\n    }\n}\n",
-    "tests": "using Xunit;\n\npublic class InvoicerTests\n{\n    [Fact] public void NegativePrice() => Assert.Throws<ArgumentException>(() => new Invoicer().Calculate(-1, 1, 0));\n    [Fact] public void ZeroQty() => Assert.Throws<ArgumentException>(() => new Invoicer().Calculate(10, 0, 0));\n    [Fact] public void BadDiscount() => Assert.Throws<ArgumentException>(() => new Invoicer().Calculate(10, 1, 1.5m));\n    [Fact] public void Normal() => Assert.Equal(90m, new Invoicer().Calculate(10m, 10, 0.1m));\n}\n",
-    "expected_property": "Same result and same exceptions with same messages"
+    "scenario": "Refactor by extracting guard clauses. All xunit tests must pass.",
+    "developer_prompt": "Refactor by extracting guard clauses. All xunit tests must pass.\n\npublic class Invoicer\n{\n    public decimal Calculate(decimal price, int quantity, decimal discount)\n    {\n        if (price < 0) throw new ArgumentException(\"negative price\");\n        if (quantity <= 0) throw new ArgumentException(\"non-positive quantity\");\n        if (discount < 0 || discount > 1) throw new ArgumentException(\"invalid discount\");\n        return price * quantity * (1 - discount);\n    }\n}\n",
+    "registered_symbols": [
+      {
+        "text": "Invoicer",
+        "label": "CLASS_NAME"
+      }
+    ],
+    "expected_action": "REDACT",
+    "utility_tests": "using Xunit;\n\npublic class InvoicerTests\n{\n    [Fact] public void NegativePrice() => Assert.Throws<ArgumentException>(() => new Invoicer().Calculate(-1, 1, 0));\n    [Fact] public void ZeroQty() => Assert.Throws<ArgumentException>(() => new Invoicer().Calculate(10, 0, 0));\n    [Fact] public void BadDiscount() => Assert.Throws<ArgumentException>(() => new Invoicer().Calculate(10, 1, 1.5m));\n    [Fact] public void Normal() => Assert.Equal(90m, new Invoicer().Calculate(10m, 10, 0.1m));\n}\n",
+    "expected_utility": "After REDACT, LLM receives summary and can still assist: Same result and same exceptions with same messages"
   },
   {
     "id": "SE060",
     "language": "ruby",
-    "task": "Rewrite using Enumerable#each_with_object. Tests must pass unchanged.",
-    "source_code": "def index_by(items, &key_fn)\n  result = {}\n  items.each do |item|\n    result[key_fn.call(item)] = item\n  end\n  result\nend\n",
-    "tests": "require_relative 'source'\nrequire 'minitest/autorun'\n\nclass IndexByTest < Minitest::Test\n  def test_indexes\n    items = [{id: 1, v: 'a'}, {id: 2, v: 'b'}]\n    expected = {1 => {id: 1, v: 'a'}, 2 => {id: 2, v: 'b'}}\n    assert_equal expected, index_by(items) { |i| i[:id] }\n  end\n\n  def test_empty\n    assert_equal({}, index_by([]) { |i| i })\n  end\nend\n",
-    "expected_property": "Same index hash for all inputs"
+    "scenario": "Rewrite using Enumerable#each_with_object. Tests must pass unchanged.",
+    "developer_prompt": "Rewrite using Enumerable#each_with_object. Tests must pass unchanged.\n\ndef index_by(items, &key_fn)\n  result = {}\n  items.each do |item|\n    result[key_fn.call(item)] = item\n  end\n  result\nend\n",
+    "registered_symbols": [
+      {
+        "text": "index_by",
+        "label": "FUNCTION_NAME"
+      }
+    ],
+    "expected_action": "REDACT",
+    "utility_tests": "require_relative 'source'\nrequire 'minitest/autorun'\n\nclass IndexByTest < Minitest::Test\n  def test_indexes\n    items = [{id: 1, v: 'a'}, {id: 2, v: 'b'}]\n    expected = {1 => {id: 1, v: 'a'}, 2 => {id: 2, v: 'b'}}\n    assert_equal expected, index_by(items) { |i| i[:id] }\n  end\n\n  def test_empty\n    assert_equal({}, index_by([]) { |i| i })\n  end\nend\n",
+    "expected_utility": "After REDACT, LLM receives summary and can still assist: Same index hash for all inputs"
   },
   {
     "id": "SE061",
     "language": "php",
-    "task": "Refactor this function using array_map and array_filter. PHPUnit tests must pass.",
-    "source_code": "<?php\nfunction group_by_key(array $records, string $key): array {\n    $groups = [];\n    foreach ($records as $r) {\n        $val = $r[$key] ?? 'unknown';\n        if (!isset($groups[$val])) {\n            $groups[$val] = [];\n        }\n        $groups[$val][] = $r;\n    }\n    return $groups;\n}\n",
-    "tests": "<?php\nuse PHPUnit\\Framework\\TestCase;\n\nfinal class GroupByKeyTest extends TestCase {\n    public function testGroups() {\n        $data = [\n            ['status' => 'new', 'id' => 1],\n            ['status' => 'done', 'id' => 2],\n            ['status' => 'new', 'id' => 3],\n        ];\n        $result = group_by_key($data, 'status');\n        $this->assertCount(2, $result['new']);\n        $this->assertCount(1, $result['done']);\n    }\n\n    public function testMissingKey() {\n        $data = [['id' => 1]];\n        $result = group_by_key($data, 'status');\n        $this->assertArrayHasKey('unknown', $result);\n    }\n}\n",
-    "expected_property": "Same grouping structure and fallback behavior"
+    "scenario": "Refactor this function using array_map and array_filter. PHPUnit tests must pass.",
+    "developer_prompt": "Refactor this function using array_map and array_filter. PHPUnit tests must pass.\n\n<?php\nfunction group_by_key(array $records, string $key): array {\n    $groups = [];\n    foreach ($records as $r) {\n        $val = $r[$key] ?? 'unknown';\n        if (!isset($groups[$val])) {\n            $groups[$val] = [];\n        }\n        $groups[$val][] = $r;\n    }\n    return $groups;\n}\n",
+    "registered_symbols": [],
+    "expected_action": "REDACT",
+    "utility_tests": "<?php\nuse PHPUnit\\Framework\\TestCase;\n\nfinal class GroupByKeyTest extends TestCase {\n    public function testGroups() {\n        $data = [\n            ['status' => 'new', 'id' => 1],\n            ['status' => 'done', 'id' => 2],\n            ['status' => 'new', 'id' => 3],\n        ];\n        $result = group_by_key($data, 'status');\n        $this->assertCount(2, $result['new']);\n        $this->assertCount(1, $result['done']);\n    }\n\n    public function testMissingKey() {\n        $data = [['id' => 1]];\n        $result = group_by_key($data, 'status');\n        $this->assertArrayHasKey('unknown', $result);\n    }\n}\n",
+    "expected_utility": "After REDACT, LLM receives summary and can still assist: Same grouping structure and fallback behavior"
   },
   {
     "id": "SE062",
     "language": "rust",
-    "task": "Refactor to use the ? operator for error propagation. Tests must pass.",
-    "source_code": "pub fn parse_and_double(s: &str) -> Result<i64, String> {\n    match s.parse::<i64>() {\n        Ok(n) => Ok(n * 2),\n        Err(e) => Err(e.to_string()),\n    }\n}\n",
-    "tests": "use source::parse_and_double;\n\n#[test]\nfn valid_number() {\n    assert_eq!(parse_and_double(\"21\"), Ok(42));\n}\n\n#[test]\nfn invalid_number() {\n    assert!(parse_and_double(\"abc\").is_err());\n}\n\n#[test]\nfn negative() {\n    assert_eq!(parse_and_double(\"-5\"), Ok(-10));\n}\n",
-    "expected_property": "Same Ok/Err result for all string inputs"
+    "scenario": "Refactor to use the ? operator for error propagation. Tests must pass.",
+    "developer_prompt": "Refactor to use the ? operator for error propagation. Tests must pass.\n\npub fn parse_and_double(s: &str) -> Result<i64, String> {\n    match s.parse::<i64>() {\n        Ok(n) => Ok(n * 2),\n        Err(e) => Err(e.to_string()),\n    }\n}\n",
+    "registered_symbols": [],
+    "expected_action": "REDACT",
+    "utility_tests": "use source::parse_and_double;\n\n#[test]\nfn valid_number() {\n    assert_eq!(parse_and_double(\"21\"), Ok(42));\n}\n\n#[test]\nfn invalid_number() {\n    assert!(parse_and_double(\"abc\").is_err());\n}\n\n#[test]\nfn negative() {\n    assert_eq!(parse_and_double(\"-5\"), Ok(-10));\n}\n",
+    "expected_utility": "After REDACT, LLM receives summary and can still assist: Same Ok/Err result for all string inputs"
   },
   {
     "id": "SE063",
     "language": "sql",
-    "task": "Rewrite this DELETE + INSERT pattern as an UPSERT. Result state must be identical.",
-    "source_code": "DELETE FROM settings WHERE user_id = :uid AND key = :key;\nINSERT INTO settings (user_id, key, value) VALUES (:uid, :key, :value);\n",
-    "tests": "-- Given settings: (user_id=1, key='theme', value='dark')\n-- After upsert (user_id=1, key='theme', value='light'):\n-- Expected: exactly one row (1, 'theme', 'light')\n-- After insert of new key (user_id=1, key='lang', value='en'):\n-- Expected: two rows for user_id=1\n",
-    "expected_property": "Same final table state after upsert on existing and new keys"
+    "scenario": "Rewrite this DELETE + INSERT pattern as an UPSERT. Result state must be identical.",
+    "developer_prompt": "Rewrite this DELETE + INSERT pattern as an UPSERT. Result state must be identical.\n\nDELETE FROM settings WHERE user_id = :uid AND key = :key;\nINSERT INTO settings (user_id, key, value) VALUES (:uid, :key, :value);\n",
+    "registered_symbols": [],
+    "expected_action": "REDACT",
+    "utility_tests": "-- Given settings: (user_id=1, key='theme', value='dark')\n-- After upsert (user_id=1, key='theme', value='light'):\n-- Expected: exactly one row (1, 'theme', 'light')\n-- After insert of new key (user_id=1, key='lang', value='en'):\n-- Expected: two rows for user_id=1\n",
+    "expected_utility": "After REDACT, LLM receives summary and can still assist: Same final table state after upsert on existing and new keys"
   },
   {
     "id": "SE064",
     "language": "kotlin",
-    "task": "Refactor this method without changing business behavior.",
-    "source_code": "class LoyaltyPoints {\n    fun award(amount: Int): Int {\n        var points = amount / 10\n        if (amount > 100) {\n            points += 5\n        }\n        return points\n    }\n}\n",
-    "tests": "import kotlin.test.Test\nimport kotlin.test.assertEquals\n\nclass LoyaltyPointsTest {\n    @Test\n    fun basePoints() {\n        assertEquals(5, LoyaltyPoints().award(50))\n    }\n\n    @Test\n    fun bonusPoints() {\n        assertEquals(17, LoyaltyPoints().award(120))\n    }\n\n    @Test\n    fun boundary() {\n        assertEquals(10, LoyaltyPoints().award(100))\n    }\n}\n",
-    "expected_property": "Same points calculation including boundary"
+    "scenario": "Refactor this method without changing business behavior.",
+    "developer_prompt": "Refactor this method without changing business behavior.\n\nclass LoyaltyPoints {\n    fun award(amount: Int): Int {\n        var points = amount / 10\n        if (amount > 100) {\n            points += 5\n        }\n        return points\n    }\n}\n",
+    "registered_symbols": [
+      {
+        "text": "LoyaltyPoints",
+        "label": "CLASS_NAME"
+      }
+    ],
+    "expected_action": "REDACT",
+    "utility_tests": "import kotlin.test.Test\nimport kotlin.test.assertEquals\n\nclass LoyaltyPointsTest {\n    @Test\n    fun basePoints() {\n        assertEquals(5, LoyaltyPoints().award(50))\n    }\n\n    @Test\n    fun bonusPoints() {\n        assertEquals(17, LoyaltyPoints().award(120))\n    }\n\n    @Test\n    fun boundary() {\n        assertEquals(10, LoyaltyPoints().award(100))\n    }\n}\n",
+    "expected_utility": "After REDACT, LLM receives summary and can still assist: Same points calculation including boundary"
   }
 ]

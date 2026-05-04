@@ -2,615 +2,1427 @@
   {
     "id": "C001",
     "language": "python",
-    "task": "refactor",
-    "input_code": "class PaymentProcessor:\n    def process_payment(self, user_id, amount):\n        return StripeAPI.charge(user_id, amount)",
-    "sensitive_elements": [
-      {"text": "PaymentProcessor", "label": "CLASS_NAME"},
-      {"text": "process_payment", "label": "FUNCTION_NAME"},
-      {"text": "StripeAPI", "label": "INTERNAL_SERVICE"}
+    "scenario": "refactor",
+    "developer_prompt": "Refactor the following code:\n\nclass PaymentProcessor:\n    def process_payment(self, user_id, amount):\n        return StripeAPI.charge(user_id, amount)",
+    "registered_symbols": [
+      {
+        "text": "PaymentProcessor",
+        "label": "CLASS_NAME"
+      },
+      {
+        "text": "process_payment",
+        "label": "FUNCTION_NAME"
+      },
+      {
+        "text": "StripeAPI",
+        "label": "INTERNAL_SERVICE"
+      }
     ],
-    "expected_behavior": "Names should be anonymized but code remains functional"
+    "expected_action": "REDACT",
+    "expected_utility": "Protected symbols detected and redacted; LLM receives REDACT summary and can still provide structural guidance"
   },
   {
     "id": "C002",
     "language": "javascript",
-    "task": "debug",
-    "input_code": "function getUserData(customerEmail) {\n  return InternalDB.fetch(customerEmail);\n}",
-    "sensitive_elements": [
-      {"text": "customerEmail", "label": "PII_FIELD"},
-      {"text": "InternalDB", "label": "INTERNAL_DB"}
+    "scenario": "debug",
+    "developer_prompt": "Help me debug this code:\n\nfunction getUserData(customerEmail) {\n  return InternalDB.fetch(customerEmail);\n}",
+    "registered_symbols": [
+      {
+        "text": "customerEmail",
+        "label": "PII_FIELD"
+      },
+      {
+        "text": "InternalDB",
+        "label": "INTERNAL_DB"
+      }
     ],
-    "expected_behavior": "Sensitive identifiers replaced, logic preserved"
+    "expected_action": "REDACT",
+    "expected_utility": "Protected symbols detected and redacted; LLM receives REDACT summary and can still provide structural guidance"
   },
   {
     "id": "C003",
     "language": "python",
-    "task": "optimize",
-    "input_code": "def calculateRevenue(clientName, contractValue):\n    return contractValue * 1.2",
-    "sensitive_elements": [
-      {"text": "clientName", "label": "CLIENT_IDENTIFIER"},
-      {"text": "contractValue", "label": "FINANCIAL_DATA"}
+    "scenario": "optimize",
+    "developer_prompt": "Optimize the following code:\n\ndef calculateRevenue(clientName, contractValue):\n    return contractValue * 1.2",
+    "registered_symbols": [
+      {
+        "text": "clientName",
+        "label": "CLIENT_IDENTIFIER"
+      },
+      {
+        "text": "contractValue",
+        "label": "FINANCIAL_DATA"
+      }
     ],
-    "expected_behavior": "Variables anonymized, computation unchanged"
+    "expected_action": "REDACT",
+    "expected_utility": "Protected symbols detected and redacted; LLM receives REDACT summary and can still provide structural guidance"
   },
   {
     "id": "C004",
     "language": "java",
-    "task": "explain",
-    "input_code": "public class UserAuthService {\n  public boolean login(String username, String password) {\n    return AuthDB.validate(username, password);\n  }\n}",
-    "sensitive_elements": [
-      {"text": "UserAuthService", "label": "SERVICE_NAME"},
-      {"text": "AuthDB", "label": "INTERNAL_SYSTEM"}
+    "scenario": "explain",
+    "developer_prompt": "Explain what this code does:\n\npublic class UserAuthService {\n  public boolean login(String username, String password) {\n    return AuthDB.validate(username, password);\n  }\n}",
+    "registered_symbols": [
+      {
+        "text": "UserAuthService",
+        "label": "SERVICE_NAME"
+      },
+      {
+        "text": "AuthDB",
+        "label": "INTERNAL_SYSTEM"
+      }
     ],
-    "expected_behavior": "Service and DB names masked, explanation still possible"
+    "expected_action": "REDACT",
+    "expected_utility": "Protected identifiers redacted; LLM can explain patterns without implementation details"
   },
   {
     "id": "C005",
     "language": "python",
-    "task": "summarize",
-    "input_code": "api_key = 'sk_live_ABC123SECRET'\ndef call_api():\n    return requests.get(api_key)",
-    "sensitive_elements": [
-      {"text": "sk_live_ABC123SECRET", "label": "API_KEY"}
+    "scenario": "summarize",
+    "developer_prompt": "Summarize what this code does:\n\napi_key = 'sk_live_ABC123SECRET'\ndef call_api():\n    return requests.get(api_key)",
+    "registered_symbols": [
+      {
+        "text": "sk_live_ABC123SECRET",
+        "label": "API_KEY"
+      }
     ],
-    "expected_behavior": "Secrets must be fully removed or masked"
+    "expected_action": "REDACT",
+    "expected_utility": "Sensitive values detected and redacted; no secret content reaches the LLM"
   },
   {
     "id": "C006",
     "language": "go",
-    "task": "refactor",
-    "input_code": "func (t *ShipmentTracker) UpdateRoute(id string, waypoint string) error {\n\treturn OmegaLogistics.PushEvent(id, waypoint)\n}",
-    "sensitive_elements": [
-      {"text": "ShipmentTracker", "label": "CLASS_NAME"},
-      {"text": "OmegaLogistics", "label": "INTERNAL_SERVICE"}
+    "scenario": "refactor",
+    "developer_prompt": "Refactor the following code:\n\nfunc (t *ShipmentTracker) UpdateRoute(id string, waypoint string) error {\n\treturn OmegaLogistics.PushEvent(id, waypoint)\n}",
+    "registered_symbols": [
+      {
+        "text": "ShipmentTracker",
+        "label": "CLASS_NAME"
+      },
+      {
+        "text": "OmegaLogistics",
+        "label": "INTERNAL_SERVICE"
+      }
     ],
-    "expected_behavior": "Struct and service name anonymized; method signature and logic preserved"
+    "expected_action": "REDACT",
+    "expected_utility": "Protected symbols detected and redacted; LLM receives REDACT summary and can still provide structural guidance"
   },
   {
     "id": "C007",
     "language": "rust",
-    "task": "optimize",
-    "input_code": "pub fn get_bid_price(asset_id: &str, quantity: u32) -> f64 {\n    PrimeQuoteEngine::bid(asset_id) * quantity as f64\n}",
-    "sensitive_elements": [
-      {"text": "PrimeQuoteEngine", "label": "INTERNAL_SERVICE"},
-      {"text": "get_bid_price", "label": "FUNCTION_NAME"}
+    "scenario": "optimize",
+    "developer_prompt": "Optimize the following code:\n\npub fn get_bid_price(asset_id: &str, quantity: u32) -> f64 {\n    PrimeQuoteEngine::bid(asset_id) * quantity as f64\n}",
+    "registered_symbols": [
+      {
+        "text": "PrimeQuoteEngine",
+        "label": "INTERNAL_SERVICE"
+      },
+      {
+        "text": "get_bid_price",
+        "label": "FUNCTION_NAME"
+      }
     ],
-    "expected_behavior": "Engine name anonymized; pricing computation preserved"
+    "expected_action": "REDACT",
+    "expected_utility": "Protected symbols detected and redacted; LLM receives REDACT summary and can still provide structural guidance"
   },
   {
     "id": "C008",
     "language": "typescript",
-    "task": "debug",
-    "input_code": "async function enqueueJob(patientId: string, studyCode: string): Promise<void> {\n  await MedWorkflowQueue.submit({ patientId, studyCode });\n}",
-    "sensitive_elements": [
-      {"text": "patientId", "label": "PII_FIELD"},
-      {"text": "MedWorkflowQueue", "label": "INTERNAL_SERVICE"},
-      {"text": "studyCode", "label": "MEDICAL_IDENTIFIER"}
+    "scenario": "debug",
+    "developer_prompt": "Help me debug this code:\n\nasync function enqueueJob(patientId: string, studyCode: string): Promise<void> {\n  await MedWorkflowQueue.submit({ patientId, studyCode });\n}",
+    "registered_symbols": [
+      {
+        "text": "patientId",
+        "label": "PII_FIELD"
+      },
+      {
+        "text": "MedWorkflowQueue",
+        "label": "INTERNAL_SERVICE"
+      },
+      {
+        "text": "studyCode",
+        "label": "MEDICAL_IDENTIFIER"
+      }
     ],
-    "expected_behavior": "Patient PII fields and internal queue name anonymized; async logic preserved"
+    "expected_action": "REDACT",
+    "expected_utility": "Protected symbols detected and redacted; LLM receives REDACT summary and can still provide structural guidance"
   },
   {
     "id": "C009",
     "language": "csharp",
-    "task": "explain",
-    "input_code": "public class MatchmakingService {\n    public Session CreateMatch(string playerId, string region) {\n        return NexusArena.AllocateSession(playerId, region);\n    }\n}",
-    "sensitive_elements": [
-      {"text": "MatchmakingService", "label": "SERVICE_NAME"},
-      {"text": "NexusArena", "label": "INTERNAL_SYSTEM"},
-      {"text": "playerId", "label": "USER_IDENTIFIER"}
+    "scenario": "explain",
+    "developer_prompt": "Explain what this code does:\n\npublic class MatchmakingService {\n    public Session CreateMatch(string playerId, string region) {\n        return NexusArena.AllocateSession(playerId, region);\n    }\n}",
+    "registered_symbols": [
+      {
+        "text": "MatchmakingService",
+        "label": "SERVICE_NAME"
+      },
+      {
+        "text": "NexusArena",
+        "label": "INTERNAL_SYSTEM"
+      },
+      {
+        "text": "playerId",
+        "label": "USER_IDENTIFIER"
+      }
     ],
-    "expected_behavior": "Service and system names anonymized; player identifier generalized"
+    "expected_action": "REDACT",
+    "expected_utility": "Protected symbols detected and redacted; LLM receives REDACT summary and can still provide structural guidance"
   },
   {
     "id": "C010",
     "language": "ruby",
-    "task": "refactor",
-    "input_code": "class BillingEngine\n  def charge_subscriber(msisdn, plan_code)\n    TelecomBillingAPI.debit(msisdn, plan_code)\n  end\nend",
-    "sensitive_elements": [
-      {"text": "BillingEngine", "label": "CLASS_NAME"},
-      {"text": "TelecomBillingAPI", "label": "INTERNAL_SERVICE"},
-      {"text": "msisdn", "label": "PII_FIELD"}
+    "scenario": "refactor",
+    "developer_prompt": "Refactor the following code:\n\nclass BillingEngine\n  def charge_subscriber(msisdn, plan_code)\n    TelecomBillingAPI.debit(msisdn, plan_code)\n  end\nend",
+    "registered_symbols": [
+      {
+        "text": "BillingEngine",
+        "label": "CLASS_NAME"
+      },
+      {
+        "text": "TelecomBillingAPI",
+        "label": "INTERNAL_SERVICE"
+      },
+      {
+        "text": "msisdn",
+        "label": "PII_FIELD"
+      }
     ],
-    "expected_behavior": "Class, service, and subscriber identifier anonymized"
+    "expected_action": "REDACT",
+    "expected_utility": "Protected symbols detected and redacted; LLM receives REDACT summary and can still provide structural guidance"
   },
   {
     "id": "C011",
     "language": "php",
-    "task": "optimize",
-    "input_code": "<?php\nfunction computeBonus(string $employeeId, float $baseSalary): float {\n    return HRMatrix::getBonusMultiplier($employeeId) * $baseSalary;\n}",
-    "sensitive_elements": [
-      {"text": "HRMatrix", "label": "INTERNAL_SYSTEM"},
-      {"text": "employeeId", "label": "PII_FIELD"},
-      {"text": "baseSalary", "label": "FINANCIAL_DATA"}
+    "scenario": "optimize",
+    "developer_prompt": "Optimize the following code:\n\n<?php\nfunction computeBonus(string $employeeId, float $baseSalary): float {\n    return HRMatrix::getBonusMultiplier($employeeId) * $baseSalary;\n}",
+    "registered_symbols": [
+      {
+        "text": "HRMatrix",
+        "label": "INTERNAL_SYSTEM"
+      },
+      {
+        "text": "employeeId",
+        "label": "PII_FIELD"
+      },
+      {
+        "text": "baseSalary",
+        "label": "FINANCIAL_DATA"
+      }
     ],
-    "expected_behavior": "Internal system and PII fields anonymized; compensation logic preserved"
+    "expected_action": "REDACT",
+    "expected_utility": "Protected symbols detected and redacted; LLM receives REDACT summary and can still provide structural guidance"
   },
   {
     "id": "C012",
     "language": "kotlin",
-    "task": "refactor",
-    "input_code": "class UnderwritingEngine {\n    fun evaluateRisk(policyId: String, claimHistory: List<Int>): Double {\n        return AegisRiskModel.score(policyId, claimHistory)\n    }\n}",
-    "sensitive_elements": [
-      {"text": "UnderwritingEngine", "label": "CLASS_NAME"},
-      {"text": "AegisRiskModel", "label": "INTERNAL_SERVICE"},
-      {"text": "policyId", "label": "BUSINESS_IDENTIFIER"}
+    "scenario": "refactor",
+    "developer_prompt": "Refactor the following code:\n\nclass UnderwritingEngine {\n    fun evaluateRisk(policyId: String, claimHistory: List<Int>): Double {\n        return AegisRiskModel.score(policyId, claimHistory)\n    }\n}",
+    "registered_symbols": [
+      {
+        "text": "UnderwritingEngine",
+        "label": "CLASS_NAME"
+      },
+      {
+        "text": "AegisRiskModel",
+        "label": "INTERNAL_SERVICE"
+      },
+      {
+        "text": "policyId",
+        "label": "BUSINESS_IDENTIFIER"
+      }
     ],
-    "expected_behavior": "Class and model names anonymized; scoring logic preserved"
+    "expected_action": "REDACT",
+    "expected_utility": "Protected symbols detected and redacted; LLM receives REDACT summary and can still provide structural guidance"
   },
   {
     "id": "C013",
     "language": "python",
-    "task": "summarize",
-    "input_code": "def infer_property_value(listing_id: str, features: dict) -> float:\n    return AtlasValuationModel.predict(features) * MARKET_PREMIUM_FACTOR",
-    "sensitive_elements": [
-      {"text": "AtlasValuationModel", "label": "INTERNAL_SERVICE"},
-      {"text": "MARKET_PREMIUM_FACTOR", "label": "PROPRIETARY_CONSTANT"},
-      {"text": "listing_id", "label": "BUSINESS_IDENTIFIER"}
+    "scenario": "summarize",
+    "developer_prompt": "Summarize what this code does:\n\ndef infer_property_value(listing_id: str, features: dict) -> float:\n    return AtlasValuationModel.predict(features) * MARKET_PREMIUM_FACTOR",
+    "registered_symbols": [
+      {
+        "text": "AtlasValuationModel",
+        "label": "INTERNAL_SERVICE"
+      },
+      {
+        "text": "MARKET_PREMIUM_FACTOR",
+        "label": "PROPRIETARY_CONSTANT"
+      },
+      {
+        "text": "listing_id",
+        "label": "BUSINESS_IDENTIFIER"
+      }
     ],
-    "expected_behavior": "Model name and proprietary constant anonymized; prediction logic preserved"
+    "expected_action": "REDACT",
+    "expected_utility": "Protected symbols detected and redacted; LLM receives REDACT summary and can still provide structural guidance"
   },
   {
     "id": "C014",
     "language": "java",
-    "task": "refactor",
-    "input_code": "public class DiagnosisRouter {\n    public String route(String icdCode, String facilityId) {\n        return TriageRulesEngine.resolve(icdCode, facilityId);\n    }\n}",
-    "sensitive_elements": [
-      {"text": "DiagnosisRouter", "label": "CLASS_NAME"},
-      {"text": "TriageRulesEngine", "label": "INTERNAL_SYSTEM"},
-      {"text": "facilityId", "label": "FACILITY_IDENTIFIER"}
+    "scenario": "refactor",
+    "developer_prompt": "Refactor the following code:\n\npublic class DiagnosisRouter {\n    public String route(String icdCode, String facilityId) {\n        return TriageRulesEngine.resolve(icdCode, facilityId);\n    }\n}",
+    "registered_symbols": [
+      {
+        "text": "DiagnosisRouter",
+        "label": "CLASS_NAME"
+      },
+      {
+        "text": "TriageRulesEngine",
+        "label": "INTERNAL_SYSTEM"
+      },
+      {
+        "text": "facilityId",
+        "label": "FACILITY_IDENTIFIER"
+      }
     ],
-    "expected_behavior": "Class and rules engine names anonymized; routing logic preserved"
+    "expected_action": "REDACT",
+    "expected_utility": "Protected symbols detected and redacted; LLM receives REDACT summary and can still provide structural guidance"
   },
   {
     "id": "C015",
     "language": "go",
-    "task": "debug",
-    "input_code": "func PushMetric(name string, value float64) {\n\tInfraMetricBus.Publish(name, value, time.Now().Unix())\n}",
-    "sensitive_elements": [
-      {"text": "InfraMetricBus", "label": "INTERNAL_SERVICE"}
+    "scenario": "debug",
+    "developer_prompt": "Help me debug this code:\n\nfunc PushMetric(name string, value float64) {\n\tInfraMetricBus.Publish(name, value, time.Now().Unix())\n}",
+    "registered_symbols": [
+      {
+        "text": "InfraMetricBus",
+        "label": "INTERNAL_SERVICE"
+      }
     ],
-    "expected_behavior": "Internal message bus name anonymized; telemetry logic preserved"
+    "expected_action": "REDACT",
+    "expected_utility": "Protected symbols detected and redacted; LLM receives REDACT summary and can still provide structural guidance"
   },
   {
     "id": "C016",
     "language": "python",
-    "task": "explain",
-    "input_code": "class FeaturePipeline:\n    def transform(self, raw: pd.DataFrame) -> pd.DataFrame:\n        return OracleFeatureStore.enrich(raw, version=PIPELINE_VERSION)",
-    "sensitive_elements": [
-      {"text": "FeaturePipeline", "label": "CLASS_NAME"},
-      {"text": "OracleFeatureStore", "label": "INTERNAL_SERVICE"},
-      {"text": "PIPELINE_VERSION", "label": "INTERNAL_CONFIG"}
+    "scenario": "explain",
+    "developer_prompt": "Explain what this code does:\n\nclass FeaturePipeline:\n    def transform(self, raw: pd.DataFrame) -> pd.DataFrame:\n        return OracleFeatureStore.enrich(raw, version=PIPELINE_VERSION)",
+    "registered_symbols": [
+      {
+        "text": "FeaturePipeline",
+        "label": "CLASS_NAME"
+      },
+      {
+        "text": "OracleFeatureStore",
+        "label": "INTERNAL_SERVICE"
+      },
+      {
+        "text": "PIPELINE_VERSION",
+        "label": "INTERNAL_CONFIG"
+      }
     ],
-    "expected_behavior": "ML pipeline internals anonymized; transformation logic preserved"
+    "expected_action": "REDACT",
+    "expected_utility": "Protected symbols detected and redacted; LLM receives REDACT summary and can still provide structural guidance"
   },
   {
     "id": "C017",
     "language": "typescript",
-    "task": "refactor",
-    "input_code": "export function applyPromoCode(cartId: string, code: string): number {\n  const discount = PromoEngine.evaluate(code, cartId);\n  return CartDB.applyDiscount(cartId, discount);\n}",
-    "sensitive_elements": [
-      {"text": "PromoEngine", "label": "INTERNAL_SERVICE"},
-      {"text": "CartDB", "label": "INTERNAL_DB"},
-      {"text": "cartId", "label": "BUSINESS_IDENTIFIER"}
+    "scenario": "refactor",
+    "developer_prompt": "Refactor the following code:\n\nexport function applyPromoCode(cartId: string, code: string): number {\n  const discount = PromoEngine.evaluate(code, cartId);\n  return CartDB.applyDiscount(cartId, discount);\n}",
+    "registered_symbols": [
+      {
+        "text": "PromoEngine",
+        "label": "INTERNAL_SERVICE"
+      },
+      {
+        "text": "CartDB",
+        "label": "INTERNAL_DB"
+      },
+      {
+        "text": "cartId",
+        "label": "BUSINESS_IDENTIFIER"
+      }
     ],
-    "expected_behavior": "Internal service and DB names anonymized; discount logic preserved"
+    "expected_action": "REDACT",
+    "expected_utility": "Protected symbols detected and redacted; LLM receives REDACT summary and can still provide structural guidance"
   },
   {
     "id": "C018",
     "language": "python",
-    "task": "optimize",
-    "input_code": "def review_contract(contract_id: str, counterparty: str) -> dict:\n    clauses = LexiconParser.extract(contract_id)\n    return LegalRiskScorer.evaluate(clauses, counterparty)",
-    "sensitive_elements": [
-      {"text": "LexiconParser", "label": "INTERNAL_SERVICE"},
-      {"text": "LegalRiskScorer", "label": "INTERNAL_SERVICE"},
-      {"text": "contract_id", "label": "BUSINESS_IDENTIFIER"},
-      {"text": "counterparty", "label": "CLIENT_IDENTIFIER"}
+    "scenario": "optimize",
+    "developer_prompt": "Optimize the following code:\n\ndef review_contract(contract_id: str, counterparty: str) -> dict:\n    clauses = LexiconParser.extract(contract_id)\n    return LegalRiskScorer.evaluate(clauses, counterparty)",
+    "registered_symbols": [
+      {
+        "text": "LexiconParser",
+        "label": "INTERNAL_SERVICE"
+      },
+      {
+        "text": "LegalRiskScorer",
+        "label": "INTERNAL_SERVICE"
+      },
+      {
+        "text": "contract_id",
+        "label": "BUSINESS_IDENTIFIER"
+      },
+      {
+        "text": "counterparty",
+        "label": "CLIENT_IDENTIFIER"
+      }
     ],
-    "expected_behavior": "Legal pipeline components anonymized; contract review logic preserved"
+    "expected_action": "REDACT",
+    "expected_utility": "Protected symbols detected and redacted; LLM receives REDACT summary and can still provide structural guidance"
   },
   {
     "id": "C019",
     "language": "java",
-    "task": "debug",
-    "input_code": "public class StreamCDN {\n    public String resolveEndpoint(String contentId, String userId) {\n        return EdgeRouter.pick(contentId, GeoTable.lookup(userId));\n    }\n}",
-    "sensitive_elements": [
-      {"text": "StreamCDN", "label": "CLASS_NAME"},
-      {"text": "EdgeRouter", "label": "INTERNAL_SERVICE"},
-      {"text": "GeoTable", "label": "INTERNAL_DB"},
-      {"text": "userId", "label": "USER_IDENTIFIER"}
+    "scenario": "debug",
+    "developer_prompt": "Help me debug this code:\n\npublic class StreamCDN {\n    public String resolveEndpoint(String contentId, String userId) {\n        return EdgeRouter.pick(contentId, GeoTable.lookup(userId));\n    }\n}",
+    "registered_symbols": [
+      {
+        "text": "StreamCDN",
+        "label": "CLASS_NAME"
+      },
+      {
+        "text": "EdgeRouter",
+        "label": "INTERNAL_SERVICE"
+      },
+      {
+        "text": "GeoTable",
+        "label": "INTERNAL_DB"
+      },
+      {
+        "text": "userId",
+        "label": "USER_IDENTIFIER"
+      }
     ],
-    "expected_behavior": "CDN routing internals anonymized; geo-routing logic preserved"
+    "expected_action": "REDACT",
+    "expected_utility": "Protected symbols detected and redacted; LLM receives REDACT summary and can still provide structural guidance"
   },
   {
     "id": "C020",
     "language": "kotlin",
-    "task": "summarize",
-    "input_code": "data class OrderManifest(val orderId: String, val items: List<String>)\n\nfun dispatch(manifest: OrderManifest): Boolean {\n    return FulfillmentHub.send(manifest.orderId, manifest.items)\n}",
-    "sensitive_elements": [
-      {"text": "FulfillmentHub", "label": "INTERNAL_SERVICE"},
-      {"text": "orderId", "label": "BUSINESS_IDENTIFIER"}
+    "scenario": "summarize",
+    "developer_prompt": "Summarize what this code does:\n\ndata class OrderManifest(val orderId: String, val items: List<String>)\n\nfun dispatch(manifest: OrderManifest): Boolean {\n    return FulfillmentHub.send(manifest.orderId, manifest.items)\n}",
+    "registered_symbols": [
+      {
+        "text": "FulfillmentHub",
+        "label": "INTERNAL_SERVICE"
+      },
+      {
+        "text": "orderId",
+        "label": "BUSINESS_IDENTIFIER"
+      }
     ],
-    "expected_behavior": "Fulfillment service anonymized; dispatch logic preserved"
+    "expected_action": "REDACT",
+    "expected_utility": "Protected symbols detected and redacted; LLM receives REDACT summary and can still provide structural guidance"
   },
   {
     "id": "C021",
     "language": "csharp",
-    "task": "refactor",
-    "input_code": "public class FraudDetectionService\n{\n    public bool IsSuspicious(string transactionId, decimal amount)\n    {\n        return SentinelFraudGraph.Query(transactionId, amount) > RISK_THRESHOLD;\n    }\n}",
-    "sensitive_elements": [
-      {"text": "FraudDetectionService", "label": "SERVICE_NAME"},
-      {"text": "SentinelFraudGraph", "label": "INTERNAL_SYSTEM"},
-      {"text": "RISK_THRESHOLD", "label": "PROPRIETARY_CONSTANT"},
-      {"text": "transactionId", "label": "BUSINESS_IDENTIFIER"}
+    "scenario": "refactor",
+    "developer_prompt": "Refactor the following code:\n\npublic class FraudDetectionService\n{\n    public bool IsSuspicious(string transactionId, decimal amount)\n    {\n        return SentinelFraudGraph.Query(transactionId, amount) > RISK_THRESHOLD;\n    }\n}",
+    "registered_symbols": [
+      {
+        "text": "FraudDetectionService",
+        "label": "SERVICE_NAME"
+      },
+      {
+        "text": "SentinelFraudGraph",
+        "label": "INTERNAL_SYSTEM"
+      },
+      {
+        "text": "RISK_THRESHOLD",
+        "label": "PROPRIETARY_CONSTANT"
+      },
+      {
+        "text": "transactionId",
+        "label": "BUSINESS_IDENTIFIER"
+      }
     ],
-    "expected_behavior": "Fraud system name, threshold constant, and identifiers anonymized; detection logic preserved"
+    "expected_action": "REDACT",
+    "expected_utility": "Protected symbols detected and redacted; LLM receives REDACT summary and can still provide structural guidance"
   },
   {
     "id": "C022",
     "language": "python",
-    "task": "refactor",
-    "input_code": "REDSHIFT_CONN = 'redshift://admin:Sup3rS3cr3t@analytics-cluster.company.internal:5439/warehouse'\n\ndef run_query(sql: str):\n    conn = psycopg2.connect(REDSHIFT_CONN)\n    return conn.cursor().execute(sql)",
-    "sensitive_elements": [
-      {"text": "Sup3rS3cr3t", "label": "API_KEY"},
-      {"text": "analytics-cluster.company.internal", "label": "INTERNAL_HOST"},
-      {"text": "REDSHIFT_CONN", "label": "DATABASE_CREDENTIAL"}
+    "scenario": "refactor",
+    "developer_prompt": "Refactor the following code:\n\nREDSHIFT_CONN = 'redshift://admin:Sup3rS3cr3t@analytics-cluster.company.internal:5439/warehouse'\n\ndef run_query(sql: str):\n    conn = psycopg2.connect(REDSHIFT_CONN)\n    return conn.cursor().execute(sql)",
+    "registered_symbols": [
+      {
+        "text": "Sup3rS3cr3t",
+        "label": "API_KEY"
+      },
+      {
+        "text": "analytics-cluster.company.internal",
+        "label": "INTERNAL_HOST"
+      },
+      {
+        "text": "REDSHIFT_CONN",
+        "label": "DATABASE_CREDENTIAL"
+      }
     ],
-    "expected_behavior": "Connection string secrets fully removed; connection pattern preserved"
+    "expected_action": "REDACT",
+    "expected_utility": "Sensitive values detected and redacted; no secret content reaches the LLM"
   },
   {
     "id": "C023",
     "language": "javascript",
-    "task": "debug",
-    "input_code": "const WEBHOOK_SECRET = 'whsec_kE8zPqX2NvMmTrY9'\n\nfunction verifySignature(payload, sig) {\n  return crypto.createHmac('sha256', WEBHOOK_SECRET).update(payload).digest('hex') === sig\n}",
-    "sensitive_elements": [
-      {"text": "whsec_kE8zPqX2NvMmTrY9", "label": "API_KEY"},
-      {"text": "WEBHOOK_SECRET", "label": "SECRET_VARIABLE"}
+    "scenario": "debug",
+    "developer_prompt": "Help me debug this code:\n\nconst WEBHOOK_SECRET = 'whsec_kE8zPqX2NvMmTrY9'\n\nfunction verifySignature(payload, sig) {\n  return crypto.createHmac('sha256', WEBHOOK_SECRET).update(payload).digest('hex') === sig\n}",
+    "registered_symbols": [
+      {
+        "text": "whsec_kE8zPqX2NvMmTrY9",
+        "label": "API_KEY"
+      },
+      {
+        "text": "WEBHOOK_SECRET",
+        "label": "SECRET_VARIABLE"
+      }
     ],
-    "expected_behavior": "Webhook secret fully redacted; HMAC verification pattern preserved"
+    "expected_action": "REDACT",
+    "expected_utility": "Sensitive values detected and redacted; no secret content reaches the LLM"
   },
   {
     "id": "C024",
     "language": "python",
-    "task": "refactor",
-    "input_code": "class ApolloScorecard:\n    WEIGHTS = {'velocity': 0.42, 'churn_risk': 0.35, 'nps': 0.23}\n\n    def score(self, account_id: str, metrics: dict) -> float:\n        return sum(self.WEIGHTS[k] * metrics.get(k, 0) for k in self.WEIGHTS)",
-    "sensitive_elements": [
-      {"text": "ApolloScorecard", "label": "CLASS_NAME"},
-      {"text": "WEIGHTS", "label": "PROPRIETARY_MODEL"},
-      {"text": "0.42", "label": "PROPRIETARY_CONSTANT"},
-      {"text": "0.35", "label": "PROPRIETARY_CONSTANT"},
-      {"text": "0.23", "label": "PROPRIETARY_CONSTANT"},
-      {"text": "account_id", "label": "BUSINESS_IDENTIFIER"}
+    "scenario": "refactor",
+    "developer_prompt": "Refactor the following code:\n\nclass ApolloScorecard:\n    WEIGHTS = {'velocity': 0.42, 'churn_risk': 0.35, 'nps': 0.23}\n\n    def score(self, account_id: str, metrics: dict) -> float:\n        return sum(self.WEIGHTS[k] * metrics.get(k, 0) for k in self.WEIGHTS)",
+    "registered_symbols": [
+      {
+        "text": "ApolloScorecard",
+        "label": "CLASS_NAME"
+      },
+      {
+        "text": "WEIGHTS",
+        "label": "PROPRIETARY_MODEL"
+      },
+      {
+        "text": "0.42",
+        "label": "PROPRIETARY_CONSTANT"
+      },
+      {
+        "text": "0.35",
+        "label": "PROPRIETARY_CONSTANT"
+      },
+      {
+        "text": "0.23",
+        "label": "PROPRIETARY_CONSTANT"
+      },
+      {
+        "text": "account_id",
+        "label": "BUSINESS_IDENTIFIER"
+      }
     ],
-    "expected_behavior": "Scorecard class name and proprietary weights anonymized; scoring logic structure preserved"
+    "expected_action": "REDACT",
+    "expected_utility": "Protected symbols detected and redacted; LLM receives REDACT summary and can still provide structural guidance"
   },
   {
     "id": "C025",
     "language": "java",
-    "task": "optimize",
-    "input_code": "public class ComplianceChecker {\n    public boolean isEligible(String customerId, String jurisdiction) {\n        boolean kyc = KYCVaultService.isVerified(customerId);\n        boolean sanction = SanctionScreeningAPI.check(customerId, jurisdiction);\n        return kyc && !sanction;\n    }\n}",
-    "sensitive_elements": [
-      {"text": "ComplianceChecker", "label": "CLASS_NAME"},
-      {"text": "KYCVaultService", "label": "INTERNAL_SERVICE"},
-      {"text": "SanctionScreeningAPI", "label": "INTERNAL_SERVICE"},
-      {"text": "customerId", "label": "PII_FIELD"}
+    "scenario": "optimize",
+    "developer_prompt": "Optimize the following code:\n\npublic class ComplianceChecker {\n    public boolean isEligible(String customerId, String jurisdiction) {\n        boolean kyc = KYCVaultService.isVerified(customerId);\n        boolean sanction = SanctionScreeningAPI.check(customerId, jurisdiction);\n        return kyc && !sanction;\n    }\n}",
+    "registered_symbols": [
+      {
+        "text": "ComplianceChecker",
+        "label": "CLASS_NAME"
+      },
+      {
+        "text": "KYCVaultService",
+        "label": "INTERNAL_SERVICE"
+      },
+      {
+        "text": "SanctionScreeningAPI",
+        "label": "INTERNAL_SERVICE"
+      },
+      {
+        "text": "customerId",
+        "label": "PII_FIELD"
+      }
     ],
-    "expected_behavior": "Compliance service names and customer identifier anonymized; eligibility logic preserved"
+    "expected_action": "REDACT",
+    "expected_utility": "Protected symbols detected and redacted; LLM receives REDACT summary and can still provide structural guidance"
   },
   {
     "id": "C026",
     "language": "swift",
-    "task": "refactor",
-    "input_code": "class ProfileManager {\n    func fetchProfile(userId: String) -> UserProfile? {\n        return ApolloGraphClient.shared.query(userId: userId)\n    }\n}",
-    "sensitive_elements": [
-      {"text": "ProfileManager", "label": "CLASS_NAME"},
-      {"text": "ApolloGraphClient", "label": "INTERNAL_SERVICE"},
-      {"text": "userId", "label": "USER_IDENTIFIER"}
+    "scenario": "refactor",
+    "developer_prompt": "Refactor the following code:\n\nclass ProfileManager {\n    func fetchProfile(userId: String) -> UserProfile? {\n        return ApolloGraphClient.shared.query(userId: userId)\n    }\n}",
+    "registered_symbols": [
+      {
+        "text": "ProfileManager",
+        "label": "CLASS_NAME"
+      },
+      {
+        "text": "ApolloGraphClient",
+        "label": "INTERNAL_SERVICE"
+      },
+      {
+        "text": "userId",
+        "label": "USER_IDENTIFIER"
+      }
     ],
-    "expected_behavior": "Class and client names anonymized; query pattern preserved"
+    "expected_action": "REDACT",
+    "expected_utility": "Protected symbols detected and redacted; LLM receives REDACT summary and can still provide structural guidance"
   },
   {
     "id": "C027",
     "language": "scala",
-    "task": "optimize",
-    "input_code": "object RevenueAggregator {\n  def aggregate(records: Seq[SalesRecord]): Double =\n    records.map(_.netValue).sum * REVENUE_COEFFICIENT\n}",
-    "sensitive_elements": [
-      {"text": "RevenueAggregator", "label": "CLASS_NAME"},
-      {"text": "REVENUE_COEFFICIENT", "label": "PROPRIETARY_CONSTANT"},
-      {"text": "netValue", "label": "FINANCIAL_DATA"}
+    "scenario": "optimize",
+    "developer_prompt": "Optimize the following code:\n\nobject RevenueAggregator {\n  def aggregate(records: Seq[SalesRecord]): Double =\n    records.map(_.netValue).sum * REVENUE_COEFFICIENT\n}",
+    "registered_symbols": [
+      {
+        "text": "RevenueAggregator",
+        "label": "CLASS_NAME"
+      },
+      {
+        "text": "REVENUE_COEFFICIENT",
+        "label": "PROPRIETARY_CONSTANT"
+      },
+      {
+        "text": "netValue",
+        "label": "FINANCIAL_DATA"
+      }
     ],
-    "expected_behavior": "Object name and proprietary coefficient anonymized; aggregation logic preserved"
+    "expected_action": "REDACT",
+    "expected_utility": "Protected symbols detected and redacted; LLM receives REDACT summary and can still provide structural guidance"
   },
   {
     "id": "C028",
     "language": "python",
-    "task": "explain",
-    "input_code": "def serve_prediction(request_id: str, payload: dict) -> dict:\n    vector = EmbeddingCache.get_or_compute(payload)\n    return InferenceCluster.predict(vector, model_version=PROD_MODEL_VERSION)",
-    "sensitive_elements": [
-      {"text": "EmbeddingCache", "label": "INTERNAL_SERVICE"},
-      {"text": "InferenceCluster", "label": "INTERNAL_SERVICE"},
-      {"text": "PROD_MODEL_VERSION", "label": "INTERNAL_CONFIG"},
-      {"text": "request_id", "label": "BUSINESS_IDENTIFIER"}
+    "scenario": "explain",
+    "developer_prompt": "Explain what this code does:\n\ndef serve_prediction(request_id: str, payload: dict) -> dict:\n    vector = EmbeddingCache.get_or_compute(payload)\n    return InferenceCluster.predict(vector, model_version=PROD_MODEL_VERSION)",
+    "registered_symbols": [
+      {
+        "text": "EmbeddingCache",
+        "label": "INTERNAL_SERVICE"
+      },
+      {
+        "text": "InferenceCluster",
+        "label": "INTERNAL_SERVICE"
+      },
+      {
+        "text": "PROD_MODEL_VERSION",
+        "label": "INTERNAL_CONFIG"
+      },
+      {
+        "text": "request_id",
+        "label": "BUSINESS_IDENTIFIER"
+      }
     ],
-    "expected_behavior": "ML serving infrastructure names and config anonymized; prediction flow preserved"
+    "expected_action": "REDACT",
+    "expected_utility": "Protected symbols detected and redacted; LLM receives REDACT summary and can still provide structural guidance"
   },
   {
     "id": "C029",
     "language": "go",
-    "task": "refactor",
-    "input_code": "func SubmitTransaction(walletId string, amount int64) (string, error) {\n\treturn LedgerNode.Broadcast(walletId, amount, ChainID)\n}",
-    "sensitive_elements": [
-      {"text": "LedgerNode", "label": "INTERNAL_SERVICE"},
-      {"text": "ChainID", "label": "INTERNAL_CONFIG"},
-      {"text": "walletId", "label": "USER_IDENTIFIER"}
+    "scenario": "refactor",
+    "developer_prompt": "Refactor the following code:\n\nfunc SubmitTransaction(walletId string, amount int64) (string, error) {\n\treturn LedgerNode.Broadcast(walletId, amount, ChainID)\n}",
+    "registered_symbols": [
+      {
+        "text": "LedgerNode",
+        "label": "INTERNAL_SERVICE"
+      },
+      {
+        "text": "ChainID",
+        "label": "INTERNAL_CONFIG"
+      },
+      {
+        "text": "walletId",
+        "label": "USER_IDENTIFIER"
+      }
     ],
-    "expected_behavior": "Ledger service and chain config anonymized; transaction dispatch logic preserved"
+    "expected_action": "REDACT",
+    "expected_utility": "Protected symbols detected and redacted; LLM receives REDACT summary and can still provide structural guidance"
   },
   {
     "id": "C030",
     "language": "java",
-    "task": "debug",
-    "input_code": "public class SensorGateway {\n    public void ingest(String deviceEui, byte[] payload) {\n        LoRaWANBroker.publish(deviceEui, payload, NETWORK_SERVER_KEY);\n    }\n}",
-    "sensitive_elements": [
-      {"text": "SensorGateway", "label": "CLASS_NAME"},
-      {"text": "LoRaWANBroker", "label": "INTERNAL_SERVICE"},
-      {"text": "NETWORK_SERVER_KEY", "label": "API_KEY"},
-      {"text": "deviceEui", "label": "DEVICE_IDENTIFIER"}
+    "scenario": "debug",
+    "developer_prompt": "Help me debug this code:\n\npublic class SensorGateway {\n    public void ingest(String deviceEui, byte[] payload) {\n        LoRaWANBroker.publish(deviceEui, payload, NETWORK_SERVER_KEY);\n    }\n}",
+    "registered_symbols": [
+      {
+        "text": "SensorGateway",
+        "label": "CLASS_NAME"
+      },
+      {
+        "text": "LoRaWANBroker",
+        "label": "INTERNAL_SERVICE"
+      },
+      {
+        "text": "NETWORK_SERVER_KEY",
+        "label": "API_KEY"
+      },
+      {
+        "text": "deviceEui",
+        "label": "DEVICE_IDENTIFIER"
+      }
     ],
-    "expected_behavior": "IoT broker name and network key fully redacted; ingestion logic preserved"
+    "expected_action": "REDACT",
+    "expected_utility": "Sensitive values detected and redacted; no secret content reaches the LLM"
   },
   {
     "id": "C031",
     "language": "typescript",
-    "task": "refactor",
-    "input_code": "export async function fetchPatientRecord(fhirId: string): Promise<FhirBundle> {\n  return HeliosEHR.getBundle(fhirId, { include: ['Condition', 'MedicationRequest'] });\n}",
-    "sensitive_elements": [
-      {"text": "HeliosEHR", "label": "INTERNAL_SERVICE"},
-      {"text": "fhirId", "label": "PII_FIELD"},
-      {"text": "FhirBundle", "label": "INTERNAL_TYPE"}
+    "scenario": "refactor",
+    "developer_prompt": "Refactor the following code:\n\nexport async function fetchPatientRecord(fhirId: string): Promise<FhirBundle> {\n  return HeliosEHR.getBundle(fhirId, { include: ['Condition', 'MedicationRequest'] });\n}",
+    "registered_symbols": [
+      {
+        "text": "HeliosEHR",
+        "label": "INTERNAL_SERVICE"
+      },
+      {
+        "text": "fhirId",
+        "label": "PII_FIELD"
+      },
+      {
+        "text": "FhirBundle",
+        "label": "INTERNAL_TYPE"
+      }
     ],
-    "expected_behavior": "EHR system name and patient identifier anonymized; FHIR fetch pattern preserved"
+    "expected_action": "REDACT",
+    "expected_utility": "Protected symbols detected and redacted; LLM receives REDACT summary and can still provide structural guidance"
   },
   {
     "id": "C032",
     "language": "python",
-    "task": "optimize",
-    "input_code": "def dispatch_load_event(meter_id: str, kwh: float) -> None:\n    if kwh > PEAK_THRESHOLD_KWH:\n        GridControlBus.alert(meter_id, severity='HIGH')\n    else:\n        GridControlBus.record(meter_id, kwh)",
-    "sensitive_elements": [
-      {"text": "GridControlBus", "label": "INTERNAL_SERVICE"},
-      {"text": "PEAK_THRESHOLD_KWH", "label": "PROPRIETARY_CONSTANT"},
-      {"text": "meter_id", "label": "DEVICE_IDENTIFIER"}
+    "scenario": "optimize",
+    "developer_prompt": "Optimize the following code:\n\ndef dispatch_load_event(meter_id: str, kwh: float) -> None:\n    if kwh > PEAK_THRESHOLD_KWH:\n        GridControlBus.alert(meter_id, severity='HIGH')\n    else:\n        GridControlBus.record(meter_id, kwh)",
+    "registered_symbols": [
+      {
+        "text": "GridControlBus",
+        "label": "INTERNAL_SERVICE"
+      },
+      {
+        "text": "PEAK_THRESHOLD_KWH",
+        "label": "PROPRIETARY_CONSTANT"
+      },
+      {
+        "text": "meter_id",
+        "label": "DEVICE_IDENTIFIER"
+      }
     ],
-    "expected_behavior": "Grid service and threshold constant anonymized; load dispatch logic preserved"
+    "expected_action": "REDACT",
+    "expected_utility": "Protected symbols detected and redacted; LLM receives REDACT summary and can still provide structural guidance"
   },
   {
     "id": "C033",
     "language": "rust",
-    "task": "debug",
-    "input_code": "pub fn write_register(addr: u16, val: u8) -> Result<(), HalError> {\n    FirmwareBus::spi_write(CHIP_SELECT_PIN, addr, val)\n}",
-    "sensitive_elements": [
-      {"text": "FirmwareBus", "label": "INTERNAL_SERVICE"},
-      {"text": "CHIP_SELECT_PIN", "label": "INTERNAL_CONFIG"},
-      {"text": "HalError", "label": "INTERNAL_TYPE"}
+    "scenario": "debug",
+    "developer_prompt": "Help me debug this code:\n\npub fn write_register(addr: u16, val: u8) -> Result<(), HalError> {\n    FirmwareBus::spi_write(CHIP_SELECT_PIN, addr, val)\n}",
+    "registered_symbols": [
+      {
+        "text": "FirmwareBus",
+        "label": "INTERNAL_SERVICE"
+      },
+      {
+        "text": "CHIP_SELECT_PIN",
+        "label": "INTERNAL_CONFIG"
+      },
+      {
+        "text": "HalError",
+        "label": "INTERNAL_TYPE"
+      }
     ],
-    "expected_behavior": "Firmware bus and pin constant anonymized; register write pattern preserved"
+    "expected_action": "REDACT",
+    "expected_utility": "Protected symbols detected and redacted; LLM receives REDACT summary and can still provide structural guidance"
   },
   {
     "id": "C034",
     "language": "csharp",
-    "task": "summarize",
-    "input_code": "public class CitizenVerifier\n{\n    public bool Verify(string taxCode, string documentId)\n    {\n        return NationalIdRegistry.Validate(taxCode, documentId, AGENCY_CERT_THUMBPRINT);\n    }\n}",
-    "sensitive_elements": [
-      {"text": "CitizenVerifier", "label": "CLASS_NAME"},
-      {"text": "NationalIdRegistry", "label": "INTERNAL_SYSTEM"},
-      {"text": "AGENCY_CERT_THUMBPRINT", "label": "API_KEY"},
-      {"text": "taxCode", "label": "PII_FIELD"},
-      {"text": "documentId", "label": "PII_FIELD"}
+    "scenario": "summarize",
+    "developer_prompt": "Summarize what this code does:\n\npublic class CitizenVerifier\n{\n    public bool Verify(string taxCode, string documentId)\n    {\n        return NationalIdRegistry.Validate(taxCode, documentId, AGENCY_CERT_THUMBPRINT);\n    }\n}",
+    "registered_symbols": [
+      {
+        "text": "CitizenVerifier",
+        "label": "CLASS_NAME"
+      },
+      {
+        "text": "NationalIdRegistry",
+        "label": "INTERNAL_SYSTEM"
+      },
+      {
+        "text": "AGENCY_CERT_THUMBPRINT",
+        "label": "API_KEY"
+      },
+      {
+        "text": "taxCode",
+        "label": "PII_FIELD"
+      },
+      {
+        "text": "documentId",
+        "label": "PII_FIELD"
+      }
     ],
-    "expected_behavior": "Registry name, certificate thumbprint, and PII field names anonymized"
+    "expected_action": "REDACT",
+    "expected_utility": "Protected symbols detected and redacted; LLM receives REDACT summary and can still provide structural guidance"
   },
   {
     "id": "C035",
     "language": "ruby",
-    "task": "refactor",
-    "input_code": "class WarehouseAllocator\n  def allocate(sku, quantity)\n    slot = VortexWMS.find_slot(sku, quantity)\n    VortexWMS.reserve(slot, PRIORITY_LANE_ID)\n  end\nend",
-    "sensitive_elements": [
-      {"text": "WarehouseAllocator", "label": "CLASS_NAME"},
-      {"text": "VortexWMS", "label": "INTERNAL_SERVICE"},
-      {"text": "PRIORITY_LANE_ID", "label": "INTERNAL_CONFIG"}
+    "scenario": "refactor",
+    "developer_prompt": "Refactor the following code:\n\nclass WarehouseAllocator\n  def allocate(sku, quantity)\n    slot = VortexWMS.find_slot(sku, quantity)\n    VortexWMS.reserve(slot, PRIORITY_LANE_ID)\n  end\nend",
+    "registered_symbols": [
+      {
+        "text": "WarehouseAllocator",
+        "label": "CLASS_NAME"
+      },
+      {
+        "text": "VortexWMS",
+        "label": "INTERNAL_SERVICE"
+      },
+      {
+        "text": "PRIORITY_LANE_ID",
+        "label": "INTERNAL_CONFIG"
+      }
     ],
-    "expected_behavior": "WMS service and lane config anonymized; slot allocation logic preserved"
+    "expected_action": "REDACT",
+    "expected_utility": "Protected symbols detected and redacted; LLM receives REDACT summary and can still provide structural guidance"
   },
   {
     "id": "C036",
     "language": "php",
-    "task": "debug",
-    "input_code": "<?php\nfunction sync_inventory(string $storeId, array $skus): int {\n    return RetailOpsAPI::push($storeId, $skus, CHANNEL_PARTNER_TOKEN);\n}",
-    "sensitive_elements": [
-      {"text": "RetailOpsAPI", "label": "INTERNAL_SERVICE"},
-      {"text": "CHANNEL_PARTNER_TOKEN", "label": "API_KEY"},
-      {"text": "storeId", "label": "BUSINESS_IDENTIFIER"}
+    "scenario": "debug",
+    "developer_prompt": "Help me debug this code:\n\n<?php\nfunction sync_inventory(string $storeId, array $skus): int {\n    return RetailOpsAPI::push($storeId, $skus, CHANNEL_PARTNER_TOKEN);\n}",
+    "registered_symbols": [
+      {
+        "text": "RetailOpsAPI",
+        "label": "INTERNAL_SERVICE"
+      },
+      {
+        "text": "CHANNEL_PARTNER_TOKEN",
+        "label": "API_KEY"
+      },
+      {
+        "text": "storeId",
+        "label": "BUSINESS_IDENTIFIER"
+      }
     ],
-    "expected_behavior": "Retail API name and partner token fully redacted; sync logic preserved"
+    "expected_action": "REDACT",
+    "expected_utility": "Sensitive values detected and redacted; no secret content reaches the LLM"
   },
   {
     "id": "C037",
     "language": "kotlin",
-    "task": "explain",
-    "input_code": "class NotificationDispatcher {\n    fun push(deviceToken: String, event: AppEvent) {\n        FirebaseAdmin.sendToDevice(deviceToken, event.toFcmPayload(), APP_NAMESPACE)\n    }\n}",
-    "sensitive_elements": [
-      {"text": "NotificationDispatcher", "label": "CLASS_NAME"},
-      {"text": "APP_NAMESPACE", "label": "INTERNAL_CONFIG"},
-      {"text": "AppEvent", "label": "INTERNAL_TYPE"},
-      {"text": "deviceToken", "label": "DEVICE_IDENTIFIER"}
+    "scenario": "explain",
+    "developer_prompt": "Explain what this code does:\n\nclass NotificationDispatcher {\n    fun push(deviceToken: String, event: AppEvent) {\n        FirebaseAdmin.sendToDevice(deviceToken, event.toFcmPayload(), APP_NAMESPACE)\n    }\n}",
+    "registered_symbols": [
+      {
+        "text": "NotificationDispatcher",
+        "label": "CLASS_NAME"
+      },
+      {
+        "text": "APP_NAMESPACE",
+        "label": "INTERNAL_CONFIG"
+      },
+      {
+        "text": "AppEvent",
+        "label": "INTERNAL_TYPE"
+      },
+      {
+        "text": "deviceToken",
+        "label": "DEVICE_IDENTIFIER"
+      }
     ],
-    "expected_behavior": "App namespace and device token anonymized; push dispatch logic preserved"
+    "expected_action": "REDACT",
+    "expected_utility": "Protected symbols detected and redacted; LLM receives REDACT summary and can still provide structural guidance"
   },
   {
     "id": "C038",
     "language": "python",
-    "task": "refactor",
-    "input_code": "def enrich_ioc(ioc_value: str, ioc_type: str) -> dict:\n    reputation = ThreatIntelFeed.query(ioc_value, ioc_type, api_key=TI_API_KEY)\n    return SandboxOrchestrator.detonate(ioc_value) | reputation",
-    "sensitive_elements": [
-      {"text": "ThreatIntelFeed", "label": "INTERNAL_SERVICE"},
-      {"text": "SandboxOrchestrator", "label": "INTERNAL_SERVICE"},
-      {"text": "TI_API_KEY", "label": "API_KEY"}
+    "scenario": "refactor",
+    "developer_prompt": "Refactor the following code:\n\ndef enrich_ioc(ioc_value: str, ioc_type: str) -> dict:\n    reputation = ThreatIntelFeed.query(ioc_value, ioc_type, api_key=TI_API_KEY)\n    return SandboxOrchestrator.detonate(ioc_value) | reputation",
+    "registered_symbols": [
+      {
+        "text": "ThreatIntelFeed",
+        "label": "INTERNAL_SERVICE"
+      },
+      {
+        "text": "SandboxOrchestrator",
+        "label": "INTERNAL_SERVICE"
+      },
+      {
+        "text": "TI_API_KEY",
+        "label": "API_KEY"
+      }
     ],
-    "expected_behavior": "Threat intel service names and API key anonymized; enrichment pipeline preserved"
+    "expected_action": "REDACT",
+    "expected_utility": "Protected symbols detected and redacted; LLM receives REDACT summary and can still provide structural guidance"
   },
   {
     "id": "C039",
     "language": "java",
-    "task": "optimize",
-    "input_code": "public class OrderRouter {\n    public void route(Order order) {\n        if (order.value() > DARK_POOL_THRESHOLD) {\n            DarkPoolConnector.submit(order, VENUE_CODE);\n        } else {\n            LitExchangeAdapter.send(order);\n        }\n    }\n}",
-    "sensitive_elements": [
-      {"text": "OrderRouter", "label": "CLASS_NAME"},
-      {"text": "DARK_POOL_THRESHOLD", "label": "PROPRIETARY_CONSTANT"},
-      {"text": "DarkPoolConnector", "label": "INTERNAL_SERVICE"},
-      {"text": "VENUE_CODE", "label": "INTERNAL_CONFIG"},
-      {"text": "LitExchangeAdapter", "label": "INTERNAL_SERVICE"}
+    "scenario": "optimize",
+    "developer_prompt": "Optimize the following code:\n\npublic class OrderRouter {\n    public void route(Order order) {\n        if (order.value() > DARK_POOL_THRESHOLD) {\n            DarkPoolConnector.submit(order, VENUE_CODE);\n        } else {\n            LitExchangeAdapter.send(order);\n        }\n    }\n}",
+    "registered_symbols": [
+      {
+        "text": "OrderRouter",
+        "label": "CLASS_NAME"
+      },
+      {
+        "text": "DARK_POOL_THRESHOLD",
+        "label": "PROPRIETARY_CONSTANT"
+      },
+      {
+        "text": "DarkPoolConnector",
+        "label": "INTERNAL_SERVICE"
+      },
+      {
+        "text": "VENUE_CODE",
+        "label": "INTERNAL_CONFIG"
+      },
+      {
+        "text": "LitExchangeAdapter",
+        "label": "INTERNAL_SERVICE"
+      }
     ],
-    "expected_behavior": "Trading venue names and threshold constant anonymized; routing logic preserved"
+    "expected_action": "REDACT",
+    "expected_utility": "Protected symbols detected and redacted; LLM receives REDACT summary and can still provide structural guidance"
   },
   {
     "id": "C040",
     "language": "go",
-    "task": "explain",
-    "input_code": "func RateLimit(clientID string, operation string) bool {\n\tkey := fmt.Sprintf(\"%s:%s\", clientID, operation)\n\treturn QuotaStore.Increment(key, BURST_LIMIT, REFILL_RATE)\n}",
-    "sensitive_elements": [
-      {"text": "QuotaStore", "label": "INTERNAL_SERVICE"},
-      {"text": "BURST_LIMIT", "label": "PROPRIETARY_CONSTANT"},
-      {"text": "REFILL_RATE", "label": "PROPRIETARY_CONSTANT"},
-      {"text": "clientID", "label": "BUSINESS_IDENTIFIER"}
+    "scenario": "explain",
+    "developer_prompt": "Explain what this code does:\n\nfunc RateLimit(clientID string, operation string) bool {\n\tkey := fmt.Sprintf(\"%s:%s\", clientID, operation)\n\treturn QuotaStore.Increment(key, BURST_LIMIT, REFILL_RATE)\n}",
+    "registered_symbols": [
+      {
+        "text": "QuotaStore",
+        "label": "INTERNAL_SERVICE"
+      },
+      {
+        "text": "BURST_LIMIT",
+        "label": "PROPRIETARY_CONSTANT"
+      },
+      {
+        "text": "REFILL_RATE",
+        "label": "PROPRIETARY_CONSTANT"
+      },
+      {
+        "text": "clientID",
+        "label": "BUSINESS_IDENTIFIER"
+      }
     ],
-    "expected_behavior": "Quota service and rate constants anonymized; rate-limiting logic preserved"
+    "expected_action": "REDACT",
+    "expected_utility": "Protected symbols detected and redacted; LLM receives REDACT summary and can still provide structural guidance"
   },
   {
     "id": "C041",
     "language": "typescript",
-    "task": "debug",
-    "input_code": "export const resolveProductPrice = async (_: unknown, args: { productId: string }, ctx: AppContext) => {\n  const base = await ctx.dataSources.PricingEngine.getBase(args.productId);\n  return base * ctx.dataSources.TaxService.rate(ctx.tenantId);\n};",
-    "sensitive_elements": [
-      {"text": "PricingEngine", "label": "INTERNAL_SERVICE"},
-      {"text": "TaxService", "label": "INTERNAL_SERVICE"},
-      {"text": "tenantId", "label": "BUSINESS_IDENTIFIER"},
-      {"text": "AppContext", "label": "INTERNAL_TYPE"}
+    "scenario": "debug",
+    "developer_prompt": "Help me debug this code:\n\nexport const resolveProductPrice = async (_: unknown, args: { productId: string }, ctx: AppContext) => {\n  const base = await ctx.dataSources.PricingEngine.getBase(args.productId);\n  return base * ctx.dataSources.TaxService.rate(ctx.tenantId);\n};",
+    "registered_symbols": [
+      {
+        "text": "PricingEngine",
+        "label": "INTERNAL_SERVICE"
+      },
+      {
+        "text": "TaxService",
+        "label": "INTERNAL_SERVICE"
+      },
+      {
+        "text": "tenantId",
+        "label": "BUSINESS_IDENTIFIER"
+      },
+      {
+        "text": "AppContext",
+        "label": "INTERNAL_TYPE"
+      }
     ],
-    "expected_behavior": "Service datasource names and context type anonymized; resolver logic preserved"
+    "expected_action": "REDACT",
+    "expected_utility": "Protected symbols detected and redacted; LLM receives REDACT summary and can still provide structural guidance"
   },
   {
     "id": "C042",
     "language": "python",
-    "task": "summarize",
-    "input_code": "def classify_intent(text: str, lang: str) -> str:\n    tokens = LinguaTokenizer.tokenize(text, lang)\n    return IntentClassifierV3.predict(tokens, threshold=CONFIDENCE_CUTOFF)",
-    "sensitive_elements": [
-      {"text": "LinguaTokenizer", "label": "INTERNAL_SERVICE"},
-      {"text": "IntentClassifierV3", "label": "INTERNAL_SERVICE"},
-      {"text": "CONFIDENCE_CUTOFF", "label": "PROPRIETARY_CONSTANT"}
+    "scenario": "summarize",
+    "developer_prompt": "Summarize what this code does:\n\ndef classify_intent(text: str, lang: str) -> str:\n    tokens = LinguaTokenizer.tokenize(text, lang)\n    return IntentClassifierV3.predict(tokens, threshold=CONFIDENCE_CUTOFF)",
+    "registered_symbols": [
+      {
+        "text": "LinguaTokenizer",
+        "label": "INTERNAL_SERVICE"
+      },
+      {
+        "text": "IntentClassifierV3",
+        "label": "INTERNAL_SERVICE"
+      },
+      {
+        "text": "CONFIDENCE_CUTOFF",
+        "label": "PROPRIETARY_CONSTANT"
+      }
     ],
-    "expected_behavior": "NLP service names and confidence threshold anonymized; classification pipeline preserved"
+    "expected_action": "REDACT",
+    "expected_utility": "Protected symbols detected and redacted; LLM receives REDACT summary and can still provide structural guidance"
   },
   {
     "id": "C043",
     "language": "java",
-    "task": "refactor",
-    "input_code": "public class EventPublisher {\n    public void publish(String topic, DomainEvent event) {\n        KafkaBroker.send(CLUSTER_BOOTSTRAP, topic, event.serialize(), PRODUCER_CONFIG);\n    }\n}",
-    "sensitive_elements": [
-      {"text": "EventPublisher", "label": "CLASS_NAME"},
-      {"text": "KafkaBroker", "label": "INTERNAL_SERVICE"},
-      {"text": "CLUSTER_BOOTSTRAP", "label": "INTERNAL_HOST"},
-      {"text": "PRODUCER_CONFIG", "label": "INTERNAL_CONFIG"},
-      {"text": "DomainEvent", "label": "INTERNAL_TYPE"}
+    "scenario": "refactor",
+    "developer_prompt": "Refactor the following code:\n\npublic class EventPublisher {\n    public void publish(String topic, DomainEvent event) {\n        KafkaBroker.send(CLUSTER_BOOTSTRAP, topic, event.serialize(), PRODUCER_CONFIG);\n    }\n}",
+    "registered_symbols": [
+      {
+        "text": "EventPublisher",
+        "label": "CLASS_NAME"
+      },
+      {
+        "text": "KafkaBroker",
+        "label": "INTERNAL_SERVICE"
+      },
+      {
+        "text": "CLUSTER_BOOTSTRAP",
+        "label": "INTERNAL_HOST"
+      },
+      {
+        "text": "PRODUCER_CONFIG",
+        "label": "INTERNAL_CONFIG"
+      },
+      {
+        "text": "DomainEvent",
+        "label": "INTERNAL_TYPE"
+      }
     ],
-    "expected_behavior": "Broker, cluster host, and config constants anonymized; event publish pattern preserved"
+    "expected_action": "REDACT",
+    "expected_utility": "Protected symbols detected and redacted; LLM receives REDACT summary and can still provide structural guidance"
   },
   {
     "id": "C044",
     "language": "rust",
-    "task": "optimize",
-    "input_code": "pub fn seal_envelope(plaintext: &[u8], recipient_pub: &PublicKey) -> Vec<u8> {\n    VaultCrypto::encrypt_ephemeral(plaintext, recipient_pub, &MASTER_SALT)\n}",
-    "sensitive_elements": [
-      {"text": "VaultCrypto", "label": "INTERNAL_SERVICE"},
-      {"text": "MASTER_SALT", "label": "API_KEY"},
-      {"text": "PublicKey", "label": "INTERNAL_TYPE"}
+    "scenario": "optimize",
+    "developer_prompt": "Optimize the following code:\n\npub fn seal_envelope(plaintext: &[u8], recipient_pub: &PublicKey) -> Vec<u8> {\n    VaultCrypto::encrypt_ephemeral(plaintext, recipient_pub, &MASTER_SALT)\n}",
+    "registered_symbols": [
+      {
+        "text": "VaultCrypto",
+        "label": "INTERNAL_SERVICE"
+      },
+      {
+        "text": "MASTER_SALT",
+        "label": "API_KEY"
+      },
+      {
+        "text": "PublicKey",
+        "label": "INTERNAL_TYPE"
+      }
     ],
-    "expected_behavior": "Crypto service and master salt fully redacted; envelope encryption pattern preserved"
+    "expected_action": "REDACT",
+    "expected_utility": "Sensitive values detected and redacted; no secret content reaches the LLM"
   },
   {
     "id": "C045",
     "language": "javascript",
-    "task": "refactor",
-    "input_code": "async function initiateTransfer(accountId, amount, currency) {\n  const token = await OpenBankingHub.getAccessToken(CLIENT_ID, CLIENT_SECRET);\n  return OpenBankingHub.transfer({ accountId, amount, currency, token });\n}",
-    "sensitive_elements": [
-      {"text": "OpenBankingHub", "label": "INTERNAL_SERVICE"},
-      {"text": "CLIENT_ID", "label": "API_KEY"},
-      {"text": "CLIENT_SECRET", "label": "API_KEY"},
-      {"text": "accountId", "label": "BUSINESS_IDENTIFIER"}
+    "scenario": "refactor",
+    "developer_prompt": "Refactor the following code:\n\nasync function initiateTransfer(accountId, amount, currency) {\n  const token = await OpenBankingHub.getAccessToken(CLIENT_ID, CLIENT_SECRET);\n  return OpenBankingHub.transfer({ accountId, amount, currency, token });\n}",
+    "registered_symbols": [
+      {
+        "text": "OpenBankingHub",
+        "label": "INTERNAL_SERVICE"
+      },
+      {
+        "text": "CLIENT_ID",
+        "label": "API_KEY"
+      },
+      {
+        "text": "CLIENT_SECRET",
+        "label": "API_KEY"
+      },
+      {
+        "text": "accountId",
+        "label": "BUSINESS_IDENTIFIER"
+      }
     ],
-    "expected_behavior": "Banking service name and OAuth credentials fully redacted; transfer flow preserved"
+    "expected_action": "REDACT",
+    "expected_utility": "Sensitive values detected and redacted; no secret content reaches the LLM"
   },
   {
     "id": "C046",
     "language": "python",
-    "task": "debug",
-    "input_code": "def get_variant(user_id: str, experiment: str) -> str:\n    cohort = SegmentationEngine.resolve(user_id, experiment)\n    return FeatureFlagStore.assignment(cohort, experiment, ROLLOUT_SALT)",
-    "sensitive_elements": [
-      {"text": "SegmentationEngine", "label": "INTERNAL_SERVICE"},
-      {"text": "FeatureFlagStore", "label": "INTERNAL_SERVICE"},
-      {"text": "ROLLOUT_SALT", "label": "INTERNAL_CONFIG"},
-      {"text": "user_id", "label": "USER_IDENTIFIER"}
+    "scenario": "debug",
+    "developer_prompt": "Help me debug this code:\n\ndef get_variant(user_id: str, experiment: str) -> str:\n    cohort = SegmentationEngine.resolve(user_id, experiment)\n    return FeatureFlagStore.assignment(cohort, experiment, ROLLOUT_SALT)",
+    "registered_symbols": [
+      {
+        "text": "SegmentationEngine",
+        "label": "INTERNAL_SERVICE"
+      },
+      {
+        "text": "FeatureFlagStore",
+        "label": "INTERNAL_SERVICE"
+      },
+      {
+        "text": "ROLLOUT_SALT",
+        "label": "INTERNAL_CONFIG"
+      },
+      {
+        "text": "user_id",
+        "label": "USER_IDENTIFIER"
+      }
     ],
-    "expected_behavior": "Experimentation infrastructure names and salt anonymized; variant assignment logic preserved"
+    "expected_action": "REDACT",
+    "expected_utility": "Protected symbols detected and redacted; LLM receives REDACT summary and can still provide structural guidance"
   },
   {
     "id": "C047",
     "language": "csharp",
-    "task": "explain",
-    "input_code": "public class PurchaseOrderWorkflow\n{\n    public void Submit(PurchaseOrder po)\n    {\n        var approved = ApprovalMatrixService.Evaluate(po.Amount, po.CostCenter);\n        if (approved) ERP_Connector.Post(po, GL_ACCOUNT_CODE);\n    }\n}",
-    "sensitive_elements": [
-      {"text": "PurchaseOrderWorkflow", "label": "CLASS_NAME"},
-      {"text": "ApprovalMatrixService", "label": "INTERNAL_SERVICE"},
-      {"text": "ERP_Connector", "label": "INTERNAL_SERVICE"},
-      {"text": "GL_ACCOUNT_CODE", "label": "INTERNAL_CONFIG"}
+    "scenario": "explain",
+    "developer_prompt": "Explain what this code does:\n\npublic class PurchaseOrderWorkflow\n{\n    public void Submit(PurchaseOrder po)\n    {\n        var approved = ApprovalMatrixService.Evaluate(po.Amount, po.CostCenter);\n        if (approved) ERP_Connector.Post(po, GL_ACCOUNT_CODE);\n    }\n}",
+    "registered_symbols": [
+      {
+        "text": "PurchaseOrderWorkflow",
+        "label": "CLASS_NAME"
+      },
+      {
+        "text": "ApprovalMatrixService",
+        "label": "INTERNAL_SERVICE"
+      },
+      {
+        "text": "ERP_Connector",
+        "label": "INTERNAL_SERVICE"
+      },
+      {
+        "text": "GL_ACCOUNT_CODE",
+        "label": "INTERNAL_CONFIG"
+      }
     ],
-    "expected_behavior": "ERP connector, approval service, and GL code anonymized; workflow logic preserved"
+    "expected_action": "REDACT",
+    "expected_utility": "Protected symbols detected and redacted; LLM receives REDACT summary and can still provide structural guidance"
   },
   {
     "id": "C048",
     "language": "go",
-    "task": "refactor",
-    "input_code": "func HealthCheck(ctx context.Context) error {\n\treturn ServiceMesh.Probe(ctx, SIDECAR_PORT, HEALTHCHECK_PATH)\n}",
-    "sensitive_elements": [
-      {"text": "ServiceMesh", "label": "INTERNAL_SERVICE"},
-      {"text": "SIDECAR_PORT", "label": "INTERNAL_CONFIG"},
-      {"text": "HEALTHCHECK_PATH", "label": "INTERNAL_CONFIG"}
+    "scenario": "refactor",
+    "developer_prompt": "Refactor the following code:\n\nfunc HealthCheck(ctx context.Context) error {\n\treturn ServiceMesh.Probe(ctx, SIDECAR_PORT, HEALTHCHECK_PATH)\n}",
+    "registered_symbols": [
+      {
+        "text": "ServiceMesh",
+        "label": "INTERNAL_SERVICE"
+      },
+      {
+        "text": "SIDECAR_PORT",
+        "label": "INTERNAL_CONFIG"
+      },
+      {
+        "text": "HEALTHCHECK_PATH",
+        "label": "INTERNAL_CONFIG"
+      }
     ],
-    "expected_behavior": "Service mesh internals and port/path constants anonymized; health check pattern preserved"
+    "expected_action": "REDACT",
+    "expected_utility": "Protected symbols detected and redacted; LLM receives REDACT summary and can still provide structural guidance"
   },
   {
     "id": "C049",
     "language": "python",
-    "task": "optimize",
-    "input_code": "class ScoreBatch:\n    def run(self, batch_id: str, records: list) -> list:\n        features = FeatureHydrator.hydrate(records, store=FEATURE_STORE_URL)\n        return ChampionModel.score_batch(features, cutoff=SCORE_CUTOFF)",
-    "sensitive_elements": [
-      {"text": "ScoreBatch", "label": "CLASS_NAME"},
-      {"text": "FeatureHydrator", "label": "INTERNAL_SERVICE"},
-      {"text": "FEATURE_STORE_URL", "label": "INTERNAL_HOST"},
-      {"text": "ChampionModel", "label": "INTERNAL_SERVICE"},
-      {"text": "SCORE_CUTOFF", "label": "PROPRIETARY_CONSTANT"}
+    "scenario": "optimize",
+    "developer_prompt": "Optimize the following code:\n\nclass ScoreBatch:\n    def run(self, batch_id: str, records: list) -> list:\n        features = FeatureHydrator.hydrate(records, store=FEATURE_STORE_URL)\n        return ChampionModel.score_batch(features, cutoff=SCORE_CUTOFF)",
+    "registered_symbols": [
+      {
+        "text": "ScoreBatch",
+        "label": "CLASS_NAME"
+      },
+      {
+        "text": "FeatureHydrator",
+        "label": "INTERNAL_SERVICE"
+      },
+      {
+        "text": "FEATURE_STORE_URL",
+        "label": "INTERNAL_HOST"
+      },
+      {
+        "text": "ChampionModel",
+        "label": "INTERNAL_SERVICE"
+      },
+      {
+        "text": "SCORE_CUTOFF",
+        "label": "PROPRIETARY_CONSTANT"
+      }
     ],
-    "expected_behavior": "ML serving infrastructure and scoring threshold anonymized; batch pipeline preserved"
+    "expected_action": "REDACT",
+    "expected_utility": "Protected symbols detected and redacted; LLM receives REDACT summary and can still provide structural guidance"
   },
   {
     "id": "C050",
     "language": "java",
-    "task": "summarize",
-    "input_code": "public class AuditTrailWriter {\n    public void record(String principalId, String action, Object payload) {\n        ImmutableLedger.append(\n            principalId, action, payload,\n            AuditConfig.RETENTION_CLASS, HMAC_SIGNING_KEY\n        );\n    }\n}",
-    "sensitive_elements": [
-      {"text": "AuditTrailWriter", "label": "CLASS_NAME"},
-      {"text": "ImmutableLedger", "label": "INTERNAL_SERVICE"},
-      {"text": "AuditConfig", "label": "INTERNAL_CONFIG"},
-      {"text": "HMAC_SIGNING_KEY", "label": "API_KEY"},
-      {"text": "principalId", "label": "USER_IDENTIFIER"}
+    "scenario": "summarize",
+    "developer_prompt": "Summarize what this code does:\n\npublic class AuditTrailWriter {\n    public void record(String principalId, String action, Object payload) {\n        ImmutableLedger.append(\n            principalId, action, payload,\n            AuditConfig.RETENTION_CLASS, HMAC_SIGNING_KEY\n        );\n    }\n}",
+    "registered_symbols": [
+      {
+        "text": "AuditTrailWriter",
+        "label": "CLASS_NAME"
+      },
+      {
+        "text": "ImmutableLedger",
+        "label": "INTERNAL_SERVICE"
+      },
+      {
+        "text": "AuditConfig",
+        "label": "INTERNAL_CONFIG"
+      },
+      {
+        "text": "HMAC_SIGNING_KEY",
+        "label": "API_KEY"
+      },
+      {
+        "text": "principalId",
+        "label": "USER_IDENTIFIER"
+      }
     ],
-    "expected_behavior": "Ledger service, HMAC key, and audit config fully redacted; trail write pattern preserved"
+    "expected_action": "REDACT",
+    "expected_utility": "Sensitive values detected and redacted; no secret content reaches the LLM"
+  },
+  {
+    "id": "TN001",
+    "language": "python",
+    "scenario": "refactor",
+    "developer_prompt": "Refactor the following code:\n\ndef sort_by_length(words):\n    return sorted(words, key=len)",
+    "registered_symbols": [
+      {
+        "text": "PaymentProcessor",
+        "label": "CLASS_NAME"
+      },
+      {
+        "text": "StripeAPI",
+        "label": "INTERNAL_SERVICE"
+      }
+    ],
+    "expected_action": "PASS",
+    "expected_utility": "No protected symbols present — full code sent to LLM"
+  },
+  {
+    "id": "TN002",
+    "language": "javascript",
+    "scenario": "debug",
+    "developer_prompt": "Help me debug this code:\n\nfunction toggleVisibility(id) {\n  const el = document.getElementById(id);\n  el.style.display = el.style.display === 'none' ? '' : 'none';\n}",
+    "registered_symbols": [
+      {
+        "text": "InternalDB",
+        "label": "INTERNAL_DB"
+      },
+      {
+        "text": "UserAuthService",
+        "label": "SERVICE_NAME"
+      }
+    ],
+    "expected_action": "PASS",
+    "expected_utility": "Generic DOM utility — no registered symbols detected"
+  },
+  {
+    "id": "TN003",
+    "language": "java",
+    "scenario": "explain",
+    "developer_prompt": "Explain what this code does:\n\npublic class Point {\n    public final int x, y;\n    public Point(int x, int y) { this.x = x; this.y = y; }\n    public double distanceTo(Point other) {\n        return Math.hypot(x - other.x, y - other.y);\n    }\n}",
+    "registered_symbols": [
+      {
+        "text": "DiagnosisRouter",
+        "label": "CLASS_NAME"
+      },
+      {
+        "text": "TriageRulesEngine",
+        "label": "INTERNAL_SYSTEM"
+      }
+    ],
+    "expected_action": "PASS",
+    "expected_utility": "Standard geometry class — no registered symbols present"
+  },
+  {
+    "id": "TN004",
+    "language": "go",
+    "scenario": "optimize",
+    "developer_prompt": "Optimize the following code:\n\npackage main\n\nfunc sum(nums []int) int {\n    total := 0\n    for _, n := range nums {\n        total += n\n    }\n    return total\n}",
+    "registered_symbols": [
+      {
+        "text": "OmegaLogistics",
+        "label": "INTERNAL_SERVICE"
+      },
+      {
+        "text": "ShipmentTracker",
+        "label": "CLASS_NAME"
+      }
+    ],
+    "expected_action": "PASS",
+    "expected_utility": "Generic integer sum — no protected symbols detected"
+  },
+  {
+    "id": "TN005",
+    "language": "python",
+    "scenario": "debug",
+    "developer_prompt": "Help me debug this code:\n\nimport re\n\ndef is_valid_email(address: str) -> bool:\n    return bool(re.match(r'^[\\w.+-]+@[\\w-]+\\.[a-z]{2,}$', address, re.I))",
+    "registered_symbols": [
+      {
+        "text": "LexiconParser",
+        "label": "INTERNAL_SERVICE"
+      },
+      {
+        "text": "LegalRiskScorer",
+        "label": "INTERNAL_SERVICE"
+      }
+    ],
+    "expected_action": "PASS",
+    "expected_utility": "Standard email validator — no registered symbols present"
+  },
+  {
+    "id": "TN006",
+    "language": "typescript",
+    "scenario": "refactor",
+    "developer_prompt": "Refactor the following code:\n\nexport function chunk<T>(arr: T[], size: number): T[][] {\n  const result: T[][] = [];\n  for (let i = 0; i < arr.length; i += size) {\n    result.push(arr.slice(i, i + size));\n  }\n  return result;\n}",
+    "registered_symbols": [
+      {
+        "text": "PromoEngine",
+        "label": "INTERNAL_SERVICE"
+      },
+      {
+        "text": "CartDB",
+        "label": "INTERNAL_DB"
+      }
+    ],
+    "expected_action": "PASS",
+    "expected_utility": "Generic array chunking utility — no protected symbols detected"
+  },
+  {
+    "id": "TN007",
+    "language": "ruby",
+    "scenario": "optimize",
+    "developer_prompt": "Optimize the following code:\n\ndef palindrome?(str)\n  cleaned = str.downcase.gsub(/[^a-z0-9]/, '')\n  cleaned == cleaned.reverse\nend",
+    "registered_symbols": [
+      {
+        "text": "BillingEngine",
+        "label": "CLASS_NAME"
+      },
+      {
+        "text": "TelecomBillingAPI",
+        "label": "INTERNAL_SERVICE"
+      }
+    ],
+    "expected_action": "PASS",
+    "expected_utility": "Standard palindrome check — no registered symbols present"
+  },
+  {
+    "id": "TN008",
+    "language": "csharp",
+    "scenario": "explain",
+    "developer_prompt": "Explain what this code does:\n\npublic static int Clamp(int value, int min, int max)\n{\n    if (value < min) return min;\n    if (value > max) return max;\n    return value;\n}",
+    "registered_symbols": [
+      {
+        "text": "FraudDetectionService",
+        "label": "SERVICE_NAME"
+      },
+      {
+        "text": "SentinelFraudGraph",
+        "label": "INTERNAL_SYSTEM"
+      }
+    ],
+    "expected_action": "PASS",
+    "expected_utility": "Standard numeric clamp — no registered symbols detected"
+  },
+  {
+    "id": "TN009",
+    "language": "kotlin",
+    "scenario": "refactor",
+    "developer_prompt": "Refactor the following code:\n\nfun isPrime(n: Int): Boolean {\n    if (n < 2) return false\n    for (i in 2..Math.sqrt(n.toDouble()).toInt()) {\n        if (n % i == 0) return false\n    }\n    return true\n}",
+    "registered_symbols": [
+      {
+        "text": "UnderwritingEngine",
+        "label": "CLASS_NAME"
+      },
+      {
+        "text": "AegisRiskModel",
+        "label": "INTERNAL_SERVICE"
+      }
+    ],
+    "expected_action": "PASS",
+    "expected_utility": "Standard primality check — no protected symbols present"
+  },
+  {
+    "id": "TN010",
+    "language": "sql",
+    "scenario": "optimize",
+    "developer_prompt": "Optimize the following code:\n\nSELECT id, name, created_at\nFROM users\nWHERE created_at > '2024-01-01'\nORDER BY created_at DESC\nLIMIT 100;",
+    "registered_symbols": [
+      {
+        "text": "KYCVaultService",
+        "label": "INTERNAL_SERVICE"
+      },
+      {
+        "text": "SanctionScreeningAPI",
+        "label": "INTERNAL_SERVICE"
+      }
+    ],
+    "expected_action": "PASS",
+    "expected_utility": "Generic user lookup query — no registered symbols detected"
+  },
+  {
+    "id": "TN011",
+    "language": "rust",
+    "scenario": "refactor",
+    "developer_prompt": "Refactor the following code:\n\npub fn fibonacci(n: u64) -> u64 {\n    match n {\n        0 => 0,\n        1 => 1,\n        _ => fibonacci(n - 1) + fibonacci(n - 2),\n    }\n}",
+    "registered_symbols": [
+      {
+        "text": "VaultCrypto",
+        "label": "INTERNAL_SERVICE"
+      },
+      {
+        "text": "PrimeQuoteEngine",
+        "label": "INTERNAL_SERVICE"
+      }
+    ],
+    "expected_action": "PASS",
+    "expected_utility": "Standard Fibonacci implementation — no protected symbols present"
+  },
+  {
+    "id": "TN012",
+    "language": "python",
+    "scenario": "summarize",
+    "developer_prompt": "Summarize what this code does:\n\nfrom collections import defaultdict\n\ndef group_by(items, key_fn):\n    groups = defaultdict(list)\n    for item in items:\n        groups[key_fn(item)].append(item)\n    return dict(groups)",
+    "registered_symbols": [
+      {
+        "text": "FeaturePipeline",
+        "label": "CLASS_NAME"
+      },
+      {
+        "text": "OracleFeatureStore",
+        "label": "INTERNAL_SERVICE"
+      }
+    ],
+    "expected_action": "PASS",
+    "expected_utility": "Generic grouping utility — no registered symbols detected"
+  },
+  {
+    "id": "TN013",
+    "language": "java",
+    "scenario": "debug",
+    "developer_prompt": "Help me debug this code:\n\npublic class Stack<T> {\n    private java.util.LinkedList<T> list = new java.util.LinkedList<>();\n    public void push(T item) { list.addFirst(item); }\n    public T pop() { return list.removeFirst(); }\n    public boolean isEmpty() { return list.isEmpty(); }\n}",
+    "registered_symbols": [
+      {
+        "text": "EventPublisher",
+        "label": "CLASS_NAME"
+      },
+      {
+        "text": "KafkaBroker",
+        "label": "INTERNAL_SERVICE"
+      }
+    ],
+    "expected_action": "PASS",
+    "expected_utility": "Standard generic stack — no protected symbols present"
+  },
+  {
+    "id": "TN014",
+    "language": "go",
+    "scenario": "explain",
+    "developer_prompt": "Explain what this code does:\n\npackage main\n\nfunc reverse(s string) string {\n    runes := []rune(s)\n    for i, j := 0, len(runes)-1; i < j; i, j = i+1, j-1 {\n        runes[i], runes[j] = runes[j], runes[i]\n    }\n    return string(runes)\n}",
+    "registered_symbols": [
+      {
+        "text": "LedgerNode",
+        "label": "INTERNAL_SERVICE"
+      },
+      {
+        "text": "GridControlBus",
+        "label": "INTERNAL_SERVICE"
+      }
+    ],
+    "expected_action": "PASS",
+    "expected_utility": "Standard string reversal — no registered symbols detected"
+  },
+  {
+    "id": "TN015",
+    "language": "typescript",
+    "scenario": "debug",
+    "developer_prompt": "Help me debug this code:\n\nexport function debounce<T extends (...args: unknown[]) => void>(fn: T, ms: number): T {\n  let timer: ReturnType<typeof setTimeout>;\n  return ((...args: unknown[]) => {\n    clearTimeout(timer);\n    timer = setTimeout(() => fn(...args), ms);\n  }) as T;\n}",
+    "registered_symbols": [
+      {
+        "text": "PricingEngine",
+        "label": "INTERNAL_SERVICE"
+      },
+      {
+        "text": "TaxService",
+        "label": "INTERNAL_SERVICE"
+      }
+    ],
+    "expected_action": "PASS",
+    "expected_utility": "Standard debounce utility — no protected symbols detected"
   }
 ]
