@@ -1,4 +1,4 @@
-﻿# Key Decisions
+# Key Decisions
 
 Quick-reference for the non-obvious design choices in this codebase.
 Full rationale, alternatives considered, and consequences in [`docs/adr/`](docs/adr/).
@@ -13,5 +13,7 @@ Full rationale, alternatives considered, and consequences in [`docs/adr/`](docs/
 | 4 | **Fail-open on L1/L3 errors** ⚠️ | A gateway that blocks work due to infrastructure failures gets disabled. L2 (symbol match) is always active as safety net. **Do not change to fail-closed.** | [ADR-004](docs/adr/ADR-004-fail-open.md) |
 | 5 | **Two-key model (kr- + sk-ant-)** | Developer has a `kr-` key that only works with the gateway. Using it directly against Anthropic returns 401 — bypass is impossible without the real key. | [ADR-005](docs/adr/ADR-005-gateway-key-model.md) |
 | 6 | **REDACT instead of BLOCK in grace zone** | Lets developers ask about *how to use* a protected function without exposing the implementation. Reduces false positives that would erode trust in the gateway. | [ADR-006](docs/adr/ADR-006-redact-vs-block.md) |
-| 8 | **REDACT as default — BLOCK only on explicit L3 extraction intent** | BLOCK and REDACT protect IP equally. BLOCK adds friction without security gain. BLOCK is reserved for when L3 detects deliberate extraction intent. | [ADR-008](docs/adr/ADR-008-redact-as-default.md) |
 | 7 | **EARS format for requirements** | Structured English with explicit trigger/condition/action. Requirements are unambiguous, testable, and traceable to code. | [ADR-007](docs/adr/ADR-007-ears-requirements.md) |
+| 8 | **REDACT as default — BLOCK only on explicit L3 extraction intent** | BLOCK and REDACT protect IP equally. BLOCK adds friction without security gain. BLOCK is reserved for when L3 detects deliberate extraction intent. | [ADR-008](docs/adr/ADR-008-redact-as-default.md) |
+| 9 | **Sanitize mode (name obfuscation) not implemented** | Bidirectional name substitution (`RiskScorer → ClassA`) is fragile: the LLM invents new names in its response that are not in the substitution map, making restoration partial or incorrect. It also degrades response quality because the LLM loses semantic context from meaningful names. The real IP is in the implementation, not the names — REDACT+summary already protects it. | — |
+| 10 | **Confidentiality marker (`# CONFIDENTIAL`) not implemented** | `kiri add <path>` and `@symbol Name` in `.kiri/secrets` already cover all cases including refactoring scenarios. The marker would require scanning all source files on every change and adds no protection that the existing CLI cannot provide with a single command. | — |
