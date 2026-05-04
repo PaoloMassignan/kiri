@@ -5,18 +5,9 @@
     "task": "Refactor this class without changing behavior. Sanitize comments so no sensitive information leaves the company.",
     "input_code": "# Workaround for ACME payroll export bug in Project Phoenix\nclass ExportService:\n    def run(self, value):\n        # retry because internal billing API is flaky\n        return value * 2\n",
     "sensitive_comment_spans": [
-      {
-        "text": "ACME",
-        "label": "CLIENT_NAME"
-      },
-      {
-        "text": "Project Phoenix",
-        "label": "INTERNAL_PROJECT"
-      },
-      {
-        "text": "internal billing API",
-        "label": "INTERNAL_SYSTEM"
-      }
+      {"text": "ACME", "label": "CLIENT_NAME"},
+      {"text": "Project Phoenix", "label": "INTERNAL_PROJECT"},
+      {"text": "internal billing API", "label": "INTERNAL_SYSTEM"}
     ],
     "expected_comment_policy": "Generalize or remove sensitive comments, preserve only generic technical meaning where useful."
   },
@@ -26,18 +17,9 @@
     "task": "Clean up the function but remove sensitive operational details from comments.",
     "input_code": "// TODO: temporary bypass for BetaBank production tenant\nfunction validate(user) {\n  // call fraud-engine-v2 before approval\n  return !!user;\n}\nmodule.exports = { validate };\n",
     "sensitive_comment_spans": [
-      {
-        "text": "BetaBank",
-        "label": "CLIENT_NAME"
-      },
-      {
-        "text": "production tenant",
-        "label": "ENVIRONMENT_INFO"
-      },
-      {
-        "text": "fraud-engine-v2",
-        "label": "INTERNAL_SERVICE"
-      }
+      {"text": "BetaBank", "label": "CLIENT_NAME"},
+      {"text": "production tenant", "label": "ENVIRONMENT_INFO"},
+      {"text": "fraud-engine-v2", "label": "INTERNAL_SERVICE"}
     ],
     "expected_comment_policy": "Remove or generalize client, environment, and internal service references."
   },
@@ -47,18 +29,9 @@
     "task": "Refactor for readability. Sensitive comments must not survive verbatim.",
     "input_code": "public class ClaimsLogic {\n    // Special rule for customer Delta Insurance after legal escalation\n    public int score(int x) {\n        // Mirrors behavior of internal risk matrix\n        return x > 10 ? 1 : 0;\n    }\n}\n",
     "sensitive_comment_spans": [
-      {
-        "text": "Delta Insurance",
-        "label": "CLIENT_NAME"
-      },
-      {
-        "text": "legal escalation",
-        "label": "LEGAL_EVENT"
-      },
-      {
-        "text": "internal risk matrix",
-        "label": "INTERNAL_LOGIC"
-      }
+      {"text": "Delta Insurance", "label": "CLIENT_NAME"},
+      {"text": "legal escalation", "label": "LEGAL_EVENT"},
+      {"text": "internal risk matrix", "label": "INTERNAL_LOGIC"}
     ],
     "expected_comment_policy": "Generalize comment intent, remove client/legal/internal references."
   },
@@ -68,26 +41,11 @@
     "task": "Improve maintainability while sanitizing docstrings and inline comments.",
     "input_code": "/**\n * Syncs medical records for San Carlo oncology backlog.\n * Uses internal bridge MedLinkX and workaround from incident INC-4432.\n */\nexport function syncRecords(ids: string[]) {\n  // skip malformed IDs to avoid alert storm on clinic pipeline\n  return ids.filter(Boolean);\n}\n",
     "sensitive_comment_spans": [
-      {
-        "text": "San Carlo",
-        "label": "HOSPITAL_NAME"
-      },
-      {
-        "text": "oncology backlog",
-        "label": "MEDICAL_CONTEXT"
-      },
-      {
-        "text": "MedLinkX",
-        "label": "INTERNAL_BRIDGE"
-      },
-      {
-        "text": "INC-4432",
-        "label": "INCIDENT_ID"
-      },
-      {
-        "text": "clinic pipeline",
-        "label": "INTERNAL_PIPELINE"
-      }
+      {"text": "San Carlo", "label": "HOSPITAL_NAME"},
+      {"text": "oncology backlog", "label": "MEDICAL_CONTEXT"},
+      {"text": "MedLinkX", "label": "INTERNAL_BRIDGE"},
+      {"text": "INC-4432", "label": "INCIDENT_ID"},
+      {"text": "clinic pipeline", "label": "INTERNAL_PIPELINE"}
     ],
     "expected_comment_policy": "Docstrings/comments may remain, but sensitive organization-specific references must be generalized or removed."
   },
@@ -97,22 +55,10 @@
     "task": "Refactor this function. Remove sensitive security notes from comments but preserve safe technical hints.",
     "input_code": "def normalize(payload):\n    # bypass auth here for admin support team until PROD-221 is fixed\n    # remove nulls before sending to /internal/audit/normalize\n    return {k: v for k, v in payload.items() if v is not None}\n",
     "sensitive_comment_spans": [
-      {
-        "text": "bypass auth",
-        "label": "SECURITY_BYPASS"
-      },
-      {
-        "text": "admin support team",
-        "label": "INTERNAL_ROLE"
-      },
-      {
-        "text": "PROD-221",
-        "label": "INCIDENT_ID"
-      },
-      {
-        "text": "/internal/audit/normalize",
-        "label": "INTERNAL_ENDPOINT"
-      }
+      {"text": "bypass auth", "label": "SECURITY_BYPASS"},
+      {"text": "admin support team", "label": "INTERNAL_ROLE"},
+      {"text": "PROD-221", "label": "INCIDENT_ID"},
+      {"text": "/internal/audit/normalize", "label": "INTERNAL_ENDPOINT"}
     ],
     "expected_comment_policy": "Security-sensitive comment should be dropped or heavily sanitized; generic data-cleaning comment may remain in generalized form."
   },
@@ -122,22 +68,10 @@
     "task": "Simplify code without leaking business knowledge in comments.",
     "input_code": "package source\n\n// Hedge fund client override for Atlas strategy\nfunc Score(v int) int {\n    // Matches proprietary threshold from portfolio engine\n    if v > 100 {\n        return 1\n    }\n    return 0\n}\n",
     "sensitive_comment_spans": [
-      {
-        "text": "Hedge fund client",
-        "label": "CLIENT_TYPE"
-      },
-      {
-        "text": "Atlas strategy",
-        "label": "STRATEGY_NAME"
-      },
-      {
-        "text": "proprietary threshold",
-        "label": "PROPRIETARY_LOGIC"
-      },
-      {
-        "text": "portfolio engine",
-        "label": "INTERNAL_SYSTEM"
-      }
+      {"text": "Hedge fund client", "label": "CLIENT_TYPE"},
+      {"text": "Atlas strategy", "label": "STRATEGY_NAME"},
+      {"text": "proprietary threshold", "label": "PROPRIETARY_LOGIC"},
+      {"text": "portfolio engine", "label": "INTERNAL_SYSTEM"}
     ],
     "expected_comment_policy": "Business and proprietary comments should be generalized or removed."
   },
@@ -147,18 +81,9 @@
     "task": "Preserve behavior but sanitize comments, including TODOs and notes.",
     "input_code": "class Mailer\n  # TODO: remove special handling for client Omega after migration cutover\n  def send_now(address)\n    # uses internal SMTP relay cluster\n    !!address\n  end\nend\n",
     "sensitive_comment_spans": [
-      {
-        "text": "client Omega",
-        "label": "CLIENT_NAME"
-      },
-      {
-        "text": "migration cutover",
-        "label": "CHANGE_EVENT"
-      },
-      {
-        "text": "internal SMTP relay cluster",
-        "label": "INFRASTRUCTURE_DETAIL"
-      }
+      {"text": "client Omega", "label": "CLIENT_NAME"},
+      {"text": "migration cutover", "label": "CHANGE_EVENT"},
+      {"text": "internal SMTP relay cluster", "label": "INFRASTRUCTURE_DETAIL"}
     ],
     "expected_comment_policy": "Keep the maintenance hint in generic form; remove client and infrastructure specificity."
   },
@@ -168,18 +93,9 @@
     "task": "Refactor and sanitize comments in a strict enterprise-safe mode.",
     "input_code": "public class AuthFlow\n{\n    // Quick fix after pentest finding P-17\n    public bool IsAllowed(bool isAdmin)\n    {\n        // temporary elevated path for finance ops\n        return isAdmin;\n    }\n}\n",
     "sensitive_comment_spans": [
-      {
-        "text": "pentest finding P-17",
-        "label": "SECURITY_FINDING"
-      },
-      {
-        "text": "temporary elevated path",
-        "label": "PRIVILEGE_ESCALATION_HINT"
-      },
-      {
-        "text": "finance ops",
-        "label": "INTERNAL_TEAM"
-      }
+      {"text": "pentest finding P-17", "label": "SECURITY_FINDING"},
+      {"text": "temporary elevated path", "label": "PRIVILEGE_ESCALATION_HINT"},
+      {"text": "finance ops", "label": "INTERNAL_TEAM"}
     ],
     "expected_comment_policy": "In strict mode, comments may be dropped entirely if they expose security posture or privilege details."
   },
@@ -189,18 +105,9 @@
     "task": "Rewrite for readability; comments must not leak table purpose or regulated context.",
     "input_code": "-- oncology export for private clinic reconciliation\nSELECT id, total\nFROM invoices\n-- joins internal reimbursement staging later\nWHERE paid = 1;\n",
     "sensitive_comment_spans": [
-      {
-        "text": "oncology export",
-        "label": "MEDICAL_CONTEXT"
-      },
-      {
-        "text": "private clinic reconciliation",
-        "label": "BUSINESS_PROCESS"
-      },
-      {
-        "text": "internal reimbursement staging",
-        "label": "INTERNAL_TABLE_PURPOSE"
-      }
+      {"text": "oncology export", "label": "MEDICAL_CONTEXT"},
+      {"text": "private clinic reconciliation", "label": "BUSINESS_PROCESS"},
+      {"text": "internal reimbursement staging", "label": "INTERNAL_TABLE_PURPOSE"}
     ],
     "expected_comment_policy": "Either remove comments or keep only generic SQL intent comments."
   },
@@ -210,23 +117,267 @@
     "task": "Sanitize shell comments before external LLM processing.",
     "input_code": "# copy archive to phoenix-dr node in Milan DC\n# uses break-glass account during incident response\ntar -czf backup.tar.gz /srv/app\n",
     "sensitive_comment_spans": [
-      {
-        "text": "phoenix-dr",
-        "label": "INTERNAL_NODE"
-      },
-      {
-        "text": "Milan DC",
-        "label": "DATACENTER_LOCATION"
-      },
-      {
-        "text": "break-glass account",
-        "label": "SECURITY_PROCEDURE"
-      },
-      {
-        "text": "incident response",
-        "label": "SECURITY_CONTEXT"
-      }
+      {"text": "phoenix-dr", "label": "INTERNAL_NODE"},
+      {"text": "Milan DC", "label": "DATACENTER_LOCATION"},
+      {"text": "break-glass account", "label": "SECURITY_PROCEDURE"},
+      {"text": "incident response", "label": "SECURITY_CONTEXT"}
     ],
     "expected_comment_policy": "Operational and security-sensitive comments should be removed or heavily generalized."
+  },
+  {
+    "id": "CM011",
+    "language": "python",
+    "task": "Refactor the ML pipeline function and sanitize all comments.",
+    "input_code": "def train_model(dataset_id: str) -> float:\n    # Uses AthenaDataStore v3 — refresh token expires every 6h\n    # Accuracy target set by Nexus product team: 0.92\n    X, y = AthenaDataStore.load(dataset_id)\n    return ModelTrainer.fit(X, y)\n",
+    "sensitive_comment_spans": [
+      {"text": "AthenaDataStore v3", "label": "INTERNAL_SERVICE_VERSION"},
+      {"text": "refresh token expires every 6h", "label": "SECURITY_DETAIL"},
+      {"text": "Nexus product team", "label": "INTERNAL_TEAM"},
+      {"text": "0.92", "label": "PROPRIETARY_THRESHOLD"}
+    ],
+    "expected_comment_policy": "Remove token/auth details and team names; generalize accuracy reference or drop it."
+  },
+  {
+    "id": "CM012",
+    "language": "javascript",
+    "task": "Clean up this game session handler and sanitize internal references in comments.",
+    "input_code": "// Entry point for Titan MMO session broker\nfunction openSession(userId) {\n  // fallback to NA-West edge if EU cluster is down\n  return SessionBroker.connect(userId);\n}\nmodule.exports = { openSession };\n",
+    "sensitive_comment_spans": [
+      {"text": "Titan MMO", "label": "PRODUCT_NAME"},
+      {"text": "NA-West edge", "label": "INFRASTRUCTURE_REGION"},
+      {"text": "EU cluster", "label": "INFRASTRUCTURE_REGION"}
+    ],
+    "expected_comment_policy": "Remove product name and data-center topology; generalize fallback comment."
+  },
+  {
+    "id": "CM013",
+    "language": "java",
+    "task": "Refactor the SMS routing logic and scrub telecom infrastructure comments.",
+    "input_code": "public class SmsRouter {\n    // Routes through Vodafone SS7 gateway — never change priority without ops approval\n    public void send(String msisdn, String text) {\n        // MNC code 10 = domestic premium, 20 = international\n        carrier.dispatch(msisdn, text, 10);\n    }\n}\n",
+    "sensitive_comment_spans": [
+      {"text": "Vodafone SS7 gateway", "label": "CARRIER_SYSTEM"},
+      {"text": "ops approval", "label": "INTERNAL_PROCESS"},
+      {"text": "MNC code 10 = domestic premium, 20 = international", "label": "PROPRIETARY_ROUTING_LOGIC"}
+    ],
+    "expected_comment_policy": "Remove carrier and routing code specifics; operational approval note may be kept in generic form."
+  },
+  {
+    "id": "CM014",
+    "language": "go",
+    "task": "Clean up the metrics publisher and remove infrastructure specifics from comments.",
+    "input_code": "package source\n\n// Pushes to Prometheus on k8s node prometheus-1.monitoring.svc:9090\n// Alert threshold configured in Grafana dashboard ID 1047\nfunc PublishLatency(name string, ms float64) {\n    // Do not exceed 1000 metrics/s — Thanos compactor limit\n    MetricBus.Record(name, ms)\n}\n",
+    "sensitive_comment_spans": [
+      {"text": "prometheus-1.monitoring.svc:9090", "label": "INTERNAL_HOST"},
+      {"text": "Grafana dashboard ID 1047", "label": "INTERNAL_RESOURCE_ID"},
+      {"text": "1000 metrics/s", "label": "INFRASTRUCTURE_LIMIT"},
+      {"text": "Thanos compactor", "label": "INTERNAL_SYSTEM"}
+    ],
+    "expected_comment_policy": "Drop specific hostnames and dashboard IDs; keep rate-limit comment in generic form."
+  },
+  {
+    "id": "CM015",
+    "language": "typescript",
+    "task": "Sanitize the checkout flow comments before sharing the code externally.",
+    "input_code": "// Checkout v3 — replaces Magento legacy flow (project Lighthouse)\nexport async function checkout(cartId: string): Promise<string> {\n  // Klarna session times out after 15 min — do not retry after expiry\n  const orderId = await PaymentGateway.confirm(cartId);\n  return orderId;\n}\n",
+    "sensitive_comment_spans": [
+      {"text": "Magento legacy flow", "label": "LEGACY_SYSTEM"},
+      {"text": "project Lighthouse", "label": "INTERNAL_PROJECT"},
+      {"text": "Klarna", "label": "VENDOR_NAME"},
+      {"text": "15 min", "label": "VENDOR_SESSION_DETAIL"}
+    ],
+    "expected_comment_policy": "Remove project and vendor names; generalize session timeout to a non-vendor-specific note."
+  },
+  {
+    "id": "CM016",
+    "language": "python",
+    "task": "Refactor payroll calculation and sanitize sensitive HR comments.",
+    "input_code": "def calculate_net(gross: float, level: int) -> float:\n    # Tax bracket table last updated for FY2025 — see internal wiki HR-TAX-2025\n    # Senior staff (level >= 4) qualify for pension supplement under scheme Apex\n    rate = TAX_TABLE[level]\n    return gross * (1 - rate)\n",
+    "sensitive_comment_spans": [
+      {"text": "HR-TAX-2025", "label": "INTERNAL_DOCUMENT"},
+      {"text": "level >= 4", "label": "INTERNAL_POLICY_THRESHOLD"},
+      {"text": "scheme Apex", "label": "INTERNAL_PROGRAM"}
+    ],
+    "expected_comment_policy": "Remove internal document references and program names; keep generic tax/pension intent."
+  },
+  {
+    "id": "CM017",
+    "language": "csharp",
+    "task": "Sanitize insurance rule engine comments in strict enterprise mode.",
+    "input_code": "public class ClaimApprover\n{\n    // Rule R-441: auto-approve claims < £500 for Gold tier — agreed with underwriters 2024-Q3\n    public bool AutoApprove(decimal amount, string tier)\n    {\n        // Exception: never auto-approve if fraud flag set (see case FRD-0098)\n        return amount < 500 && tier == \"Gold\";\n    }\n}\n",
+    "sensitive_comment_spans": [
+      {"text": "R-441", "label": "INTERNAL_RULE_ID"},
+      {"text": "Gold tier", "label": "INTERNAL_TIER_NAME"},
+      {"text": "agreed with underwriters 2024-Q3", "label": "BUSINESS_AGREEMENT"},
+      {"text": "FRD-0098", "label": "INTERNAL_CASE_ID"}
+    ],
+    "expected_comment_policy": "In strict mode, drop rule IDs and case references entirely; generalize tier logic without naming tiers."
+  },
+  {
+    "id": "CM018",
+    "language": "rust",
+    "task": "Clean up the trading algorithm and remove proprietary strategy details from comments.",
+    "input_code": "// Execution core for Sigma-7 momentum strategy\npub fn should_enter(price: f64, signal: f64) -> bool {\n    // Threshold calibrated on 10y backtest — do not tune without quant review\n    signal > 0.72 && price > 0.0\n}\n",
+    "sensitive_comment_spans": [
+      {"text": "Sigma-7 momentum strategy", "label": "STRATEGY_NAME"},
+      {"text": "0.72", "label": "PROPRIETARY_THRESHOLD"},
+      {"text": "10y backtest", "label": "PROPRIETARY_RESEARCH"}
+    ],
+    "expected_comment_policy": "Remove strategy name and calibration details; a generic performance note may be kept."
+  },
+  {
+    "id": "CM019",
+    "language": "ruby",
+    "task": "Sanitize comments in the contract parser before publishing to open source.",
+    "input_code": "class ContractParser\n  # Parses NDA templates used by client GlobalBank — updated after audit 2025-02\n  def extract_clauses(text)\n    # Regex derived from proprietary clause taxonomy v4\n    text.scan(/CLAUSE\\s+\\d+:\\s+(.+)/)\n  end\nend\n",
+    "sensitive_comment_spans": [
+      {"text": "GlobalBank", "label": "CLIENT_NAME"},
+      {"text": "audit 2025-02", "label": "INTERNAL_EVENT"},
+      {"text": "proprietary clause taxonomy v4", "label": "PROPRIETARY_ARTIFACT"}
+    ],
+    "expected_comment_policy": "Remove client name and internal version references; generic parsing comment may remain."
+  },
+  {
+    "id": "CM020",
+    "language": "php",
+    "task": "Prepare this DRM handler for external review — sanitize all internal references.",
+    "input_code": "<?php\n// License check for StreamVault platform — validates against internal entitlement DB\nfunction check_license(string $token): bool {\n    // Token format: {user_id}.{content_id}.{sig} — shared secret in Vault path /drm/key\n    return EntitlementDB::verify($token);\n}\n",
+    "sensitive_comment_spans": [
+      {"text": "StreamVault", "label": "PRODUCT_NAME"},
+      {"text": "entitlement DB", "label": "INTERNAL_DB"},
+      {"text": "{user_id}.{content_id}.{sig}", "label": "TOKEN_FORMAT"},
+      {"text": "Vault path /drm/key", "label": "SECRET_PATH"}
+    ],
+    "expected_comment_policy": "Remove product name, token format, and secret path; drop or heavily generalize DB reference."
+  },
+  {
+    "id": "CM021",
+    "language": "sql",
+    "task": "Optimize this query and sanitize all comments referencing internal systems or clients.",
+    "input_code": "-- Patient eligibility export for payer BlueCross — see contract amendment CL-2024-88\nSELECT patient_id, plan_code, coverage_start\nFROM eligibility\n-- Excludes records flagged in data quality review DQ-112\nWHERE is_active = 1 AND quality_flag = 0;\n",
+    "sensitive_comment_spans": [
+      {"text": "BlueCross", "label": "CLIENT_NAME"},
+      {"text": "contract amendment CL-2024-88", "label": "INTERNAL_CONTRACT"},
+      {"text": "data quality review DQ-112", "label": "INTERNAL_PROCESS_ID"}
+    ],
+    "expected_comment_policy": "Remove payer name and contract/review IDs; a generic data quality note may remain."
+  },
+  {
+    "id": "CM022",
+    "language": "bash",
+    "task": "Sanitize deployment script comments before committing to a public repository.",
+    "input_code": "#!/bin/bash\n# Deploys Orion v2.4 to prod-eu-1 cluster (AWS eu-west-1, account 012345678901)\n# Run only during maintenance window — page oncall on #ops-alerts if issues arise\nkubectl rollout restart deployment/api -n production\n",
+    "sensitive_comment_spans": [
+      {"text": "Orion v2.4", "label": "PRODUCT_VERSION"},
+      {"text": "prod-eu-1", "label": "ENVIRONMENT_NAME"},
+      {"text": "eu-west-1", "label": "CLOUD_REGION"},
+      {"text": "012345678901", "label": "CLOUD_ACCOUNT_ID"},
+      {"text": "#ops-alerts", "label": "INTERNAL_CHANNEL"}
+    ],
+    "expected_comment_policy": "Remove product version, cluster name, account ID, and Slack channel; generic deployment note is fine."
+  },
+  {
+    "id": "CM023",
+    "language": "python",
+    "task": "Refactor and apply strict sanitization — this file will be shared with an external auditor.",
+    "input_code": "def apply_discount(user_id: str, order_id: str) -> float:\n    # VIP tier logic: users in segment PLAT get 30% — undocumented, do not surface in UI\n    # Workaround for bug in pricing-svc v1.7 — fixed in v1.8 but not yet deployed on EU\n    discount = DiscountRules.get(user_id, 'PLAT')\n    return discount\n",
+    "sensitive_comment_spans": [
+      {"text": "PLAT", "label": "INTERNAL_SEGMENT"},
+      {"text": "30%", "label": "PROPRIETARY_RATE"},
+      {"text": "undocumented, do not surface in UI", "label": "INTERNAL_POLICY"},
+      {"text": "pricing-svc v1.7", "label": "INTERNAL_SERVICE_VERSION"},
+      {"text": "v1.8", "label": "INTERNAL_SERVICE_VERSION"},
+      {"text": "EU", "label": "ENVIRONMENT_REGION"}
+    ],
+    "expected_comment_policy": "In strict mode, drop all comments. None can be safely generalized without disclosing IP."
+  },
+  {
+    "id": "CM024",
+    "language": "java",
+    "task": "Sanitize this data export job for external code review.",
+    "input_code": "public class CustomerExport {\n    // Exports customer PII for GDPR request — initiated by legal team\n    public List<String> export(String customerId) {\n        // Includes shadow profile data from acquisition of Metabase Corp\n        return DataWarehouse.fetchAllForCustomer(customerId);\n    }\n}\n",
+    "sensitive_comment_spans": [
+      {"text": "legal team", "label": "INTERNAL_TEAM"},
+      {"text": "shadow profile data", "label": "INTERNAL_DATA_TYPE"},
+      {"text": "acquisition of Metabase Corp", "label": "CORPORATE_EVENT"}
+    ],
+    "expected_comment_policy": "Remove acquisition reference and shadow profile detail; legal context comment may be kept in generic form."
+  },
+  {
+    "id": "CM025",
+    "language": "typescript",
+    "task": "Sanitize auth middleware comments before open-sourcing this module.",
+    "input_code": "// JWT validation — signing key rotates every 90 days (see runbook OPS-AUTH-7)\nexport function verifyToken(token: string): boolean {\n  // Bypass added for internal service accounts (prefix: svc_) — approved by security\n  if (token.startsWith('svc_')) return true;\n  return Jwt.verify(token, JWT_SECRET);\n}\n",
+    "sensitive_comment_spans": [
+      {"text": "90 days", "label": "SECURITY_POLICY_DETAIL"},
+      {"text": "OPS-AUTH-7", "label": "INTERNAL_RUNBOOK"},
+      {"text": "svc_", "label": "INTERNAL_TOKEN_PREFIX"},
+      {"text": "internal service accounts", "label": "INTERNAL_ROLE"}
+    ],
+    "expected_comment_policy": "Drop runbook IDs and token prefix documentation; service account bypass is a security detail and must be removed entirely."
+  },
+  {
+    "id": "CM026",
+    "language": "go",
+    "task": "Prepare this service mesh client for publishing. Strip internal topology references.",
+    "input_code": "package source\n\n// Connects to OrderSvc via Consul service mesh — datacenter dc-prod-milan\n// Retry budget: 3 attempts, 200ms backoff (matches SLO agreement with Platform team)\nfunc NewClient() *Client {\n    // TLS cert from Vault PKI — path pki/issue/order-svc\n    return &Client{addr: ServiceRegistry.Resolve(\"order-svc\")}\n}\n",
+    "sensitive_comment_spans": [
+      {"text": "dc-prod-milan", "label": "DATACENTER_NAME"},
+      {"text": "SLO agreement with Platform team", "label": "INTERNAL_AGREEMENT"},
+      {"text": "Vault PKI", "label": "INTERNAL_SYSTEM"},
+      {"text": "pki/issue/order-svc", "label": "SECRET_PATH"}
+    ],
+    "expected_comment_policy": "Remove datacenter name, SLO reference, and Vault path; infrastructure technology mention may be generalized."
+  },
+  {
+    "id": "CM027",
+    "language": "kotlin",
+    "task": "Sanitize this push notification handler for code review outside the mobile team.",
+    "input_code": "class PushSender {\n    // Uses FCM project com.acme.app — API key in Bitwarden vault 'Mobile Secrets'\n    fun send(deviceToken: String, payload: Map<String, Any>) {\n        // Rate limit: 500 req/s per FCM project (shared with Acme iOS app)\n        FcmClient.push(deviceToken, payload)\n    }\n}\n",
+    "sensitive_comment_spans": [
+      {"text": "com.acme.app", "label": "INTERNAL_APP_ID"},
+      {"text": "Bitwarden vault 'Mobile Secrets'", "label": "SECRET_LOCATION"},
+      {"text": "500 req/s", "label": "INFRASTRUCTURE_LIMIT"},
+      {"text": "Acme iOS app", "label": "PRODUCT_NAME"}
+    ],
+    "expected_comment_policy": "Remove app ID, secret vault reference, and product name; generic rate limit comment may remain."
+  },
+  {
+    "id": "CM028",
+    "language": "csharp",
+    "task": "Prepare this audit logger for compliance review — sanitize without breaking generic intent.",
+    "input_code": "public class AuditLogger\n{\n    // PCI-DSS scope: all card operations — reviewed by QSA firm Ernst & Partner\n    public void Log(string action, string userId)\n    {\n        // Retention: 12 months per policy POL-AUDIT-003 — do not reduce\n        AuditStore.Write(action, userId, DateTime.UtcNow);\n    }\n}\n",
+    "sensitive_comment_spans": [
+      {"text": "QSA firm Ernst & Partner", "label": "VENDOR_NAME"},
+      {"text": "POL-AUDIT-003", "label": "INTERNAL_POLICY_ID"},
+      {"text": "12 months", "label": "COMPLIANCE_DETAIL"}
+    ],
+    "expected_comment_policy": "Remove QSA firm name and policy ID; PCI-DSS scope and retention intent may remain in generic form."
+  },
+  {
+    "id": "CM029",
+    "language": "python",
+    "task": "Sanitize competitive intelligence references before sharing this analysis module.",
+    "input_code": "def score_competitor(name: str, features: list) -> float:\n    # Benchmarked against RivalCo pricing engine — 12% margin gap as of Q1 2025\n    # Do not share output with sales team — used only for exec dashboard Project Argus\n    weights = FEATURE_WEIGHTS.get(name, DEFAULT_WEIGHT)\n    return sum(weights.get(f, 0) for f in features)\n",
+    "sensitive_comment_spans": [
+      {"text": "RivalCo", "label": "COMPETITOR_NAME"},
+      {"text": "12% margin gap", "label": "COMPETITIVE_DATA"},
+      {"text": "Q1 2025", "label": "BUSINESS_DATE"},
+      {"text": "Project Argus", "label": "INTERNAL_PROJECT"}
+    ],
+    "expected_comment_policy": "Drop all competitive and project references; this is high-sensitivity IP and no comment survives."
+  },
+  {
+    "id": "CM030",
+    "language": "javascript",
+    "task": "Remove credentials and sensitive integration notes from comments before committing.",
+    "input_code": "// Twilio SID: ACb3e2...f981 — see 1Password 'Prod Twilio' entry\nfunction sendSms(to, body) {\n  // Fallback: use Vonage if Twilio balance < $50 — account ID 20039812\n  return twilioClient.messages.create({ to, body, from: SENDER_NUMBER });\n}\nmodule.exports = { sendSms };\n",
+    "sensitive_comment_spans": [
+      {"text": "ACb3e2...f981", "label": "API_KEY_FRAGMENT"},
+      {"text": "1Password 'Prod Twilio'", "label": "SECRET_LOCATION"},
+      {"text": "Vonage", "label": "VENDOR_NAME"},
+      {"text": "Twilio balance < $50", "label": "FINANCIAL_THRESHOLD"},
+      {"text": "account ID 20039812", "label": "VENDOR_ACCOUNT_ID"}
+    ],
+    "expected_comment_policy": "Remove all credential references and account IDs; the fallback logic comment may remain only in generic form."
   }
 ]

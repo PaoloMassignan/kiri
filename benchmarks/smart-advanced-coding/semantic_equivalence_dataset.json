@@ -94,5 +94,165 @@
     "source_code": "class LoyaltyPoints {\n    fun award(amount: Int): Int {\n        var points = amount / 10\n        if (amount > 100) {\n            points += 5\n        }\n        return points\n    }\n}\n",
     "tests": "import kotlin.test.Test\nimport kotlin.test.assertEquals\n\nclass LoyaltyPointsTest {\n    @Test\n    fun basePoints() {\n        assertEquals(5, LoyaltyPoints().award(50))\n    }\n\n    @Test\n    fun bonusPoints() {\n        assertEquals(17, LoyaltyPoints().award(120))\n    }\n}\n",
     "expected_property": "Same points calculation"
+  },
+  {
+    "id": "SE013",
+    "language": "python",
+    "task": "Refactor this function to be more Pythonic. All tests must still pass.",
+    "source_code": "def find_first(items, predicate):\n    result = None\n    for item in items:\n        if predicate(item):\n            result = item\n            break\n    return result\n",
+    "tests": "def test_finds_first():\n    assert find_first([1, 3, 5, 2], lambda x: x % 2 == 0) == 2\n\ndef test_returns_none():\n    assert find_first([1, 3, 5], lambda x: x % 2 == 0) is None\n\ndef test_empty_list():\n    assert find_first([], lambda x: True) is None\n",
+    "expected_property": "Same return values for all inputs"
+  },
+  {
+    "id": "SE014",
+    "language": "python",
+    "task": "Simplify this recursive function while preserving its output.",
+    "source_code": "def flatten(nested):\n    result = []\n    for item in nested:\n        if isinstance(item, list):\n            for sub in flatten(item):\n                result.append(sub)\n        else:\n            result.append(item)\n    return result\n",
+    "tests": "def test_flat_list():\n    assert flatten([1, 2, 3]) == [1, 2, 3]\n\ndef test_nested():\n    assert flatten([1, [2, 3], [4, [5]]]) == [1, 2, 3, 4, 5]\n\ndef test_empty():\n    assert flatten([]) == []\n",
+    "expected_property": "Same flattened list for any nesting depth"
+  },
+  {
+    "id": "SE015",
+    "language": "javascript",
+    "task": "Convert this callback-based code to async/await. Output behavior must remain the same.",
+    "source_code": "function fetchUser(id, callback) {\n  db.find(id, function(err, user) {\n    if (err) {\n      callback(null);\n    } else {\n      callback(user);\n    }\n  });\n}\n\nmodule.exports = { fetchUser };\n",
+    "tests": "const { fetchUser } = require('./source');\n\nconst mockDb = { find: (id, cb) => cb(null, { id, name: 'Alice' }) };\nconst failDb = { find: (id, cb) => cb(new Error('fail'), null) };\n\nglobal.db = mockDb;\ntest('returns user on success', done => {\n  fetchUser(1, user => {\n    expect(user).toEqual({ id: 1, name: 'Alice' });\n    done();\n  });\n});\n\nglobal.db = failDb;\ntest('returns null on error', done => {\n  fetchUser(1, user => {\n    expect(user).toBeNull();\n    done();\n  });\n});\n",
+    "expected_property": "Same return value (user or null) for success and error cases"
+  },
+  {
+    "id": "SE016",
+    "language": "typescript",
+    "task": "Refactor this switch statement to a lookup table. All tests must pass unchanged.",
+    "source_code": "export function httpStatusLabel(code: number): string {\n  switch (code) {\n    case 200: return 'OK';\n    case 201: return 'Created';\n    case 400: return 'Bad Request';\n    case 404: return 'Not Found';\n    case 500: return 'Internal Server Error';\n    default: return 'Unknown';\n  }\n}\n",
+    "tests": "import { httpStatusLabel } from './source';\n\ntest('200', () => expect(httpStatusLabel(200)).toBe('OK'));\ntest('201', () => expect(httpStatusLabel(201)).toBe('Created'));\ntest('404', () => expect(httpStatusLabel(404)).toBe('Not Found'));\ntest('500', () => expect(httpStatusLabel(500)).toBe('Internal Server Error'));\ntest('unknown', () => expect(httpStatusLabel(999)).toBe('Unknown'));\n",
+    "expected_property": "Same label string for each status code including default"
+  },
+  {
+    "id": "SE017",
+    "language": "java",
+    "task": "Refactor this constructor-heavy class to use a builder. Tests must pass unchanged.",
+    "source_code": "public class Config {\n    private final int timeout;\n    private final int retries;\n    private final boolean verbose;\n\n    public Config(int timeout, int retries, boolean verbose) {\n        this.timeout = timeout;\n        this.retries = retries;\n        this.verbose = verbose;\n    }\n\n    public int getTimeout() { return timeout; }\n    public int getRetries() { return retries; }\n    public boolean isVerbose() { return verbose; }\n}\n",
+    "tests": "import static org.junit.jupiter.api.Assertions.*;\nimport org.junit.jupiter.api.Test;\n\npublic class ConfigTest {\n    @Test\n    void defaultValues() {\n        Config c = new Config(30, 3, false);\n        assertEquals(30, c.getTimeout());\n        assertEquals(3, c.getRetries());\n        assertFalse(c.isVerbose());\n    }\n\n    @Test\n    void verboseMode() {\n        Config c = new Config(10, 1, true);\n        assertTrue(c.isVerbose());\n    }\n}\n",
+    "expected_property": "Same getter values for all field combinations"
+  },
+  {
+    "id": "SE018",
+    "language": "go",
+    "task": "Rewrite this iterative loop as idiomatic Go using range. Tests must pass.",
+    "source_code": "package source\n\nfunc SumPositive(nums []int) int {\n    total := 0\n    i := 0\n    for i < len(nums) {\n        if nums[i] > 0 {\n            total += nums[i]\n        }\n        i++\n    }\n    return total\n}\n",
+    "tests": "package source\n\nimport \"testing\"\n\nfunc TestSumPositive(t *testing.T) {\n    if SumPositive([]int{1, -2, 3, -4, 5}) != 9 {\n        t.Fatal(\"expected 9\")\n    }\n}\n\nfunc TestAllNegative(t *testing.T) {\n    if SumPositive([]int{-1, -2}) != 0 {\n        t.Fatal(\"expected 0\")\n    }\n}\n\nfunc TestEmpty(t *testing.T) {\n    if SumPositive([]int{}) != 0 {\n        t.Fatal(\"expected 0\")\n    }\n}\n",
+    "expected_property": "Same sum for all inputs including empty and all-negative"
+  },
+  {
+    "id": "SE019",
+    "language": "csharp",
+    "task": "Replace the manual foreach with LINQ. All xunit tests must pass.",
+    "source_code": "public class OrderSummary\n{\n    public List<string> GetExpiredIds(List<Order> orders, DateTime cutoff)\n    {\n        var result = new List<string>();\n        foreach (var o in orders)\n        {\n            if (o.CreatedAt < cutoff && !o.IsCancelled)\n                result.Add(o.Id);\n        }\n        return result;\n    }\n}\n\npublic record Order(string Id, DateTime CreatedAt, bool IsCancelled);\n",
+    "tests": "using Xunit;\nusing System;\nusing System.Collections.Generic;\n\npublic class OrderSummaryTests\n{\n    static readonly DateTime cutoff = new DateTime(2024, 1, 1);\n\n    [Fact]\n    public void ReturnsExpiredNonCancelled()\n    {\n        var orders = new List<Order> {\n            new(\"A\", new DateTime(2023, 6, 1), false),\n            new(\"B\", new DateTime(2023, 6, 1), true),\n            new(\"C\", new DateTime(2024, 6, 1), false)\n        };\n        var result = new OrderSummary().GetExpiredIds(orders, cutoff);\n        Assert.Equal(new List<string>{\"A\"}, result);\n    }\n\n    [Fact]\n    public void EmptyList()\n    {\n        Assert.Empty(new OrderSummary().GetExpiredIds(new List<Order>(), cutoff));\n    }\n}\n",
+    "expected_property": "Same list of expired non-cancelled order IDs"
+  },
+  {
+    "id": "SE020",
+    "language": "ruby",
+    "task": "Refactor this method using Ruby idioms. Tests must pass unchanged.",
+    "source_code": "class Cart\n  def total_with_tax(items, tax_rate)\n    subtotal = 0\n    items.each do |item|\n      subtotal = subtotal + item[:price] * item[:qty]\n    end\n    subtotal + (subtotal * tax_rate).round(2)\n  end\nend\n",
+    "tests": "require_relative 'source'\nrequire 'minitest/autorun'\n\nclass CartTest < Minitest::Test\n  def test_simple\n    items = [{price: 10.0, qty: 2}, {price: 5.0, qty: 1}]\n    assert_equal 27.5, Cart.new.total_with_tax(items, 0.1)\n  end\n\n  def test_zero_tax\n    items = [{price: 20.0, qty: 1}]\n    assert_equal 20.0, Cart.new.total_with_tax(items, 0)\n  end\n\n  def test_empty\n    assert_equal 0, Cart.new.total_with_tax([], 0.2)\n  end\nend\n",
+    "expected_property": "Same total including tax for all inputs"
+  },
+  {
+    "id": "SE021",
+    "language": "php",
+    "task": "Refactor this function for clarity. PHPUnit tests must pass.",
+    "source_code": "<?php\nfunction group_by_key(array $records, string $key): array {\n    $groups = [];\n    foreach ($records as $r) {\n        $val = $r[$key] ?? 'unknown';\n        if (!isset($groups[$val])) {\n            $groups[$val] = [];\n        }\n        $groups[$val][] = $r;\n    }\n    return $groups;\n}\n",
+    "tests": "<?php\nuse PHPUnit\\Framework\\TestCase;\n\nfinal class GroupByKeyTest extends TestCase {\n    public function testGroups() {\n        $data = [\n            ['status' => 'new', 'id' => 1],\n            ['status' => 'done', 'id' => 2],\n            ['status' => 'new', 'id' => 3],\n        ];\n        $result = group_by_key($data, 'status');\n        $this->assertCount(2, $result['new']);\n        $this->assertCount(1, $result['done']);\n    }\n\n    public function testMissingKey() {\n        $data = [['id' => 1]];\n        $result = group_by_key($data, 'status');\n        $this->assertArrayHasKey('unknown', $result);\n    }\n}\n",
+    "expected_property": "Same grouping structure and fallback behavior"
+  },
+  {
+    "id": "SE022",
+    "language": "rust",
+    "task": "Rewrite this loop using iterator combinators. Tests must pass unchanged.",
+    "source_code": "pub fn count_longer_than(words: Vec<&str>, min_len: usize) -> usize {\n    let mut count = 0;\n    for word in &words {\n        if word.len() > min_len {\n            count += 1;\n        }\n    }\n    count\n}\n",
+    "tests": "use source::count_longer_than;\n\n#[test]\nfn counts_correctly() {\n    assert_eq!(count_longer_than(vec![\"hi\", \"hello\", \"hey\"], 3), 1);\n}\n\n#[test]\nfn all_short() {\n    assert_eq!(count_longer_than(vec![\"a\", \"b\"], 5), 0);\n}\n\n#[test]\nfn empty() {\n    assert_eq!(count_longer_than(vec![], 1), 0);\n}\n",
+    "expected_property": "Same count for any input"
+  },
+  {
+    "id": "SE023",
+    "language": "sql",
+    "task": "Rewrite this correlated subquery as a JOIN. Result set must be identical.",
+    "source_code": "SELECT u.id, u.name\nFROM users u\nWHERE (\n  SELECT COUNT(*) FROM orders o WHERE o.user_id = u.id\n) > 2;\n",
+    "tests": "-- Given:\n-- users: (1,'Alice'), (2,'Bob'), (3,'Carol')\n-- orders: user_id 1 x3, user_id 2 x1, user_id 3 x5\n-- Expected: rows for Alice (id=1) and Carol (id=3)\n",
+    "expected_property": "Same user rows with more than 2 orders"
+  },
+  {
+    "id": "SE024",
+    "language": "kotlin",
+    "task": "Replace nullability checks with Kotlin safe-call operators. Tests must pass.",
+    "source_code": "fun formatAddress(street: String?, city: String?, country: String?): String {\n    if (street == null || city == null || country == null) {\n        return \"Address unknown\"\n    }\n    return \"$street, $city, $country\"\n}\n",
+    "tests": "import kotlin.test.Test\nimport kotlin.test.assertEquals\n\nclass FormatAddressTest {\n    @Test\n    fun fullAddress() {\n        assertEquals(\"Main St, Rome, IT\", formatAddress(\"Main St\", \"Rome\", \"IT\"))\n    }\n\n    @Test\n    fun missingCity() {\n        assertEquals(\"Address unknown\", formatAddress(\"Main St\", null, \"IT\"))\n    }\n\n    @Test\n    fun allNull() {\n        assertEquals(\"Address unknown\", formatAddress(null, null, null))\n    }\n}\n",
+    "expected_property": "Same formatted string or fallback"
+  },
+  {
+    "id": "SE025",
+    "language": "python",
+    "task": "Extract the repeated validation into a helper without changing outputs.",
+    "source_code": "def create_user(name: str, email: str) -> dict:\n    if not name or len(name) < 2:\n        raise ValueError('invalid name')\n    if not email or '@' not in email:\n        raise ValueError('invalid email')\n    return {'name': name, 'email': email}\n\ndef update_user(user_id: int, name: str, email: str) -> dict:\n    if not name or len(name) < 2:\n        raise ValueError('invalid name')\n    if not email or '@' not in email:\n        raise ValueError('invalid email')\n    return {'id': user_id, 'name': name, 'email': email}\n",
+    "tests": "def test_create_ok():\n    assert create_user('Alice', 'a@b.com') == {'name': 'Alice', 'email': 'a@b.com'}\n\ndef test_create_bad_name():\n    try:\n        create_user('A', 'a@b.com')\n        assert False\n    except ValueError:\n        pass\n\ndef test_update_bad_email():\n    try:\n        update_user(1, 'Bob', 'notanemail')\n        assert False\n    except ValueError:\n        pass\n\ndef test_update_ok():\n    assert update_user(1, 'Bob', 'b@c.com') == {'id': 1, 'name': 'Bob', 'email': 'b@c.com'}\n",
+    "expected_property": "Same return values and same errors"
+  },
+  {
+    "id": "SE026",
+    "language": "javascript",
+    "task": "Simplify this nested ternary. Tests must pass unchanged.",
+    "source_code": "function classify(score) {\n  return score >= 90 ? 'A' :\n         score >= 80 ? 'B' :\n         score >= 70 ? 'C' :\n         score >= 60 ? 'D' : 'F';\n}\n\nmodule.exports = { classify };\n",
+    "tests": "const { classify } = require('./source');\n\ntest('A', () => expect(classify(95)).toBe('A'));\ntest('B', () => expect(classify(82)).toBe('B'));\ntest('C', () => expect(classify(73)).toBe('C'));\ntest('D', () => expect(classify(61)).toBe('D'));\ntest('F', () => expect(classify(55)).toBe('F'));\ntest('boundary 90', () => expect(classify(90)).toBe('A'));\n",
+    "expected_property": "Same grade for all score values and boundaries"
+  },
+  {
+    "id": "SE027",
+    "language": "java",
+    "task": "Convert this imperative filter+map to Java Streams. Tests must pass.",
+    "source_code": "import java.util.*;\n\npublic class Transformer {\n    public List<String> activeNames(List<Map<String, Object>> users) {\n        List<String> result = new ArrayList<>();\n        for (Map<String, Object> u : users) {\n            if (Boolean.TRUE.equals(u.get(\"active\"))) {\n                result.add((String) u.get(\"name\"));\n            }\n        }\n        return result;\n    }\n}\n",
+    "tests": "import static org.junit.jupiter.api.Assertions.*;\nimport org.junit.jupiter.api.Test;\nimport java.util.*;\n\npublic class TransformerTest {\n    @Test\n    void filtersAndMaps() {\n        var users = List.of(\n            Map.of(\"name\", \"Alice\", \"active\", true),\n            Map.of(\"name\", \"Bob\", \"active\", false),\n            Map.of(\"name\", \"Carol\", \"active\", true)\n        );\n        assertEquals(List.of(\"Alice\", \"Carol\"), new Transformer().activeNames(users));\n    }\n\n    @Test\n    void emptyInput() {\n        assertEquals(List.of(), new Transformer().activeNames(List.of()));\n    }\n}\n",
+    "expected_property": "Same list of active user names in order"
+  },
+  {
+    "id": "SE028",
+    "language": "go",
+    "task": "Refactor this error-handling chain to reduce nesting. Tests must pass.",
+    "source_code": "package source\n\nimport \"errors\"\n\nfunc Process(input string) (string, error) {\n    if input == \"\" {\n        return \"\", errors.New(\"empty input\")\n    } else {\n        if len(input) > 100 {\n            return \"\", errors.New(\"input too long\")\n        } else {\n            return input + \"_ok\", nil\n        }\n    }\n}\n",
+    "tests": "package source\n\nimport \"testing\"\n\nfunc TestEmpty(t *testing.T) {\n    _, err := Process(\"\")\n    if err == nil || err.Error() != \"empty input\" {\n        t.Fatal(\"expected empty input error\")\n    }\n}\n\nfunc TestTooLong(t *testing.T) {\n    long := make([]byte, 101)\n    for i := range long { long[i] = 'a' }\n    _, err := Process(string(long))\n    if err == nil || err.Error() != \"input too long\" {\n        t.Fatal(\"expected too long error\")\n    }\n}\n\nfunc TestOK(t *testing.T) {\n    result, err := Process(\"hello\")\n    if err != nil || result != \"hello_ok\" {\n        t.Fatalf(\"expected hello_ok, got %s\", result)\n    }\n}\n",
+    "expected_property": "Same result/error for empty, too-long, and normal input"
+  },
+  {
+    "id": "SE029",
+    "language": "csharp",
+    "task": "Refactor by extracting the guard clauses. All xunit tests must pass.",
+    "source_code": "public class Invoicer\n{\n    public decimal Calculate(decimal price, int quantity, decimal discount)\n    {\n        if (price < 0) throw new ArgumentException(\"negative price\");\n        if (quantity <= 0) throw new ArgumentException(\"non-positive quantity\");\n        if (discount < 0 || discount > 1) throw new ArgumentException(\"invalid discount\");\n        return price * quantity * (1 - discount);\n    }\n}\n",
+    "tests": "using Xunit;\n\npublic class InvoicerTests\n{\n    [Fact] public void NegativePrice() => Assert.Throws<ArgumentException>(() => new Invoicer().Calculate(-1, 1, 0));\n    [Fact] public void ZeroQty() => Assert.Throws<ArgumentException>(() => new Invoicer().Calculate(10, 0, 0));\n    [Fact] public void BadDiscount() => Assert.Throws<ArgumentException>(() => new Invoicer().Calculate(10, 1, 1.5m));\n    [Fact] public void Normal() => Assert.Equal(90m, new Invoicer().Calculate(10m, 10, 0.1m));\n}\n",
+    "expected_property": "Same result and same exceptions with same messages"
+  },
+  {
+    "id": "SE030",
+    "language": "python",
+    "task": "Rewrite using a single-pass approach. All tests must pass unchanged.",
+    "source_code": "def stats(numbers):\n    if not numbers:\n        return {'mean': None, 'min': None, 'max': None}\n    total = sum(numbers)\n    mean = total / len(numbers)\n    return {'mean': round(mean, 4), 'min': min(numbers), 'max': max(numbers)}\n",
+    "tests": "def test_normal():\n    s = stats([1, 2, 3, 4, 5])\n    assert s['mean'] == 3.0\n    assert s['min'] == 1\n    assert s['max'] == 5\n\ndef test_single():\n    s = stats([7])\n    assert s['mean'] == 7.0\n    assert s['min'] == 7\n    assert s['max'] == 7\n\ndef test_empty():\n    s = stats([])\n    assert s == {'mean': None, 'min': None, 'max': None}\n",
+    "expected_property": "Same stats dict for all inputs including empty"
+  },
+  {
+    "id": "SE031",
+    "language": "ruby",
+    "task": "Replace the loop with functional methods. Tests must pass unchanged.",
+    "source_code": "class Paginator\n  def pages(total, per_page)\n    result = []\n    page = 1\n    offset = 0\n    while offset < total\n      result << { page: page, offset: offset }\n      page += 1\n      offset += per_page\n    end\n    result\n  end\nend\n",
+    "tests": "require_relative 'source'\nrequire 'minitest/autorun'\n\nclass PaginatorTest < Minitest::Test\n  def test_exact_pages\n    assert_equal [\n      {page: 1, offset: 0},\n      {page: 2, offset: 10}\n    ], Paginator.new.pages(20, 10)\n  end\n\n  def test_partial_last_page\n    result = Paginator.new.pages(25, 10)\n    assert_equal 3, result.length\n    assert_equal 20, result.last[:offset]\n  end\n\n  def test_empty\n    assert_equal [], Paginator.new.pages(0, 10)\n  end\nend\n",
+    "expected_property": "Same page/offset pairs for all inputs"
+  },
+  {
+    "id": "SE032",
+    "language": "sql",
+    "task": "Refactor this sequence of CTEs into a simpler form. Result must be identical.",
+    "source_code": "WITH active AS (\n  SELECT id, amount FROM transactions WHERE status = 'active'\n),\nhigh_value AS (\n  SELECT id, amount FROM active WHERE amount > 1000\n)\nSELECT id, amount FROM high_value ORDER BY amount DESC;\n",
+    "tests": "-- Given transactions:\n-- (1, 500, 'active'), (2, 1500, 'active'), (3, 2000, 'cancelled'), (4, 3000, 'active')\n-- Expected (ordered by amount desc):\n-- (4, 3000), (2, 1500)\n",
+    "expected_property": "Same rows in same order"
   }
 ]

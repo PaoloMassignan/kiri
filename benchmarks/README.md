@@ -4,14 +4,16 @@ Evaluation datasets and benchmark runners used to measure gateway accuracy and L
 
 ## Index
 
-| Directory | What it measures |
-|-----------|-----------------|
-| [`kiri/`](kiri/) | Gateway filter accuracy: precision/recall on real code datasets |
-| [`smart-coding/`](smart-coding/) | LLM semantic equivalence for code generation |
-| [`smart-advanced-coding/`](smart-advanced-coding/) | Advanced semantic equivalence (multi-language) |
-| [`smart-coding-comments/`](smart-coding-comments/) | Comment sanitization quality |
-| [`smart-redaction/`](smart-redaction/) | Smart redaction accuracy on legal and code documents |
-| `rag-protection/` | RAG document protection — fixtures in `kiri/tests/` (benchmark runner in mvp/backend, fuori da questo repo) |
+| Directory | What it measures | Cases |
+|-----------|-----------------|-------|
+| [`kiri/`](kiri/) | Gateway filter accuracy: precision/recall on real code datasets | — |
+| [`smart-coding/`](smart-coding/) | Identifier anonymization quality (class, function, service names) | 25 |
+| [`smart-advanced-coding/`](smart-advanced-coding/) | Semantic equivalence after refactoring (multi-language) | 32 |
+| [`smart-coding-comments/`](smart-coding-comments/) | Comment sanitization: sensitive spans removed, safe intent preserved | 30 |
+| [`smart-redaction/`](smart-redaction/) | Smart redaction accuracy on legal and medical documents | 10 |
+| `rag-protection/` | RAG document protection — fixtures in `kiri/tests/` | — |
+
+**Total labeled cases: 97** across 13 languages (Python, JavaScript, TypeScript, Java, Go, Rust, C#, Ruby, PHP, Kotlin, SQL, Bash, and more).
 
 ## Running benchmarks
 
