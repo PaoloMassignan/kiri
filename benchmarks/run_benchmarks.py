@@ -146,12 +146,13 @@ def run_smart_coding():
     }
 
     gap_categories = {
-        "Runtime construction":   ["KF001", "KF004"],
-        "Alias / partial context":["KF002"],
-        "Naming convention gap":  ["KF003", "KF008"],
-        "Suffix breaks boundary": ["KF005"],
-        "Interface / duck typing":["KF006"],
-        "Unit representation":    ["KF007"],
+        "Runtime construction":        ["KF001", "KF004"],
+        "Alias / partial context":     ["KF002"],
+        "Naming convention gap":       ["KF003", "KF008", "KF009"],
+        "Suffix breaks boundary":      ["KF005"],
+        "Interface / duck typing":     ["KF006"],
+        "Numeric representation":      ["KF007", "KF010"],
+        "Infrastructure-as-Code":      ["KF011"],
     }
     id_to_case = {c["id"]: c for c in gap_cases}
 

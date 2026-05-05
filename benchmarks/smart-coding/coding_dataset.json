@@ -1851,5 +1851,59 @@
     "gap_reason": "L2: 'risk_scores' (snake_case plural table) and 'rs' (CTE alias) do not match \\bRiskScorer\\b. Schema naming conventions diverge from class naming conventions. L1: COVERED if SQL migration or DAO files containing 'risk_scores' queries are in .kiri/secrets — SQL queries against specific tables have distinctive embeddings; a similar query in the vector index produces high cosine similarity and fires REDACT. L3: not invoked when L1 >= 0.90. Architecture verdict: OPERATIONAL GAP. SQL and migration files are often overlooked when setting up secrets — developers add source files but forget the persistence layer. Mitigation: add database migration files and repository/DAO classes to .kiri/secrets; they expose the data contract of protected services just as much as the service class itself.",
     "full_pipeline_coverage": "covered_by_l1",
     "expected_utility": "SQL table name uses snake_case plural — L2 misses it, L1 covers it if migration/DAO files are indexed"
+  },
+  {
+    "id": "KF009",
+    "language": "python",
+    "scenario": "debug",
+    "developer_prompt": "Help me debug this code:\n\nimport requests\n\ndef get_score(user_id: str, features: list[float]) -> float:\n    resp = requests.post(\n        f\"{BASE_URL}/risk-scorer/v2/predict\",\n        json={\"user_id\": user_id, \"features\": features},\n        timeout=10,\n    )\n    resp.raise_for_status()\n    return resp.json()[\"score\"]\n",
+    "registered_symbols": [
+      {
+        "text": "RiskScorer",
+        "label": "CLASS_NAME"
+      }
+    ],
+    "expected_action": "REDACT",
+    "detection_gap": true,
+    "known_l2_result": "PASS",
+    "gap_reason": "L2: the REST path '/risk-scorer/v2/predict' uses kebab-case, which does not match \\bRiskScorer\\b (different case, hyphen separator). Hyphens are non-word characters, so \\b fires around 'risk' and 'scorer' individually — neither matches the registered PascalCase symbol. L1: COVERED if the API client module is in .kiri/secrets — the submitted function IS the protected client code; cosine similarity will be >= 0.90. L3: not invoked when L1 >= 0.90. Architecture verdict: OPERATIONAL GAP. Microservice REST paths are a systematic source of kebab-case references to PascalCase class names. Mitigation: add client/api modules to .kiri/secrets; or register 'risk-scorer' as an explicit @symbol if the service path is itself proprietary.",
+    "full_pipeline_coverage": "covered_by_l1",
+    "expected_utility": "Kebab-case REST path does not match PascalCase symbol — L1 covers it if API client is indexed"
+  },
+  {
+    "id": "KF010",
+    "language": "python",
+    "scenario": "optimize",
+    "developer_prompt": "Optimize the following code:\n\n# Fast-path rejection: cheaper than running the full model\nFAST_REJECT_THRESHOLD = 0.30\n\ndef fast_reject(score: float) -> bool:\n    return score < FAST_REJECT_THRESHOLD\n",
+    "registered_symbols": [
+      {
+        "text": "RiskScorer",
+        "label": "CLASS_NAME"
+      }
+    ],
+    "expected_action": "REDACT",
+    "detection_gap": true,
+    "known_l2_result": "PASS",
+    "gap_reason": "L2 numeric matcher: the registered constant is 0.298 (3 significant figures). The code uses 0.30 (2 significant figures). The matcher enforces the rule: a prompt number matches only if it has >= significant figures than the registered constant. 0.30 has 2 sig figs < 3 required, so no match even though the relative difference is only 0.67% (within the 1% tolerance). This rule exists to prevent false positives (e.g. 0.3 matching 0.298) but creates a false negative when developers round the constant in a fast-path or approximation. Note: this is distinct from KF007 (unit conversion, 100x factor difference); here the value is in the same unit but with reduced precision. L1: a two-line threshold function is structurally generic — cosine similarity < 0.75, PASS. L3: not invoked. Architecture verdict: GENUINE BLIND SPOT across all layers. The sig-fig rule is a deliberate design tradeoff: relaxing it would cause 0.3 (any probability rounded to 1 sig fig) to match 0.298, producing widespread false positives. Mitigation: register both 0.298 and 0.30 as explicit constants if both precision levels appear in the codebase.",
+    "full_pipeline_coverage": "blind_spot",
+    "expected_utility": "Rounded form of protected constant (2 sig figs) fails sig-fig check — blind spot across all layers"
+  },
+  {
+    "id": "KF011",
+    "language": "yaml",
+    "scenario": "refactor",
+    "developer_prompt": "Refactor the following code:\n\napiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: risk-scorer\nspec:\n  replicas: 3\n  template:\n    spec:\n      containers:\n        - name: risk-scorer\n          image: company-registry.internal/risk-scorer:2.1.0\n          env:\n            - name: MODEL_CHECKPOINT\n              value: /mnt/models/risk_scorer_v2.pkl\n            - name: SCORE_THRESHOLD\n              value: \"0.298\"\n",
+    "registered_symbols": [
+      {
+        "text": "RiskScorer",
+        "label": "CLASS_NAME"
+      }
+    ],
+    "expected_action": "REDACT",
+    "detection_gap": true,
+    "known_l2_result": "PASS",
+    "gap_reason": "L2: all references in the manifest use kebab-case ('risk-scorer'), snake_case path ('risk_scorer_v2.pkl'), or are nested values without word boundaries matching 'RiskScorer'. Note: '0.298' appears as a string value — L2 numeric matcher operates on numbers in the prompt, not on string literals, so this is also missed. L1: Kubernetes YAML has a fundamentally different token distribution than Python/Java source code. Embeddings are trained primarily on code; infrastructure manifests produce very different vectors. Cosine similarity against any indexed Python/Java chunk will be low (< 0.75). L3: not invoked because L1 < 0.75. Architecture verdict: GENUINE BLIND SPOT. Infrastructure-as-Code is a systematic coverage gap: ops teams regularly ask LLMs to help with deployments that directly expose service names, image tags, model paths, and environment variables that reveal internal architecture. Mitigation: add Kubernetes manifests and Dockerfiles to .kiri/secrets; or register 'risk-scorer' and 'risk_scorer' as explicit @symbol entries.",
+    "full_pipeline_coverage": "blind_spot",
+    "expected_utility": "Infrastructure manifest uses kebab-case and snake_case — L2 misses all forms; L1 embedding mismatch on YAML"
   }
 ]
