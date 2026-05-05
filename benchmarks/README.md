@@ -31,12 +31,19 @@ All datasets follow the detect+REDACT schema aligned with Kiri's actual filter b
 | [`smart-redaction/`](smart-redaction/) | Smart redaction accuracy on legal and medical documents | 10 |
 | `rag-protection/` | RAG document protection — fixtures in `kiri/tests/` | — |
 
-**Total labeled cases: 216** across 15 languages (Python, JavaScript, TypeScript, Java, Go, Rust, C#, Ruby, PHP, Kotlin, SQL, Bash, Swift, Scala, and more).
+**Total labeled cases: 224** across 15 languages (Python, JavaScript, TypeScript, Java, Go, Rust, C#, Ruby, PHP, Kotlin, SQL, Bash, Swift, Scala, and more).
 
 `smart-coding` includes 17 near-miss cases (NM001–NM017) that stress-test word-boundary precision:
 version suffixes (`RiskScorerV2`), underscore extensions (`calculate_fee_async`), case mismatches
 (`InvoiceService` vs `invoice_service`), design-pattern suffixes (`FeatureStoreClient`), and
 symbol detection in non-obvious positions (string literals, type annotations, imports, doc comments).
+
+`smart-coding` also includes 8 known-failure cases (KF001–KF008, `detection_gap: true`) that
+document L2 blind spots by design. These are excluded from F1 scoring and printed separately
+by the runner with full explanations. Categories: runtime string construction, alias-only snippets,
+naming convention gaps (SCREAMING_SNAKE_CASE, SQL table names), Java Impl suffix, interface/duck
+typing, and numeric constant unit mismatch. Each case documents the correct answer, what L2
+returns, and the recommended mitigation.
 
 ## Running benchmarks
 

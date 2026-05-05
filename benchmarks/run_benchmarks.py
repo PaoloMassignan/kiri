@@ -67,13 +67,16 @@ def run_smart_coding():
     print("  SUITE: smart-coding  (L2 symbol detection)")
     print(f"{'=' * 62}")
 
-    cases = load(BASE / "smart-coding" / "coding_dataset.json")
+    all_cases = load(BASE / "smart-coding" / "coding_dataset.json")
+
+    gap_cases   = [c for c in all_cases if c.get("detection_gap")]
+    scorable    = [c for c in all_cases if not c.get("detection_gap")]
 
     tp = fp = fn = tn = 0
     errors = []
     by_language: dict[str, list] = defaultdict(list)
 
-    for c in cases:
+    for c in scorable:
         predicted = predict_action(c["registered_symbols"], c["developer_prompt"])
         expected  = c["expected_action"]
         correct   = predicted == expected
@@ -101,18 +104,19 @@ def run_smart_coding():
 
     m = classification_metrics(tp, fp, fn, tn)
 
-    print(f"\n  Cases : {len(cases)}  (REDACT={tp+fn}, PASS={tn+fp})")
+    print(f"\n  Scored cases  : {len(scorable)}  (REDACT={tp+fn}, PASS={tn+fp})")
+    print(f"  Excluded (gaps): {len(gap_cases)}  known L2 blind spots — scored separately below")
     print(f"  {SEP}")
     print(f"  Precision : {fmt(m['precision'])}   (REDACT correctly predicted / all predicted REDACT)")
     print(f"  Recall    : {fmt(m['recall'])}   (REDACT correctly detected / all actual REDACT)")
     print(f"  F1        : {fmt(m['f1'])}")
     print(f"  Accuracy  : {fmt(m['accuracy'])}")
-    print(f"\n  Confusion matrix:")
+    print(f"\n  Confusion matrix (scorable cases only):")
     print(f"              Predicted REDACT  Predicted PASS")
     print(f"  Actual REDACT    {tp:3d} (TP)         {fn:3d} (FN)")
     print(f"  Actual PASS      {fp:3d} (FP)         {tn:3d} (TN)")
 
-    # Per-language accuracy
+    # Per-language accuracy (scorable only)
     print(f"\n  Per-language accuracy:")
     for lang in sorted(by_language):
         results = by_language[lang]
@@ -121,7 +125,7 @@ def run_smart_coding():
         print(f"    {lang:15s}  {acc:.0%}  {bar}  ({sum(results)}/{len(results)})")
 
     if errors:
-        print(f"\n  Misclassified cases ({len(errors)}):")
+        print(f"\n  Unexpected misclassifications ({len(errors)}):")
         for c in errors:
             syms = [s["text"] for s in c["registered_symbols"]]
             matched = l2_matches(c["registered_symbols"], c["developer_prompt"])
@@ -129,6 +133,45 @@ def run_smart_coding():
             print(f"    [{tag}] {c['id']}  registered={syms}  matched={matched}")
             if VERBOSE:
                 print(f"         prompt: {c['developer_prompt'][:120]!r}")
+
+    # ── Known L2 blind spots ─────────────────────────────────────────────────
+    print(f"\n  {'=' * 58}")
+    print(f"  KNOWN L2 BLIND SPOTS  ({len(gap_cases)} cases — expected failures)")
+    print(f"  {'=' * 58}")
+
+    gap_categories = {
+        "Runtime construction":   ["KF001", "KF004"],
+        "Alias / partial context":["KF002"],
+        "Naming convention gap":  ["KF003", "KF008"],
+        "Suffix breaks boundary": ["KF005"],
+        "Interface / duck typing":["KF006"],
+        "Unit representation":    ["KF007"],
+    }
+    id_to_case = {c["id"]: c for c in gap_cases}
+
+    for category, ids in gap_categories.items():
+        print(f"\n  [{category}]")
+        for cid in ids:
+            c = id_to_case.get(cid)
+            if not c:
+                continue
+            predicted = predict_action(c["registered_symbols"], c["developer_prompt"])
+            syms = [s["text"] for s in c["registered_symbols"]]
+            print(f"    {cid:6s} [{c['language']:12s}]  "
+                  f"correct={c['expected_action']:6s}  L2={predicted:6s}  "
+                  f"registered={syms}")
+            # Print gap_reason wrapped at 70 chars
+            reason = c.get("gap_reason", "")
+            words = reason.split()
+            line = "           "
+            for word in words:
+                if len(line) + len(word) + 1 > 72:
+                    print(line)
+                    line = "           " + word
+                else:
+                    line += " " + word
+            if line.strip():
+                print(line)
 
     return m
 

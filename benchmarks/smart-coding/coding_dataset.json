@@ -1707,5 +1707,141 @@
     "expected_action": "PASS",
     "expected_utility": "DB (uppercase) does not match db, dbClient, newDBClient — L2 is case-sensitive",
     "near_miss_note": "DB registered as uppercase acronym; code uses lowercase db and mixed dbClient — case-sensitive no-match"
+  },
+  {
+    "id": "KF001",
+    "language": "python",
+    "scenario": "debug",
+    "developer_prompt": "Help me debug this code:\n\nprefix = 'Risk'\ncls_name = prefix + 'Scorer'\nmodel_cls = globals()[cls_name]\nresult = model_cls().evaluate(features)\n",
+    "registered_symbols": [
+      {
+        "text": "RiskScorer",
+        "label": "CLASS_NAME"
+      }
+    ],
+    "expected_action": "REDACT",
+    "detection_gap": true,
+    "known_l2_result": "PASS",
+    "gap_reason": "L2 is a static text scanner: the literal token 'RiskScorer' never appears in the prompt. The symbol is assembled at runtime by concatenating 'Risk' and 'Scorer'. Neither part is registered individually. Fix: L3 semantic analysis could infer that globals()[prefix + 'Scorer'] references a protected class, but this requires understanding Python's dynamic dispatch. Operational mitigation: register both 'RiskScorer' and 'Risk' if the prefix is itself proprietary.",
+    "expected_utility": "Symbol assembled at runtime — L2 blind spot; L3 semantic analysis required"
+  },
+  {
+    "id": "KF002",
+    "language": "python",
+    "scenario": "explain",
+    "developer_prompt": "Explain what this code does:\n\n# imports are in __init__.py; this file contains only the logic\ndef run_evaluation(model, data: list) -> float:\n    scores = [model.score(item) for item in data]\n    return sum(scores) / len(scores)\n",
+    "registered_symbols": [
+      {
+        "text": "RiskScorer",
+        "label": "CLASS_NAME"
+      }
+    ],
+    "expected_action": "REDACT",
+    "detection_gap": true,
+    "known_l2_result": "PASS",
+    "gap_reason": "The developer shared only one file from a multi-file project. The import 'from models import RiskScorer as model' lives in __init__.py, which is not included in the prompt. L2 scans only what is in the prompt text; it has no awareness of the broader codebase. The symbol 'RiskScorer' does not appear anywhere in the shared snippet. Fix: Kiri's indexer already addresses this at the file level — if the user adds a directory to .kiri/secrets, symbols are extracted from all files. The gap occurs only when the developer manually pastes a code snippet that omits the imports.",
+    "expected_utility": "Proprietary class referenced only via alias — symbol absent from shared snippet"
+  },
+  {
+    "id": "KF003",
+    "language": "python",
+    "scenario": "refactor",
+    "developer_prompt": "Refactor the following code:\n\nimport os\n\nRISK_SCORER_ENDPOINT = os.getenv('RISK_SCORER_ENDPOINT', 'http://ml-svc:8080')\nRISK_SCORER_TIMEOUT  = int(os.getenv('RISK_SCORER_TIMEOUT', '30'))\nRISK_SCORER_MAX_RETRIES = int(os.getenv('RISK_SCORER_MAX_RETRIES', '3'))\n",
+    "registered_symbols": [
+      {
+        "text": "RiskScorer",
+        "label": "CLASS_NAME"
+      }
+    ],
+    "expected_action": "REDACT",
+    "detection_gap": true,
+    "known_l2_result": "PASS",
+    "gap_reason": "Naming convention mismatch: the class is registered as 'RiskScorer' (PascalCase) but its derived config constants use SCREAMING_SNAKE_CASE: RISK_SCORER_ENDPOINT. The L2 word-boundary regex is case-sensitive and matches the exact registered string. 'RISK_SCORER' contains no word boundary that would allow 'RiskScorer' to match inside it. Fix: register both 'RiskScorer' and 'RISK_SCORER' in .kiri/secrets. Alternatively, L3 could recognize that env var names derived from a class name constitute a reference to that class.",
+    "expected_utility": "Class name encoded as env var prefix in SCREAMING_SNAKE_CASE — case-sensitive L2 misses it"
+  },
+  {
+    "id": "KF004",
+    "language": "typescript",
+    "scenario": "debug",
+    "developer_prompt": "Help me debug this code:\n\nfunction buildServiceKey(name: string, suffix: string): string {\n  return `${name}${suffix}`;\n}\n\nconst key = buildServiceKey('Risk', 'Scorer');\nconst service = serviceRegistry.get(key);\n",
+    "registered_symbols": [
+      {
+        "text": "RiskScorer",
+        "label": "CLASS_NAME"
+      }
+    ],
+    "expected_action": "REDACT",
+    "detection_gap": true,
+    "known_l2_result": "PASS",
+    "gap_reason": "The protected symbol is constructed at runtime via template literal interpolation. The string 'RiskScorer' is never present as a literal token — only its two parts 'Risk' and 'Scorer' appear separately as string arguments. L2 cannot evaluate the runtime result of string concatenation or template expressions. Fix: register 'Risk' as a protected prefix if the prefix itself is proprietary. Otherwise, only L3 (LLM-based) analysis could infer that `${name}${suffix}` with those specific arguments resolves to a protected service name.",
+    "expected_utility": "Symbol assembled via template literal at runtime — static scanner cannot evaluate interpolation"
+  },
+  {
+    "id": "KF005",
+    "language": "java",
+    "scenario": "refactor",
+    "developer_prompt": "Refactor the following code:\n\npublic class RiskScorerImpl implements Scorer {\n    private final double threshold;\n\n    public RiskScorerImpl(double threshold) {\n        this.threshold = threshold;\n    }\n\n    @Override\n    public double score(double[] features) {\n        double raw = 0;\n        for (double f : features) raw += f;\n        return raw / features.length;\n    }\n}\n",
+    "registered_symbols": [
+      {
+        "text": "RiskScorer",
+        "label": "CLASS_NAME"
+      }
+    ],
+    "expected_action": "REDACT",
+    "detection_gap": true,
+    "known_l2_result": "PASS",
+    "gap_reason": "The implementation class 'RiskScorerImpl' does not match \\bRiskScorer\\b. In 'RiskScorerImpl', the character following 'RiskScorer' is 'I' — a word character. The word boundary \\b only fires between a word char and a non-word char, so 'RiskScorer' inside 'RiskScorerImpl' has no right boundary and is not matched. This is a systematic gap: Java convention generates Impl, Service, Factory, Repository suffixes from every interface/base name. Fix: explicitly register 'RiskScorerImpl', 'RiskScorerService', etc. in .kiri/secrets, or switch to prefix matching (with the tradeoff of increased false positives).",
+    "expected_utility": "Impl suffix breaks word boundary — standard Java naming convention creates systematic gap"
+  },
+  {
+    "id": "KF006",
+    "language": "go",
+    "scenario": "explain",
+    "developer_prompt": "Explain what this code does:\n\npackage scoring\n\ntype Scorer interface {\n    Score(features []float64) float64\n}\n\nfunc Evaluate(s Scorer, data [][]float64) []float64 {\n    results := make([]float64, len(data))\n    for i, row := range data {\n        results[i] = s.Score(row)\n    }\n    return results\n}\n",
+    "registered_symbols": [
+      {
+        "text": "RiskScorer",
+        "label": "CLASS_NAME"
+      }
+    ],
+    "expected_action": "REDACT",
+    "detection_gap": true,
+    "known_l2_result": "PASS",
+    "gap_reason": "The function accepts a 'Scorer' interface. In the actual codebase, 'RiskScorer' implements this interface and is the only concrete type passed here. However, the interface type name 'Scorer' is generic and not registered. L2 cannot reason about type hierarchies: it only sees what is textually present. This is the interface-segregation blind spot — proprietary logic is hidden behind an abstraction layer that uses a generic name. Fix: register 'Scorer' if it is itself a proprietary interface name. This case is also where L1 similarity detection is most valuable: if similar scoring patterns have been seen in protected code, L1 may trigger.",
+    "expected_utility": "Concrete proprietary type hidden behind a generic interface — L2 has no type-system awareness"
+  },
+  {
+    "id": "KF007",
+    "language": "python",
+    "scenario": "optimize",
+    "developer_prompt": "Optimize the following code:\n\n# Internal approval threshold (percentage form)\nAPPROVAL_THRESHOLD_PCT = 29.8\n\ndef approve(score: float) -> bool:\n    return (score * 100) >= APPROVAL_THRESHOLD_PCT\n",
+    "registered_symbols": [
+      {
+        "text": "RiskScorer",
+        "label": "CLASS_NAME"
+      }
+    ],
+    "expected_action": "REDACT",
+    "detection_gap": true,
+    "known_l2_result": "PASS",
+    "gap_reason": "The registered numeric constant is 0.298 (fractional form). The code uses 29.8 (percentage form: 0.298 × 100). L2's numeric matcher compares values within a 1% relative tolerance but does NOT perform unit conversion between fractional and percentage representations. 0.298 and 29.8 differ by a factor of 100, far outside the 1% tolerance window. Fix: register both representations (0.298 and 29.8) in .kiri/secrets, or document the convention that numeric constants are always registered in fractional form and developers must use them consistently.",
+    "expected_utility": "Protected constant expressed as percentage (29.8) vs registered fractional form (0.298) — unit gap"
+  },
+  {
+    "id": "KF008",
+    "language": "sql",
+    "scenario": "optimize",
+    "developer_prompt": "Optimize the following code:\n\nWITH rs AS (\n    SELECT user_id, score, evaluated_at\n    FROM risk_scores\n    WHERE evaluated_at >= NOW() - INTERVAL '7 days'\n),\napproved AS (\n    SELECT user_id FROM rs WHERE score >= 0.7\n)\nSELECT u.email, a.user_id\nFROM approved a\nJOIN users u ON u.id = a.user_id;\n",
+    "registered_symbols": [
+      {
+        "text": "RiskScorer",
+        "label": "CLASS_NAME"
+      }
+    ],
+    "expected_action": "REDACT",
+    "detection_gap": true,
+    "known_l2_result": "PASS",
+    "gap_reason": "The table 'risk_scores' is the persistence layer of the RiskScorer service. The CTE is aliased as 'rs' — a common abbreviation for RiskScorer. Neither 'risk_scores' nor 'rs' matches \\bRiskScorer\\b. This is a schema-naming gap: the registered symbol is the class name, but the database table follows snake_case convention and uses a plural noun. Fix: add 'risk_scores' as an explicit @symbol in .kiri/secrets alongside 'RiskScorer', since the table is the data contract of the service. This is a documentation/onboarding problem as much as a detection one.",
+    "expected_utility": "Proprietary service table name uses snake_case plural — does not match PascalCase registered symbol"
   }
 ]
