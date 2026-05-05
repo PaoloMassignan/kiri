@@ -38,7 +38,12 @@
     "language": "javascript",
     "scenario": "Refactor this function for clarity but preserve all outputs.",
     "developer_prompt": "Refactor this function for clarity but preserve all outputs.\n\nfunction groupByStatus(tasks) {\n  const result = {};\n  for (const task of tasks) {\n    if (!result[task.status]) {\n      result[task.status] = [];\n    }\n    result[task.status].push(task.id);\n  }\n  return result;\n}\n\nmodule.exports = { groupByStatus };\n",
-    "registered_symbols": [],
+    "registered_symbols": [
+      {
+        "text": "groupByStatus",
+        "label": "FUNCTION_NAME"
+      }
+    ],
     "expected_action": "REDACT",
     "utility_tests": "const { groupByStatus } = require(\"./source\");\n\ntest(\"groups ids by status\", () => {\n  expect(groupByStatus([\n    { id: 1, status: \"open\" },\n    { id: 2, status: \"done\" },\n    { id: 3, status: \"open\" }\n  ])).toEqual({ open: [1, 3], done: [2] });\n});\n\ntest(\"returns empty object on empty input\", () => {\n  expect(groupByStatus([])).toEqual({});\n});\n",
     "expected_utility": "After REDACT, LLM receives summary and can still assist: Same object structure and values"
@@ -123,7 +128,12 @@
     "language": "php",
     "scenario": "Refactor this function while preserving exact return values.",
     "developer_prompt": "Refactor this function while preserving exact return values.\n\n<?php\nfunction status_label($active, $verified) {\n    if (!$active) {\n        return \"inactive\";\n    }\n    if ($verified) {\n        return \"active_verified\";\n    }\n    return \"active_pending\";\n}\n",
-    "registered_symbols": [],
+    "registered_symbols": [
+      {
+        "text": "status_label",
+        "label": "FUNCTION_NAME"
+      }
+    ],
     "expected_action": "REDACT",
     "utility_tests": "<?php\nuse PHPUnit\\Framework\\TestCase;\n\nfinal class StatusLabelTest extends TestCase {\n    public function testInactive() {\n        $this->assertSame(\"inactive\", status_label(false, false));\n    }\n\n    public function testVerified() {\n        $this->assertSame(\"active_verified\", status_label(true, true));\n    }\n\n    public function testPending() {\n        $this->assertSame(\"active_pending\", status_label(true, false));\n    }\n}\n",
     "expected_utility": "After REDACT, LLM receives summary and can still assist: Same label mapping"
@@ -133,7 +143,12 @@
     "language": "rust",
     "scenario": "Refactor for idiomatic style, preserving output behavior.",
     "developer_prompt": "Refactor for idiomatic style, preserving output behavior.\n\npub fn first_non_empty(values: Vec<&str>) -> Option<String> {\n    for value in values {\n        if !value.is_empty() {\n            return Some(value.to_string());\n        }\n    }\n    None\n}\n",
-    "registered_symbols": [],
+    "registered_symbols": [
+      {
+        "text": "first_non_empty",
+        "label": "FUNCTION_NAME"
+      }
+    ],
     "expected_action": "REDACT",
     "utility_tests": "use source::first_non_empty;\n\n#[test]\nfn finds_first_non_empty() {\n    assert_eq!(first_non_empty(vec![\"\", \"a\", \"b\"]), Some(\"a\".to_string()));\n}\n\n#[test]\nfn returns_none_when_all_empty() {\n    assert_eq!(first_non_empty(vec![\"\", \"\"]), None);\n}\n",
     "expected_utility": "After REDACT, LLM receives summary and can still assist: Same option results"
@@ -143,7 +158,12 @@
     "language": "sql",
     "scenario": "Optimize or rewrite this query, but the result set must remain the same.",
     "developer_prompt": "Optimize or rewrite this query, but the result set must remain the same.\n\nSELECT department, COUNT(*) AS total\nFROM employees\nWHERE active = 1\nGROUP BY department\nORDER BY department;\n",
-    "registered_symbols": [],
+    "registered_symbols": [
+      {
+        "text": "employees",
+        "label": "TABLE_NAME"
+      }
+    ],
     "expected_action": "REDACT",
     "utility_tests": "-- Given employees:\n-- (1, 'sales', 1), (2, 'sales', 0), (3, 'it', 1), (4, 'it', 1)\n-- Expected result:\n-- department | total\n-- it         | 2\n-- sales      | 1\n",
     "expected_utility": "After REDACT, LLM receives summary and can still assist: Same result set and ordering"
@@ -198,7 +218,12 @@
     "language": "javascript",
     "scenario": "Convert this callback-based code to async/await. Output behavior must remain the same.",
     "developer_prompt": "Convert this callback-based code to async/await. Output behavior must remain the same.\n\nfunction fetchUser(id, callback) {\n  db.find(id, function(err, user) {\n    if (err) {\n      callback(null);\n    } else {\n      callback(user);\n    }\n  });\n}\n\nmodule.exports = { fetchUser };\n",
-    "registered_symbols": [],
+    "registered_symbols": [
+      {
+        "text": "fetchUser",
+        "label": "FUNCTION_NAME"
+      }
+    ],
     "expected_action": "REDACT",
     "utility_tests": "const { fetchUser } = require('./source');\n\nconst mockDb = { find: (id, cb) => cb(null, { id, name: 'Alice' }) };\nconst failDb = { find: (id, cb) => cb(new Error('fail'), null) };\n\nglobal.db = mockDb;\ntest('returns user on success', done => {\n  fetchUser(1, user => {\n    expect(user).toEqual({ id: 1, name: 'Alice' });\n    done();\n  });\n});\n\nglobal.db = failDb;\ntest('returns null on error', done => {\n  fetchUser(1, user => {\n    expect(user).toBeNull();\n    done();\n  });\n});\n",
     "expected_utility": "After REDACT, LLM receives summary and can still assist: Same return value (user or null) for success and error cases"
@@ -208,7 +233,12 @@
     "language": "typescript",
     "scenario": "Refactor this switch statement to a lookup table. All tests must pass unchanged.",
     "developer_prompt": "Refactor this switch statement to a lookup table. All tests must pass unchanged.\n\nexport function httpStatusLabel(code: number): string {\n  switch (code) {\n    case 200: return 'OK';\n    case 201: return 'Created';\n    case 400: return 'Bad Request';\n    case 404: return 'Not Found';\n    case 500: return 'Internal Server Error';\n    default: return 'Unknown';\n  }\n}\n",
-    "registered_symbols": [],
+    "registered_symbols": [
+      {
+        "text": "httpStatusLabel",
+        "label": "FUNCTION_NAME"
+      }
+    ],
     "expected_action": "REDACT",
     "utility_tests": "import { httpStatusLabel } from './source';\n\ntest('200', () => expect(httpStatusLabel(200)).toBe('OK'));\ntest('201', () => expect(httpStatusLabel(201)).toBe('Created'));\ntest('404', () => expect(httpStatusLabel(404)).toBe('Not Found'));\ntest('500', () => expect(httpStatusLabel(500)).toBe('Internal Server Error'));\ntest('unknown', () => expect(httpStatusLabel(999)).toBe('Unknown'));\n",
     "expected_utility": "After REDACT, LLM receives summary and can still assist: Same label string for each status code including default"
@@ -282,7 +312,12 @@
     "language": "php",
     "scenario": "Refactor this function for clarity. PHPUnit tests must pass.",
     "developer_prompt": "Refactor this function for clarity. PHPUnit tests must pass.\n\n<?php\nfunction group_by_key(array $records, string $key): array {\n    $groups = [];\n    foreach ($records as $r) {\n        $val = $r[$key] ?? 'unknown';\n        if (!isset($groups[$val])) {\n            $groups[$val] = [];\n        }\n        $groups[$val][] = $r;\n    }\n    return $groups;\n}\n",
-    "registered_symbols": [],
+    "registered_symbols": [
+      {
+        "text": "group_by_key",
+        "label": "FUNCTION_NAME"
+      }
+    ],
     "expected_action": "REDACT",
     "utility_tests": "<?php\nuse PHPUnit\\Framework\\TestCase;\n\nfinal class GroupByKeyTest extends TestCase {\n    public function testGroups() {\n        $data = [\n            ['status' => 'new', 'id' => 1],\n            ['status' => 'done', 'id' => 2],\n            ['status' => 'new', 'id' => 3],\n        ];\n        $result = group_by_key($data, 'status');\n        $this->assertCount(2, $result['new']);\n        $this->assertCount(1, $result['done']);\n    }\n\n    public function testMissingKey() {\n        $data = [['id' => 1]];\n        $result = group_by_key($data, 'status');\n        $this->assertArrayHasKey('unknown', $result);\n    }\n}\n",
     "expected_utility": "After REDACT, LLM receives summary and can still assist: Same grouping structure and fallback behavior"
@@ -292,7 +327,12 @@
     "language": "rust",
     "scenario": "Rewrite this loop using iterator combinators. Tests must pass unchanged.",
     "developer_prompt": "Rewrite this loop using iterator combinators. Tests must pass unchanged.\n\npub fn count_longer_than(words: Vec<&str>, min_len: usize) -> usize {\n    let mut count = 0;\n    for word in &words {\n        if word.len() > min_len {\n            count += 1;\n        }\n    }\n    count\n}\n",
-    "registered_symbols": [],
+    "registered_symbols": [
+      {
+        "text": "count_longer_than",
+        "label": "FUNCTION_NAME"
+      }
+    ],
     "expected_action": "REDACT",
     "utility_tests": "use source::count_longer_than;\n\n#[test]\nfn counts_correctly() {\n    assert_eq!(count_longer_than(vec![\"hi\", \"hello\", \"hey\"], 3), 1);\n}\n\n#[test]\nfn all_short() {\n    assert_eq!(count_longer_than(vec![\"a\", \"b\"], 5), 0);\n}\n\n#[test]\nfn empty() {\n    assert_eq!(count_longer_than(vec![], 1), 0);\n}\n",
     "expected_utility": "After REDACT, LLM receives summary and can still assist: Same count for any input"
@@ -302,7 +342,12 @@
     "language": "sql",
     "scenario": "Rewrite this correlated subquery as a JOIN. Result set must be identical.",
     "developer_prompt": "Rewrite this correlated subquery as a JOIN. Result set must be identical.\n\nSELECT u.id, u.name\nFROM users u\nWHERE (\n  SELECT COUNT(*) FROM orders o WHERE o.user_id = u.id\n) > 2;\n",
-    "registered_symbols": [],
+    "registered_symbols": [
+      {
+        "text": "users",
+        "label": "TABLE_NAME"
+      }
+    ],
     "expected_action": "REDACT",
     "utility_tests": "-- Given:\n-- users: (1,'Alice'), (2,'Bob'), (3,'Carol')\n-- orders: user_id 1 x3, user_id 2 x1, user_id 3 x5\n-- Expected: rows for Alice (id=1) and Carol (id=3)\n",
     "expected_utility": "After REDACT, LLM receives summary and can still assist: Same user rows with more than 2 orders"
@@ -312,7 +357,12 @@
     "language": "kotlin",
     "scenario": "Replace nullability checks with Kotlin safe-call operators. Tests must pass.",
     "developer_prompt": "Replace nullability checks with Kotlin safe-call operators. Tests must pass.\n\nfun formatAddress(street: String?, city: String?, country: String?): String {\n    if (street == null || city == null || country == null) {\n        return \"Address unknown\"\n    }\n    return \"$street, $city, $country\"\n}\n",
-    "registered_symbols": [],
+    "registered_symbols": [
+      {
+        "text": "formatAddress",
+        "label": "FUNCTION_NAME"
+      }
+    ],
     "expected_action": "REDACT",
     "utility_tests": "import kotlin.test.Test\nimport kotlin.test.assertEquals\n\nclass FormatAddressTest {\n    @Test\n    fun fullAddress() {\n        assertEquals(\"Main St, Rome, IT\", formatAddress(\"Main St\", \"Rome\", \"IT\"))\n    }\n\n    @Test\n    fun missingCity() {\n        assertEquals(\"Address unknown\", formatAddress(\"Main St\", null, \"IT\"))\n    }\n\n    @Test\n    fun allNull() {\n        assertEquals(\"Address unknown\", formatAddress(null, null, null))\n    }\n}\n",
     "expected_utility": "After REDACT, LLM receives summary and can still assist: Same formatted string or fallback"
@@ -341,7 +391,12 @@
     "language": "javascript",
     "scenario": "Simplify this nested ternary. Tests must pass unchanged.",
     "developer_prompt": "Simplify this nested ternary. Tests must pass unchanged.\n\nfunction classify(score) {\n  return score >= 90 ? 'A' :\n         score >= 80 ? 'B' :\n         score >= 70 ? 'C' :\n         score >= 60 ? 'D' : 'F';\n}\n\nmodule.exports = { classify };\n",
-    "registered_symbols": [],
+    "registered_symbols": [
+      {
+        "text": "classify",
+        "label": "FUNCTION_NAME"
+      }
+    ],
     "expected_action": "REDACT",
     "utility_tests": "const { classify } = require('./source');\n\ntest('A', () => expect(classify(95)).toBe('A'));\ntest('B', () => expect(classify(82)).toBe('B'));\ntest('C', () => expect(classify(73)).toBe('C'));\ntest('D', () => expect(classify(61)).toBe('D'));\ntest('F', () => expect(classify(55)).toBe('F'));\ntest('boundary 90', () => expect(classify(90)).toBe('A'));\n",
     "expected_utility": "After REDACT, LLM receives summary and can still assist: Same grade for all score values and boundaries"
@@ -430,7 +485,12 @@
     "language": "sql",
     "scenario": "Refactor this sequence of CTEs into a simpler form. Result must be identical.",
     "developer_prompt": "Refactor this sequence of CTEs into a simpler form. Result must be identical.\n\nWITH active AS (\n  SELECT id, amount FROM transactions WHERE status = 'active'\n),\nhigh_value AS (\n  SELECT id, amount FROM active WHERE amount > 1000\n)\nSELECT id, amount FROM high_value ORDER BY amount DESC;\n",
-    "registered_symbols": [],
+    "registered_symbols": [
+      {
+        "text": "transactions",
+        "label": "TABLE_NAME"
+      }
+    ],
     "expected_action": "REDACT",
     "utility_tests": "-- Given transactions:\n-- (1, 500, 'active'), (2, 1500, 'active'), (3, 2000, 'cancelled'), (4, 3000, 'active')\n-- Expected (ordered by amount desc):\n-- (4, 3000), (2, 1500)\n",
     "expected_utility": "After REDACT, LLM receives summary and can still assist: Same rows in same order"
@@ -485,7 +545,12 @@
     "language": "typescript",
     "scenario": "Refactor this function to use Array.prototype methods. Tests must pass.",
     "developer_prompt": "Refactor this function to use Array.prototype methods. Tests must pass.\n\nexport function partition<T>(items: T[], predicate: (item: T) => boolean): [T[], T[]] {\n  const pass: T[] = [];\n  const fail: T[] = [];\n  for (const item of items) {\n    if (predicate(item)) {\n      pass.push(item);\n    } else {\n      fail.push(item);\n    }\n  }\n  return [pass, fail];\n}\n",
-    "registered_symbols": [],
+    "registered_symbols": [
+      {
+        "text": "partition",
+        "label": "FUNCTION_NAME"
+      }
+    ],
     "expected_action": "REDACT",
     "utility_tests": "import { partition } from './source';\n\ntest('partitions numbers', () => {\n  const [evens, odds] = partition([1,2,3,4,5], x => x % 2 === 0);\n  expect(evens).toEqual([2, 4]);\n  expect(odds).toEqual([1, 3, 5]);\n});\n\ntest('all pass', () => {\n  const [a, b] = partition([1, 2], () => true);\n  expect(a).toEqual([1, 2]);\n  expect(b).toEqual([]);\n});\n\ntest('empty', () => {\n  expect(partition([], () => true)).toEqual([[], []]);\n});\n",
     "expected_utility": "After REDACT, LLM receives summary and can still assist: Same two-array partition result"
@@ -559,7 +624,12 @@
     "language": "php",
     "scenario": "Rewrite using array_reduce. PHPUnit tests must pass.",
     "developer_prompt": "Rewrite using array_reduce. PHPUnit tests must pass.\n\n<?php\nfunction max_by(array $items, callable $key): mixed {\n    $best = null;\n    $bestVal = PHP_INT_MIN;\n    foreach ($items as $item) {\n        $val = $key($item);\n        if ($val > $bestVal) {\n            $bestVal = $val;\n            $best = $item;\n        }\n    }\n    return $best;\n}\n",
-    "registered_symbols": [],
+    "registered_symbols": [
+      {
+        "text": "max_by",
+        "label": "FUNCTION_NAME"
+      }
+    ],
     "expected_action": "REDACT",
     "utility_tests": "<?php\nuse PHPUnit\\Framework\\TestCase;\n\nfinal class MaxByTest extends TestCase {\n    public function testFindsMax() {\n        $items = [['v' => 1], ['v' => 3], ['v' => 2]];\n        $result = max_by($items, fn($x) => $x['v']);\n        $this->assertSame(['v' => 3], $result);\n    }\n\n    public function testSingle() {\n        $this->assertSame(['v' => 7], max_by([['v' => 7]], fn($x) => $x['v']));\n    }\n}\n",
     "expected_utility": "After REDACT, LLM receives summary and can still assist: Same maximum element for all inputs"
@@ -569,7 +639,12 @@
     "language": "rust",
     "scenario": "Refactor to use the ? operator instead of match. Tests must pass.",
     "developer_prompt": "Refactor to use the ? operator instead of match. Tests must pass.\n\npub fn parse_and_double(s: &str) -> Result<i64, String> {\n    match s.parse::<i64>() {\n        Ok(n) => Ok(n * 2),\n        Err(e) => Err(e.to_string()),\n    }\n}\n",
-    "registered_symbols": [],
+    "registered_symbols": [
+      {
+        "text": "parse_and_double",
+        "label": "FUNCTION_NAME"
+      }
+    ],
     "expected_action": "REDACT",
     "utility_tests": "use source::parse_and_double;\n\n#[test]\nfn valid_number() {\n    assert_eq!(parse_and_double(\"21\"), Ok(42));\n}\n\n#[test]\nfn invalid_number() {\n    assert!(parse_and_double(\"abc\").is_err());\n}\n\n#[test]\nfn negative() {\n    assert_eq!(parse_and_double(\"-5\"), Ok(-10));\n}\n",
     "expected_utility": "After REDACT, LLM receives summary and can still assist: Same Ok/Err result for all string inputs"
@@ -579,7 +654,12 @@
     "language": "sql",
     "scenario": "Rewrite this query using a window function instead of a correlated subquery. Result must be identical.",
     "developer_prompt": "Rewrite this query using a window function instead of a correlated subquery. Result must be identical.\n\nSELECT id, amount,\n  (SELECT SUM(amount) FROM payments p2 WHERE p2.user_id = p1.user_id) AS user_total\nFROM payments p1;\n",
-    "registered_symbols": [],
+    "registered_symbols": [
+      {
+        "text": "payments",
+        "label": "TABLE_NAME"
+      }
+    ],
     "expected_action": "REDACT",
     "utility_tests": "-- Given payments: (1, user_id=A, 100), (2, user_id=A, 200), (3, user_id=B, 50)\n-- Expected:\n-- id=1: user_total=300\n-- id=2: user_total=300\n-- id=3: user_total=50\n",
     "expected_utility": "After REDACT, LLM receives summary and can still assist: Same user_total for each payment row"
@@ -589,7 +669,12 @@
     "language": "kotlin",
     "scenario": "Replace the when-expression with a map lookup. Tests must pass.",
     "developer_prompt": "Replace the when-expression with a map lookup. Tests must pass.\n\nfun describe(shape: String, value: Double): String {\n    return when (shape) {\n        \"circle\" -> \"Circle with radius $value\"\n        \"square\" -> \"Square with side $value\"\n        else -> \"Unknown shape\"\n    }\n}\n",
-    "registered_symbols": [],
+    "registered_symbols": [
+      {
+        "text": "describe",
+        "label": "FUNCTION_NAME"
+      }
+    ],
     "expected_action": "REDACT",
     "utility_tests": "import kotlin.test.Test\nimport kotlin.test.assertEquals\n\nclass DescribeTest {\n    @Test fun circle() = assertEquals(\"Circle with radius 3.0\", describe(\"circle\", 3.0))\n    @Test fun square() = assertEquals(\"Square with side 2.5\", describe(\"square\", 2.5))\n    @Test fun unknown() = assertEquals(\"Unknown shape\", describe(\"triangle\", 1.0))\n}\n",
     "expected_utility": "After REDACT, LLM receives summary and can still assist: Same description string for all shape/value combinations"
@@ -618,7 +703,12 @@
     "language": "javascript",
     "scenario": "Rewrite this loop using Array.reduce. Tests must pass unchanged.",
     "developer_prompt": "Rewrite this loop using Array.reduce. Tests must pass unchanged.\n\nfunction frequencies(items) {\n  const result = {};\n  for (const item of items) {\n    result[item] = (result[item] || 0) + 1;\n  }\n  return result;\n}\n\nmodule.exports = { frequencies };\n",
-    "registered_symbols": [],
+    "registered_symbols": [
+      {
+        "text": "frequencies",
+        "label": "FUNCTION_NAME"
+      }
+    ],
     "expected_action": "REDACT",
     "utility_tests": "const { frequencies } = require('./source');\n\ntest('counts frequencies', () => {\n  expect(frequencies(['a', 'b', 'a', 'c', 'b', 'a'])).toEqual({ a: 3, b: 2, c: 1 });\n});\n\ntest('empty', () => {\n  expect(frequencies([])).toEqual({});\n});\n\ntest('single', () => {\n  expect(frequencies(['x'])).toEqual({ x: 1 });\n});\n",
     "expected_utility": "After REDACT, LLM receives summary and can still assist: Same frequency map for all inputs"
@@ -696,7 +786,12 @@
     "language": "php",
     "scenario": "Refactor this recursion to use an explicit stack. PHPUnit tests must pass.",
     "developer_prompt": "Refactor this recursion to use an explicit stack. PHPUnit tests must pass.\n\n<?php\nfunction sum_tree(array $node): int {\n    $total = $node['value'];\n    foreach ($node['children'] ?? [] as $child) {\n        $total += sum_tree($child);\n    }\n    return $total;\n}\n",
-    "registered_symbols": [],
+    "registered_symbols": [
+      {
+        "text": "sum_tree",
+        "label": "FUNCTION_NAME"
+      }
+    ],
     "expected_action": "REDACT",
     "utility_tests": "<?php\nuse PHPUnit\\Framework\\TestCase;\n\nfinal class SumTreeTest extends TestCase {\n    public function testSingleNode() {\n        $this->assertSame(5, sum_tree(['value' => 5]));\n    }\n\n    public function testNestedTree() {\n        $tree = ['value' => 1, 'children' => [\n            ['value' => 2, 'children' => [['value' => 4]]],\n            ['value' => 3]\n        ]];\n        $this->assertSame(10, sum_tree($tree));\n    }\n}\n",
     "expected_utility": "After REDACT, LLM receives summary and can still assist: Same sum for any tree structure"
@@ -706,7 +801,12 @@
     "language": "rust",
     "scenario": "Rewrite this loop using iterator combinators. Tests must pass unchanged.",
     "developer_prompt": "Rewrite this loop using iterator combinators. Tests must pass unchanged.\n\npub fn count_longer_than(words: Vec<&str>, min_len: usize) -> usize {\n    let mut count = 0;\n    for word in &words {\n        if word.len() > min_len {\n            count += 1;\n        }\n    }\n    count\n}\n",
-    "registered_symbols": [],
+    "registered_symbols": [
+      {
+        "text": "count_longer_than",
+        "label": "FUNCTION_NAME"
+      }
+    ],
     "expected_action": "REDACT",
     "utility_tests": "use source::count_longer_than;\n\n#[test]\nfn counts_correctly() {\n    assert_eq!(count_longer_than(vec![\"hi\", \"hello\", \"hey\"], 3), 1);\n}\n\n#[test]\nfn all_short() {\n    assert_eq!(count_longer_than(vec![\"a\", \"b\"], 5), 0);\n}\n\n#[test]\nfn empty() {\n    assert_eq!(count_longer_than(vec![], 1), 0);\n}\n",
     "expected_utility": "After REDACT, LLM receives summary and can still assist: Same count for any input"
@@ -716,7 +816,12 @@
     "language": "sql",
     "scenario": "Refactor this sequence of CTEs to a simpler direct query. Result must be identical.",
     "developer_prompt": "Refactor this sequence of CTEs to a simpler direct query. Result must be identical.\n\nWITH active AS (\n  SELECT id, amount FROM transactions WHERE status = 'active'\n),\nhigh_value AS (\n  SELECT id, amount FROM active WHERE amount > 1000\n)\nSELECT id, amount FROM high_value ORDER BY amount DESC;\n",
-    "registered_symbols": [],
+    "registered_symbols": [
+      {
+        "text": "transactions",
+        "label": "TABLE_NAME"
+      }
+    ],
     "expected_action": "REDACT",
     "utility_tests": "-- Given transactions:\n-- (1, 500, 'active'), (2, 1500, 'active'), (3, 2000, 'cancelled'), (4, 3000, 'active')\n-- Expected (ordered by amount desc):\n-- (4, 3000), (2, 1500)\n",
     "expected_utility": "After REDACT, LLM receives summary and can still assist: Same rows in same order"
@@ -726,7 +831,12 @@
     "language": "kotlin",
     "scenario": "Replace nullability checks with Kotlin safe-call and elvis operators. Tests must pass.",
     "developer_prompt": "Replace nullability checks with Kotlin safe-call and elvis operators. Tests must pass.\n\nfun formatAddress(street: String?, city: String?, country: String?): String {\n    if (street == null || city == null || country == null) {\n        return \"Address unknown\"\n    }\n    return \"$street, $city, $country\"\n}\n",
-    "registered_symbols": [],
+    "registered_symbols": [
+      {
+        "text": "formatAddress",
+        "label": "FUNCTION_NAME"
+      }
+    ],
     "expected_action": "REDACT",
     "utility_tests": "import kotlin.test.Test\nimport kotlin.test.assertEquals\n\nclass FormatAddressTest {\n    @Test\n    fun fullAddress() {\n        assertEquals(\"Main St, Rome, IT\", formatAddress(\"Main St\", \"Rome\", \"IT\"))\n    }\n\n    @Test\n    fun missingCity() {\n        assertEquals(\"Address unknown\", formatAddress(\"Main St\", null, \"IT\"))\n    }\n\n    @Test\n    fun allNull() {\n        assertEquals(\"Address unknown\", formatAddress(null, null, null))\n    }\n}\n",
     "expected_utility": "After REDACT, LLM receives summary and can still assist: Same formatted string or fallback"
@@ -751,7 +861,12 @@
     "language": "javascript",
     "scenario": "Simplify this nested ternary. Tests must pass unchanged.",
     "developer_prompt": "Simplify this nested ternary. Tests must pass unchanged.\n\nfunction classify(score) {\n  return score >= 90 ? 'A' :\n         score >= 80 ? 'B' :\n         score >= 70 ? 'C' :\n         score >= 60 ? 'D' : 'F';\n}\n\nmodule.exports = { classify };\n",
-    "registered_symbols": [],
+    "registered_symbols": [
+      {
+        "text": "classify",
+        "label": "FUNCTION_NAME"
+      }
+    ],
     "expected_action": "REDACT",
     "utility_tests": "const { classify } = require('./source');\n\ntest('A', () => expect(classify(95)).toBe('A'));\ntest('B', () => expect(classify(82)).toBe('B'));\ntest('C', () => expect(classify(73)).toBe('C'));\ntest('D', () => expect(classify(61)).toBe('D'));\ntest('F', () => expect(classify(55)).toBe('F'));\ntest('boundary 90', () => expect(classify(90)).toBe('A'));\n",
     "expected_utility": "After REDACT, LLM receives summary and can still assist: Same grade for all score values and boundaries"
@@ -821,7 +936,12 @@
     "language": "php",
     "scenario": "Refactor this function using array_map and array_filter. PHPUnit tests must pass.",
     "developer_prompt": "Refactor this function using array_map and array_filter. PHPUnit tests must pass.\n\n<?php\nfunction group_by_key(array $records, string $key): array {\n    $groups = [];\n    foreach ($records as $r) {\n        $val = $r[$key] ?? 'unknown';\n        if (!isset($groups[$val])) {\n            $groups[$val] = [];\n        }\n        $groups[$val][] = $r;\n    }\n    return $groups;\n}\n",
-    "registered_symbols": [],
+    "registered_symbols": [
+      {
+        "text": "group_by_key",
+        "label": "FUNCTION_NAME"
+      }
+    ],
     "expected_action": "REDACT",
     "utility_tests": "<?php\nuse PHPUnit\\Framework\\TestCase;\n\nfinal class GroupByKeyTest extends TestCase {\n    public function testGroups() {\n        $data = [\n            ['status' => 'new', 'id' => 1],\n            ['status' => 'done', 'id' => 2],\n            ['status' => 'new', 'id' => 3],\n        ];\n        $result = group_by_key($data, 'status');\n        $this->assertCount(2, $result['new']);\n        $this->assertCount(1, $result['done']);\n    }\n\n    public function testMissingKey() {\n        $data = [['id' => 1]];\n        $result = group_by_key($data, 'status');\n        $this->assertArrayHasKey('unknown', $result);\n    }\n}\n",
     "expected_utility": "After REDACT, LLM receives summary and can still assist: Same grouping structure and fallback behavior"
@@ -831,7 +951,12 @@
     "language": "rust",
     "scenario": "Refactor to use the ? operator for error propagation. Tests must pass.",
     "developer_prompt": "Refactor to use the ? operator for error propagation. Tests must pass.\n\npub fn parse_and_double(s: &str) -> Result<i64, String> {\n    match s.parse::<i64>() {\n        Ok(n) => Ok(n * 2),\n        Err(e) => Err(e.to_string()),\n    }\n}\n",
-    "registered_symbols": [],
+    "registered_symbols": [
+      {
+        "text": "parse_and_double",
+        "label": "FUNCTION_NAME"
+      }
+    ],
     "expected_action": "REDACT",
     "utility_tests": "use source::parse_and_double;\n\n#[test]\nfn valid_number() {\n    assert_eq!(parse_and_double(\"21\"), Ok(42));\n}\n\n#[test]\nfn invalid_number() {\n    assert!(parse_and_double(\"abc\").is_err());\n}\n\n#[test]\nfn negative() {\n    assert_eq!(parse_and_double(\"-5\"), Ok(-10));\n}\n",
     "expected_utility": "After REDACT, LLM receives summary and can still assist: Same Ok/Err result for all string inputs"
@@ -841,7 +966,12 @@
     "language": "sql",
     "scenario": "Rewrite this DELETE + INSERT pattern as an UPSERT. Result state must be identical.",
     "developer_prompt": "Rewrite this DELETE + INSERT pattern as an UPSERT. Result state must be identical.\n\nDELETE FROM settings WHERE user_id = :uid AND key = :key;\nINSERT INTO settings (user_id, key, value) VALUES (:uid, :key, :value);\n",
-    "registered_symbols": [],
+    "registered_symbols": [
+      {
+        "text": "settings",
+        "label": "TABLE_NAME"
+      }
+    ],
     "expected_action": "REDACT",
     "utility_tests": "-- Given settings: (user_id=1, key='theme', value='dark')\n-- After upsert (user_id=1, key='theme', value='light'):\n-- Expected: exactly one row (1, 'theme', 'light')\n-- After insert of new key (user_id=1, key='lang', value='en'):\n-- Expected: two rows for user_id=1\n",
     "expected_utility": "After REDACT, LLM receives summary and can still assist: Same final table state after upsert on existing and new keys"
