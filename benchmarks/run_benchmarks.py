@@ -3,42 +3,87 @@
 Kiri benchmark runner — detect+REDACT schema.
 
 Suites:
-  smart-coding          → L2 classification (REDACT/PASS)  — precision/recall/F1
-  smart-advanced-coding → utility-after-REDACT             — symbol presence check
-  smart-coding-comments → L1/L3 inline detection           — span coverage stats
+  smart-coding          -> L2 classification (REDACT/PASS)  -- precision/recall/F1
+  smart-advanced-coding -> utility-after-REDACT             -- symbol presence check
+  smart-coding-comments -> L1/L3 inline detection           -- span coverage stats
 
 Usage:
   python run_benchmarks.py
   python run_benchmarks.py --suite smart-coding
   python run_benchmarks.py --verbose
+  python run_benchmarks.py --real        # use actual L2Filter from kiri/src
 """
 import json
 import re
 import sys
+import tempfile
 from collections import Counter, defaultdict
 from pathlib import Path
 
 BASE = Path(__file__).parent
 VERBOSE = "--verbose" in sys.argv
 SUITE_FILTER = next((sys.argv[i + 1] for i, a in enumerate(sys.argv) if a == "--suite"), None)
+USE_REAL = "--real" in sys.argv
 
 SEP = "-" * 62
+
+# ── Real L2Filter setup (only when --real) ───────────────────────────────────
+
+_real_l2_available = False
+_L2Filter = None
+_SymbolStore = None
+
+if USE_REAL:
+    kiri_root = BASE.parent / "kiri"
+    if kiri_root.exists():
+        sys.path.insert(0, str(kiri_root))
+        try:
+            from src.filter.l2_symbols import L2Filter as _L2Filter      # type: ignore
+            from src.store.symbol_store import SymbolStore as _SymbolStore  # type: ignore
+            _real_l2_available = True
+        except ImportError as e:
+            print(f"  [WARN] --real requested but import failed: {e}")
+            print("  [WARN] Falling back to simulation.")
+    else:
+        print(f"  [WARN] --real requested but kiri/ not found at {kiri_root}")
 
 
 def load(path: Path) -> list[dict]:
     return json.loads(path.read_text(encoding="utf-8"))
 
 
-# ── L2 simulation (mirrors kiri/src/filter/l2_symbols.py) ───────────────────
+# ── L2 helpers ───────────────────────────────────────────────────────────────
 
-def l2_matches(registered_symbols: list[dict], prompt: str) -> list[str]:
-    """Return list of symbol texts that match in prompt (word-boundary regex)."""
+def _sim_l2_matches(registered_symbols: list[dict], prompt: str) -> list[str]:
+    """Simulation: word-boundary regex (mirrors kiri/src/filter/l2_symbols.py)."""
     matched = []
     for sym in registered_symbols:
         text = sym.get("text", "")
         if text and re.search(rf"\b{re.escape(text)}\b", prompt):
             matched.append(text)
     return matched
+
+
+def _real_l2_matches(registered_symbols: list[dict], prompt: str) -> list[str]:
+    """Use actual SymbolStore + L2Filter from kiri/src via a temp index dir."""
+    texts = [s["text"] for s in registered_symbols if s.get("text")]
+    if not texts:
+        return []
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path = Path(tmp)
+        symbols_json = {"@explicit": texts}
+        (tmp_path / "symbols.json").write_text(
+            json.dumps(symbols_json), encoding="utf-8"
+        )
+        store = _SymbolStore(tmp_path)
+        result = _L2Filter(store).check(prompt)
+        return result.matched
+
+
+def l2_matches(registered_symbols: list[dict], prompt: str) -> list[str]:
+    if USE_REAL and _real_l2_available:
+        return _real_l2_matches(registered_symbols, prompt)
+    return _sim_l2_matches(registered_symbols, prompt)
 
 
 def predict_action(registered_symbols: list[dict], prompt: str) -> str:
@@ -64,7 +109,8 @@ def fmt(v: float) -> str:
 
 def run_smart_coding():
     print(f"\n{'=' * 62}")
-    print("  SUITE: smart-coding  (L2 symbol detection)")
+    mode = "real L2Filter" if (USE_REAL and _real_l2_available) else "simulation"
+    print(f"  SUITE: smart-coding  (L2 symbol detection)  [{mode}]")
     print(f"{'=' * 62}")
 
     all_cases = load(BASE / "smart-coding" / "coding_dataset.json")
@@ -198,7 +244,7 @@ def run_smart_coding():
 
 def run_smart_advanced_coding():
     print(f"\n{'=' * 62}")
-    print("  SUITE: smart-advanced-coding  (utility after REDACT)")
+    print("  CORPUS FIXTURE: smart-advanced-coding  (utility after REDACT)")
     print(f"{'=' * 62}")
 
     cases = load(BASE / "smart-advanced-coding" / "semantic_equivalence_dataset.json")
@@ -247,7 +293,7 @@ def run_smart_advanced_coding():
 
 def run_smart_coding_comments():
     print(f"\n{'=' * 62}")
-    print("  SUITE: smart-coding-comments  (L1/L3 inline detection)")
+    print("  CORPUS FIXTURE: smart-coding-comments  (L1/L3 inline detection)")
     print(f"{'=' * 62}")
 
     cases = load(BASE / "smart-coding-comments" / "comment_sanitization_dataset.json")

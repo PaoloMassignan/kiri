@@ -22,31 +22,39 @@ All datasets follow the detect+REDACT schema aligned with Kiri's actual filter b
 
 ## Index
 
-| Directory | What it measures | Cases |
-|-----------|-----------------|-------|
-| [`kiri/`](kiri/) | Gateway filter accuracy: precision/recall on real code datasets | — |
-| [`smart-coding/`](smart-coding/) | L2 symbol detection: REDACT vs PASS on proprietary identifiers | 82 (58 REDACT + 24 PASS) |
-| [`smart-advanced-coding/`](smart-advanced-coding/) | LLM utility preserved after REDACT (multi-language) | 64 |
-| [`smart-coding-comments/`](smart-coding-comments/) | L1/L3 inline sensitivity: sensitive comment spans detected | 60 |
-| [`smart-redaction/`](smart-redaction/) | Smart redaction accuracy on legal and medical documents | 10 |
+| Directory | Role | Cases |
+|-----------|------|-------|
+| [`smart-coding/`](smart-coding/) | **Benchmark** — L2 precision/recall/F1 on symbol detection | 105 (94 scored + 11 known failures) |
+| [`smart-advanced-coding/`](smart-advanced-coding/) | **Corpus fixture** — labeled utility-after-REDACT examples | 64 |
+| [`smart-coding-comments/`](smart-coding-comments/) | **Corpus fixture** — labeled L1/L3 inline sensitivity spans | 60 |
+| [`smart-redaction/`](smart-redaction/) | **Benchmark** — smart redaction on legal/medical documents | 10 |
+| [`kiri/`](kiri/) | Gateway filter accuracy on real code datasets | — |
 | `rag-protection/` | RAG document protection — fixtures in `kiri/tests/` | — |
 
-**Total labeled cases: 224** across 15 languages (Python, JavaScript, TypeScript, Java, Go, Rust, C#, Ruby, PHP, Kotlin, SQL, Bash, Swift, Scala, and more).
+**Total labeled cases: 239** across 15+ languages (Python, JavaScript, TypeScript, Java, Go, Rust, C#, Ruby, PHP, Kotlin, SQL, Bash, Swift, Scala, YAML, and more).
 
-`smart-coding` includes 17 near-miss cases (NM001–NM017) that stress-test word-boundary precision:
-version suffixes (`RiskScorerV2`), underscore extensions (`calculate_fee_async`), case mismatches
-(`InvoiceService` vs `invoice_service`), design-pattern suffixes (`FeatureStoreClient`), and
-symbol detection in non-obvious positions (string literals, type annotations, imports, doc comments).
+### smart-coding breakdown (105 cases)
 
-`smart-coding` also includes 8 known-failure cases (KF001–KF008, `detection_gap: true`) that
-document L2 blind spots by design. These are excluded from F1 scoring and printed separately
-by the runner with full explanations. Categories: runtime string construction, alias-only snippets,
-naming convention gaps (SCREAMING_SNAKE_CASE, SQL table names), Java Impl suffix, interface/duck
-typing, and numeric constant unit mismatch. Each case documents the correct answer, what L2
-returns, and the recommended mitigation.
+- **C001–C050** (50): core REDACT cases — proprietary symbols in realistic developer prompts
+- **OS001–OS012** (12): open-source-framework patterns — SQLAlchemy, Apache Beam, PyTorch, NestJS, Spring Boot, AWS Lambda, Go dispatch, C# MediatR, Rails ActiveJob — realistic proprietary class names
+- **TN001–TN015** (15): true-negative PASS cases — no protected symbols present
+- **NM001–NM017** (17): near-miss cases — stress-test word-boundary precision: version suffixes (`RiskScorerV2`), underscore extensions (`calculate_fee_async`), case mismatches (`InvoiceService` vs `invoice_service`), design-pattern suffixes (`FeatureStoreClient`), symbol in non-obvious positions (string literals, type annotations, imports, doc comments)
+- **KF001–KF011** (11): known-failure cases (`detection_gap: true`) — L2 blind spots excluded from F1 scoring, documented with full L1/L2/L3 architecture analysis. Categories: runtime string construction, alias/partial context, naming convention gaps, Java Impl suffix, interface/duck typing, numeric unit mismatch, numeric sig-fig precision, Infrastructure-as-Code
 
 ## Running benchmarks
 
-Each directory contains a `claude_instructions.md` (or `.txt`) with instructions for running the benchmark with Claude Code, and an `evaluation_rubric.md` with scoring criteria.
+```bash
+# Simulation (regex mirrors kiri/src/filter/l2_symbols.py)
+python run_benchmarks.py
+
+# Real L2Filter — imports actual SymbolStore + L2Filter from kiri/src
+python run_benchmarks.py --real
+
+# Single suite
+python run_benchmarks.py --suite smart-coding --real
+
+# Verbose: print every case
+python run_benchmarks.py --verbose
+```
 
 Results are stored as `results.json` / `results.csv` in each directory. Do not commit result files unless they represent a stable baseline.
