@@ -1424,5 +1424,288 @@
     ],
     "expected_action": "PASS",
     "expected_utility": "Standard debounce utility — no protected symbols detected"
+  },
+  {
+    "id": "NM001",
+    "language": "python",
+    "scenario": "debug",
+    "developer_prompt": "Help me debug this code:\n\nclass PaymentHandler:\n    def handle(self, amount: float, currency: str) -> dict:\n        if amount <= 0:\n            raise ValueError('amount must be positive')\n        return {'status': 'ok', 'amount': amount, 'currency': currency}\n",
+    "registered_symbols": [
+      {
+        "text": "PaymentProcessor",
+        "label": "CLASS_NAME"
+      },
+      {
+        "text": "StripeGateway",
+        "label": "INTERNAL_SERVICE"
+      }
+    ],
+    "expected_action": "PASS",
+    "expected_utility": "PaymentHandler is a different class — no registered symbol present",
+    "near_miss_note": "PaymentProcessor registered; code uses PaymentHandler — different name, must not match"
+  },
+  {
+    "id": "NM002",
+    "language": "typescript",
+    "scenario": "refactor",
+    "developer_prompt": "Refactor the following code:\n\nclass RiskScorerV2 {\n  score(features: number[]): number {\n    return features.reduce((a, b) => a + b, 0) / features.length;\n  }\n}\n",
+    "registered_symbols": [
+      {
+        "text": "RiskScorer",
+        "label": "CLASS_NAME"
+      },
+      {
+        "text": "AegisRiskModel",
+        "label": "INTERNAL_SERVICE"
+      }
+    ],
+    "expected_action": "PASS",
+    "expected_utility": "RiskScorerV2 does not match \\bRiskScorer\\b — version suffix breaks word boundary",
+    "near_miss_note": "RiskScorer registered; code uses RiskScorerV2 — trailing word chars prevent boundary match"
+  },
+  {
+    "id": "NM003",
+    "language": "python",
+    "scenario": "optimize",
+    "developer_prompt": "Optimize the following code:\n\nimport asyncio\n\nasync def calculate_fee_async(amount: float, tier: str) -> float:\n    await asyncio.sleep(0)\n    multiplier = 0.02 if tier == 'standard' else 0.015\n    return round(amount * multiplier, 4)\n",
+    "registered_symbols": [
+      {
+        "text": "calculate_fee",
+        "label": "FUNCTION_NAME"
+      },
+      {
+        "text": "FeeEngine",
+        "label": "INTERNAL_SERVICE"
+      }
+    ],
+    "expected_action": "PASS",
+    "expected_utility": "calculate_fee_async has no word boundary after calculate_fee — must not trigger",
+    "near_miss_note": "calculate_fee registered; code uses calculate_fee_async — underscore+suffix breaks boundary"
+  },
+  {
+    "id": "NM004",
+    "language": "java",
+    "scenario": "explain",
+    "developer_prompt": "Explain what this code does:\n\npublic class FeatureStoreClient {\n    private final String endpoint;\n\n    public FeatureStoreClient(String endpoint) {\n        this.endpoint = endpoint;\n    }\n\n    public double[] get(String key) {\n        return new double[0];\n    }\n}\n",
+    "registered_symbols": [
+      {
+        "text": "FeatureStore",
+        "label": "CLASS_NAME"
+      },
+      {
+        "text": "OracleFeatureStore",
+        "label": "INTERNAL_SERVICE"
+      }
+    ],
+    "expected_action": "PASS",
+    "expected_utility": "FeatureStoreClient does not match \\bFeatureStore\\b — Client suffix prevents boundary",
+    "near_miss_note": "FeatureStore registered; code defines FeatureStoreClient — suffix breaks word boundary"
+  },
+  {
+    "id": "NM005",
+    "language": "go",
+    "scenario": "refactor",
+    "developer_prompt": "Refactor the following code:\n\npackage orders\n\ntype OrderManagerFactory struct {\n    region string\n}\n\nfunc NewOrderManagerFactory(region string) *OrderManagerFactory {\n    return &OrderManagerFactory{region: region}\n}\n",
+    "registered_symbols": [
+      {
+        "text": "OrderManager",
+        "label": "CLASS_NAME"
+      },
+      {
+        "text": "FulfillmentEngine",
+        "label": "INTERNAL_SERVICE"
+      }
+    ],
+    "expected_action": "PASS",
+    "expected_utility": "OrderManagerFactory does not match \\bOrderManager\\b — Factory suffix breaks boundary",
+    "near_miss_note": "OrderManager registered; code uses OrderManagerFactory — design-pattern suffix, no boundary match"
+  },
+  {
+    "id": "NM006",
+    "language": "python",
+    "scenario": "debug",
+    "developer_prompt": "Help me debug this code:\n\ndef send_reminder(invoice_service, invoice_id: str) -> bool:\n    status = invoice_service.get_status(invoice_id)\n    if status == 'overdue':\n        invoice_service.notify(invoice_id)\n        return True\n    return False\n",
+    "registered_symbols": [
+      {
+        "text": "InvoiceService",
+        "label": "CLASS_NAME"
+      },
+      {
+        "text": "BillingEngine",
+        "label": "INTERNAL_SERVICE"
+      }
+    ],
+    "expected_action": "PASS",
+    "expected_utility": "invoice_service (snake_case variable) does not match InvoiceService (PascalCase) — L2 is case-sensitive",
+    "near_miss_note": "InvoiceService registered; code uses invoice_service as variable name — case mismatch, no match"
+  },
+  {
+    "id": "NM007",
+    "language": "typescript",
+    "scenario": "refactor",
+    "developer_prompt": "Refactor the following code:\n\nasync function processPayment(\n  orderId: string,\n  amount: number\n): Promise<{ success: boolean; txId: string }> {\n  if (amount <= 0) throw new Error('invalid amount');\n  return { success: true, txId: `tx_${orderId}` };\n}\n",
+    "registered_symbols": [
+      {
+        "text": "process_payment",
+        "label": "FUNCTION_NAME"
+      },
+      {
+        "text": "StripeAdapter",
+        "label": "INTERNAL_SERVICE"
+      }
+    ],
+    "expected_action": "PASS",
+    "expected_utility": "processPayment (camelCase) does not match process_payment (snake_case) — case-sensitive, no match",
+    "near_miss_note": "process_payment registered; code uses processPayment camelCase variant — different identifier"
+  },
+  {
+    "id": "NM008",
+    "language": "python",
+    "scenario": "debug",
+    "developer_prompt": "Help me debug this code:\n\ndef check_permissions(user, action: str) -> bool:\n    if not user.can(action):\n        raise PermissionError(\n            'AuditLogger requires elevated access for this action'\n        )\n    return True\n",
+    "registered_symbols": [
+      {
+        "text": "AuditLogger",
+        "label": "CLASS_NAME"
+      }
+    ],
+    "expected_action": "REDACT",
+    "expected_utility": "AuditLogger detected in string literal — L2 word-boundary matches inside strings too",
+    "near_miss_note": "Symbol appears only in an exception message string — still a data leak if sent to LLM"
+  },
+  {
+    "id": "NM009",
+    "language": "typescript",
+    "scenario": "refactor",
+    "developer_prompt": "Refactor the following code:\n\nfunction applyDiscount(engine: PricingEngine, basePrice: number): number {\n  const discounted = basePrice * 0.9;\n  return Math.max(discounted, 0);\n}\n",
+    "registered_symbols": [
+      {
+        "text": "PricingEngine",
+        "label": "CLASS_NAME"
+      }
+    ],
+    "expected_action": "REDACT",
+    "expected_utility": "PricingEngine detected in type annotation — proprietary type name leaks interface contract",
+    "near_miss_note": "Symbol appears only as a type annotation, not in runtime logic — still detectable and sensitive"
+  },
+  {
+    "id": "NM010",
+    "language": "python",
+    "scenario": "explain",
+    "developer_prompt": "Explain what this code does:\n\nfrom workflows import DataPipeline as pipeline\n\ndef run(config: dict):\n    p = pipeline(config)\n    return p.execute()\n",
+    "registered_symbols": [
+      {
+        "text": "DataPipeline",
+        "label": "CLASS_NAME"
+      }
+    ],
+    "expected_action": "REDACT",
+    "expected_utility": "DataPipeline detected in import — aliased as 'pipeline' in body but name still present in prompt",
+    "near_miss_note": "Symbol is only in the import line, aliased away in the body — import line is still in the prompt"
+  },
+  {
+    "id": "NM011",
+    "language": "go",
+    "scenario": "refactor",
+    "developer_prompt": "Refactor the following code:\n\npackage routing\n\n// route distributes requests using the ShardRouter algorithm.\nfunc route(key string, nodes []string) string {\n    return nodes[len(key)%len(nodes)]\n}\n",
+    "registered_symbols": [
+      {
+        "text": "ShardRouter",
+        "label": "CLASS_NAME"
+      }
+    ],
+    "expected_action": "REDACT",
+    "expected_utility": "ShardRouter detected in doc comment — algorithmic name reveals internal architecture",
+    "near_miss_note": "Symbol appears only in a comment, not in the code body — comment context still leaks proprietary names"
+  },
+  {
+    "id": "NM012",
+    "language": "python",
+    "scenario": "optimize",
+    "developer_prompt": "Optimize the following code:\n\nSERVICE_REGISTRY = {\n    'RecommendationEngine': 'http://ml-svc:8080',\n    'fallback': 'http://default-svc:8080',\n}\n\ndef resolve(name: str) -> str:\n    return SERVICE_REGISTRY.get(name, SERVICE_REGISTRY['fallback'])\n",
+    "registered_symbols": [
+      {
+        "text": "RecommendationEngine",
+        "label": "INTERNAL_SERVICE"
+      }
+    ],
+    "expected_action": "REDACT",
+    "expected_utility": "RecommendationEngine detected as a dict key — service registry reveals internal topology",
+    "near_miss_note": "Symbol used as a string key in a registry map — still a word-boundary match and a genuine data leak"
+  },
+  {
+    "id": "NM013",
+    "language": "java",
+    "scenario": "refactor",
+    "developer_prompt": "Refactor the following code:\n\n/**\n * Validates user eligibility for the current offer.\n * @see ComplianceChecker for full rule evaluation.\n */\npublic boolean isEligible(String userId) {\n    return userId != null && !userId.isEmpty();\n}\n",
+    "registered_symbols": [
+      {
+        "text": "ComplianceChecker",
+        "label": "CLASS_NAME"
+      }
+    ],
+    "expected_action": "REDACT",
+    "expected_utility": "ComplianceChecker detected in Javadoc @see tag — internal class name leaks in documentation",
+    "near_miss_note": "Symbol only in @see Javadoc annotation — not imported or used in code, but name still present"
+  },
+  {
+    "id": "NM014",
+    "language": "python",
+    "scenario": "refactor",
+    "developer_prompt": "Refactor the following code:\n\n__all__ = ['MLFeaturizer', 'transform', 'fit']\n\ndef transform(data: list) -> list:\n    m = max(data)\n    return [x / m for x in data]\n\ndef fit(data: list) -> dict:\n    return {'max': max(data), 'min': min(data)}\n",
+    "registered_symbols": [
+      {
+        "text": "MLFeaturizer",
+        "label": "CLASS_NAME"
+      }
+    ],
+    "expected_action": "REDACT",
+    "expected_utility": "MLFeaturizer detected in __all__ export list — module public API reveals proprietary class name",
+    "near_miss_note": "Symbol only in __all__, the class itself is not defined here — still present in the prompt"
+  },
+  {
+    "id": "NM015",
+    "language": "csharp",
+    "scenario": "debug",
+    "developer_prompt": "Help me debug this code:\n\npublic void ResolveReturnsDefaultForUnknownTenant()\n{\n    var result = Resolve(\"unknown\");\n    Assert.IsNotNull(result,\n        \"TenantResolver must never return null for unknown tenants\");\n}\n",
+    "registered_symbols": [
+      {
+        "text": "TenantResolver",
+        "label": "CLASS_NAME"
+      }
+    ],
+    "expected_action": "REDACT",
+    "expected_utility": "TenantResolver detected in Assert message — test description leaks internal component name",
+    "near_miss_note": "Symbol appears only in an assertion message string — common in test code, still a leak"
+  },
+  {
+    "id": "NM016",
+    "language": "python",
+    "scenario": "refactor",
+    "developer_prompt": "Refactor the following code:\n\nimport re\n\ndef authenticate(token: str) -> bool:\n    \"\"\"Validates an authorization token format.\"\"\"\n    return bool(re.match(r'^Bearer [A-Za-z0-9._-]{20,}$', token))\n",
+    "registered_symbols": [
+      {
+        "text": "Auth",
+        "label": "INTERNAL_SERVICE"
+      }
+    ],
+    "expected_action": "PASS",
+    "expected_utility": "Auth does not match authenticate, authorization, or authToken — \\bAuth\\b requires exact word boundaries",
+    "near_miss_note": "Auth registered (short symbol); code uses authenticate/authorization — word boundary blocks all partial matches"
+  },
+  {
+    "id": "NM017",
+    "language": "go",
+    "scenario": "debug",
+    "developer_prompt": "Help me debug this code:\n\npackage database\n\ntype dbClient struct {\n    dsn string\n}\n\nfunc newDBClient(dsn string) *dbClient {\n    return &dbClient{dsn: dsn}\n}\n\nfunc (c *dbClient) ping() error {\n    return nil\n}\n",
+    "registered_symbols": [
+      {
+        "text": "DB",
+        "label": "INTERNAL_SERVICE"
+      }
+    ],
+    "expected_action": "PASS",
+    "expected_utility": "DB (uppercase) does not match db, dbClient, newDBClient — L2 is case-sensitive",
+    "near_miss_note": "DB registered as uppercase acronym; code uses lowercase db and mixed dbClient — case-sensitive no-match"
   }
 ]
