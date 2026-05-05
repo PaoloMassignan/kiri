@@ -1722,8 +1722,9 @@
     "expected_action": "REDACT",
     "detection_gap": true,
     "known_l2_result": "PASS",
-    "gap_reason": "L2 is a static text scanner: the literal token 'RiskScorer' never appears in the prompt. The symbol is assembled at runtime by concatenating 'Risk' and 'Scorer'. Neither part is registered individually. Fix: L3 semantic analysis could infer that globals()[prefix + 'Scorer'] references a protected class, but this requires understanding Python's dynamic dispatch. Operational mitigation: register both 'RiskScorer' and 'Risk' if the prefix is itself proprietary.",
-    "expected_utility": "Symbol assembled at runtime — L2 blind spot; L3 semantic analysis required"
+    "gap_reason": "L2: literal token 'RiskScorer' never appears — the symbol is assembled at runtime from 'Risk' + 'Scorer'. L1: the submitted code (globals()[prefix + 'Scorer']) is structurally unrelated to any RiskScorer class definition in the vector index — cosine similarity will be very low (< 0.75), PASS. L3: not invoked because L1 < 0.75. Architecture verdict: GENUINE BLIND SPOT across all three layers. Static analysis cannot evaluate runtime string construction. No layer in the current architecture can bridge this gap without executing the code. Mitigation: none within current architecture; requires registering the prefix 'Risk' as a symbol if it is itself proprietary, accepting higher false-positive rate.",
+    "full_pipeline_coverage": "blind_spot",
+    "expected_utility": "Symbol assembled at runtime — blind spot across all three layers; no static or semantic analysis can resolve runtime concatenation"
   },
   {
     "id": "KF002",
@@ -1739,8 +1740,9 @@
     "expected_action": "REDACT",
     "detection_gap": true,
     "known_l2_result": "PASS",
-    "gap_reason": "The developer shared only one file from a multi-file project. The import 'from models import RiskScorer as model' lives in __init__.py, which is not included in the prompt. L2 scans only what is in the prompt text; it has no awareness of the broader codebase. The symbol 'RiskScorer' does not appear anywhere in the shared snippet. Fix: Kiri's indexer already addresses this at the file level — if the user adds a directory to .kiri/secrets, symbols are extracted from all files. The gap occurs only when the developer manually pastes a code snippet that omits the imports.",
-    "expected_utility": "Proprietary class referenced only via alias — symbol absent from shared snippet"
+    "gap_reason": "L2: 'RiskScorer' absent from the prompt — developer shared only the function body, the import lives in another file. L1: run_evaluation(model, data) is a generic two-line function with no structural similarity to any specific protected class — cosine similarity < 0.75, PASS. L3: not invoked because L1 < 0.75. Architecture verdict: GENUINE BLIND SPOT. This is a fundamental limitation: when context is stripped from the prompt, no layer can recover it. Note: Kiri's file-level indexer already mitigates the root cause — if the user adds a directory to .kiri/secrets, symbols are extracted from ALL files including __init__.py. The gap only occurs when the developer manually pastes a decontextualised snippet. This is an onboarding/workflow problem, not an architectural one.",
+    "full_pipeline_coverage": "blind_spot",
+    "expected_utility": "Alias-only snippet with no import context — blind spot across all layers; mitigated at workflow level by indexing full directories"
   },
   {
     "id": "KF003",
@@ -1756,8 +1758,9 @@
     "expected_action": "REDACT",
     "detection_gap": true,
     "known_l2_result": "PASS",
-    "gap_reason": "Naming convention mismatch: the class is registered as 'RiskScorer' (PascalCase) but its derived config constants use SCREAMING_SNAKE_CASE: RISK_SCORER_ENDPOINT. The L2 word-boundary regex is case-sensitive and matches the exact registered string. 'RISK_SCORER' contains no word boundary that would allow 'RiskScorer' to match inside it. Fix: register both 'RiskScorer' and 'RISK_SCORER' in .kiri/secrets. Alternatively, L3 could recognize that env var names derived from a class name constitute a reference to that class.",
-    "expected_utility": "Class name encoded as env var prefix in SCREAMING_SNAKE_CASE — case-sensitive L2 misses it"
+    "gap_reason": "L2: naming convention mismatch — class registered as 'RiskScorer' (PascalCase), config constants use SCREAMING_SNAKE_CASE (RISK_SCORER_ENDPOINT). Word-boundary regex is case-sensitive; no boundary fires inside RISK_SCORER. L1: COVERED if config.py is in .kiri/secrets — the submitted code IS the protected file, cosine similarity will be >= 0.90, REDACT fires without needing L3. L3: not invoked when L1 >= 0.90. Architecture verdict: OPERATIONAL GAP, not architectural. Adding the config file to secrets closes it. Mitigation: ensure that config and settings files are added to .kiri/secrets alongside source files.",
+    "full_pipeline_coverage": "covered_by_l1",
+    "expected_utility": "Class name encoded as env var prefix in SCREAMING_SNAKE_CASE — L2 misses it, L1 covers it if config file is indexed"
   },
   {
     "id": "KF004",
@@ -1773,8 +1776,9 @@
     "expected_action": "REDACT",
     "detection_gap": true,
     "known_l2_result": "PASS",
-    "gap_reason": "The protected symbol is constructed at runtime via template literal interpolation. The string 'RiskScorer' is never present as a literal token — only its two parts 'Risk' and 'Scorer' appear separately as string arguments. L2 cannot evaluate the runtime result of string concatenation or template expressions. Fix: register 'Risk' as a protected prefix if the prefix itself is proprietary. Otherwise, only L3 (LLM-based) analysis could infer that `${name}${suffix}` with those specific arguments resolves to a protected service name.",
-    "expected_utility": "Symbol assembled via template literal at runtime — static scanner cannot evaluate interpolation"
+    "gap_reason": "L2: 'RiskScorer' never appears as a literal token — only 'Risk' and 'Scorer' as separate string arguments to buildServiceKey(). L1: a generic utility function with two string arguments has no structural similarity to any class definition — cosine similarity < 0.75, PASS. L3: not invoked because L1 < 0.75. Architecture verdict: GENUINE BLIND SPOT. Same root cause as KF001: static analysis cannot evaluate what a function returns at runtime. An LLM used as L3 would need to infer the return value of buildServiceKey('Risk','Scorer') and recognise it as a protected name — currently L3 is only invoked in the grace zone and uses a prompt that does not include registry context.",
+    "full_pipeline_coverage": "blind_spot",
+    "expected_utility": "Symbol assembled via template literal — blind spot across all layers; same root cause as KF001"
   },
   {
     "id": "KF005",
@@ -1790,8 +1794,9 @@
     "expected_action": "REDACT",
     "detection_gap": true,
     "known_l2_result": "PASS",
-    "gap_reason": "The implementation class 'RiskScorerImpl' does not match \\bRiskScorer\\b. In 'RiskScorerImpl', the character following 'RiskScorer' is 'I' — a word character. The word boundary \\b only fires between a word char and a non-word char, so 'RiskScorer' inside 'RiskScorerImpl' has no right boundary and is not matched. This is a systematic gap: Java convention generates Impl, Service, Factory, Repository suffixes from every interface/base name. Fix: explicitly register 'RiskScorerImpl', 'RiskScorerService', etc. in .kiri/secrets, or switch to prefix matching (with the tradeoff of increased false positives).",
-    "expected_utility": "Impl suffix breaks word boundary — standard Java naming convention creates systematic gap"
+    "gap_reason": "L2: 'RiskScorerImpl' has no word boundary after 'RiskScorer' — 'I' is a word char, so \\bRiskScorer\\b does not match. This is systematic: Java convention appends Impl, Service, Factory, Repository to every base name. L1: COVERED if RiskScorerImpl.java is in .kiri/secrets — the submitted code is the protected file itself, embedding similarity is very high (> 0.90), REDACT fires. L3: not invoked when L1 >= 0.90. Architecture verdict: OPERATIONAL GAP. Adding implementation files to secrets alongside the base class closes it. Mitigation: when you add src/risk/RiskScorer.java to secrets, also add RiskScorerImpl.java, RiskScorerService.java, etc.",
+    "full_pipeline_coverage": "covered_by_l1",
+    "expected_utility": "Impl suffix breaks L2 word boundary — L1 covers it if the implementation file is in secrets"
   },
   {
     "id": "KF006",
@@ -1807,8 +1812,9 @@
     "expected_action": "REDACT",
     "detection_gap": true,
     "known_l2_result": "PASS",
-    "gap_reason": "The function accepts a 'Scorer' interface. In the actual codebase, 'RiskScorer' implements this interface and is the only concrete type passed here. However, the interface type name 'Scorer' is generic and not registered. L2 cannot reason about type hierarchies: it only sees what is textually present. This is the interface-segregation blind spot — proprietary logic is hidden behind an abstraction layer that uses a generic name. Fix: register 'Scorer' if it is itself a proprietary interface name. This case is also where L1 similarity detection is most valuable: if similar scoring patterns have been seen in protected code, L1 may trigger.",
-    "expected_utility": "Concrete proprietary type hidden behind a generic interface — L2 has no type-system awareness"
+    "gap_reason": "L2: 'Scorer' interface is generic and not registered; 'RiskScorer' is absent from the prompt. L2 has no type-system awareness. L1: PARTIAL — if the Go file defining the Scorer interface is in secrets, L1 may fire depending on structural similarity between the submitted and indexed code. If the file is not indexed, L1 score will be low and L3 will be invoked only in the grace zone. L3: asks 'does this extract proprietary IP?' — a generic interface and an Evaluate function do not look sensitive without knowing the codebase; a small local Ollama model will likely return 'no'. Architecture verdict: GENUINE BLIND SPOT unless the interface file is indexed. The interface-segregation principle creates a tension with static detection: the abstraction that makes code clean also hides its provenance. Mitigation: register 'Scorer' as an explicit @symbol if the interface name is itself proprietary.",
+    "full_pipeline_coverage": "partial",
+    "expected_utility": "Concrete proprietary type hidden behind generic interface — partial coverage by L1 only if interface file is indexed"
   },
   {
     "id": "KF007",
@@ -1824,8 +1830,9 @@
     "expected_action": "REDACT",
     "detection_gap": true,
     "known_l2_result": "PASS",
-    "gap_reason": "The registered numeric constant is 0.298 (fractional form). The code uses 29.8 (percentage form: 0.298 × 100). L2's numeric matcher compares values within a 1% relative tolerance but does NOT perform unit conversion between fractional and percentage representations. 0.298 and 29.8 differ by a factor of 100, far outside the 1% tolerance window. Fix: register both representations (0.298 and 29.8) in .kiri/secrets, or document the convention that numeric constants are always registered in fractional form and developers must use them consistently.",
-    "expected_utility": "Protected constant expressed as percentage (29.8) vs registered fractional form (0.298) — unit gap"
+    "gap_reason": "L2 numeric matcher: 0.298 (registered, fractional) vs 29.8 (code, percentage). Relative difference is 100x, far outside the 1% tolerance window. Unit conversion is not performed. L1: a two-line threshold function is structurally generic — no similarity to the full RiskScorer class in the index; cosine similarity < 0.75, PASS. L3: not invoked because L1 < 0.75; even if invoked, the comment says 'Internal approval threshold' which might give L3 a signal, but a small local Ollama model is unlikely to reliably flag a bare numeric constant as IP extraction. Architecture verdict: GENUINE BLIND SPOT. The unit representation gap cannot be closed without semantic understanding of what the constant represents. Mitigation: register both 0.298 and 29.8 as explicit constants in .kiri/secrets and enforce a team convention on which form is canonical.",
+    "full_pipeline_coverage": "blind_spot",
+    "expected_utility": "Numeric constant in percentage form — blind spot across all layers; unit conversion not supported by any filter"
   },
   {
     "id": "KF008",
@@ -1841,7 +1848,8 @@
     "expected_action": "REDACT",
     "detection_gap": true,
     "known_l2_result": "PASS",
-    "gap_reason": "The table 'risk_scores' is the persistence layer of the RiskScorer service. The CTE is aliased as 'rs' — a common abbreviation for RiskScorer. Neither 'risk_scores' nor 'rs' matches \\bRiskScorer\\b. This is a schema-naming gap: the registered symbol is the class name, but the database table follows snake_case convention and uses a plural noun. Fix: add 'risk_scores' as an explicit @symbol in .kiri/secrets alongside 'RiskScorer', since the table is the data contract of the service. This is a documentation/onboarding problem as much as a detection one.",
-    "expected_utility": "Proprietary service table name uses snake_case plural — does not match PascalCase registered symbol"
+    "gap_reason": "L2: 'risk_scores' (snake_case plural table) and 'rs' (CTE alias) do not match \\bRiskScorer\\b. Schema naming conventions diverge from class naming conventions. L1: COVERED if SQL migration or DAO files containing 'risk_scores' queries are in .kiri/secrets — SQL queries against specific tables have distinctive embeddings; a similar query in the vector index produces high cosine similarity and fires REDACT. L3: not invoked when L1 >= 0.90. Architecture verdict: OPERATIONAL GAP. SQL and migration files are often overlooked when setting up secrets — developers add source files but forget the persistence layer. Mitigation: add database migration files and repository/DAO classes to .kiri/secrets; they expose the data contract of protected services just as much as the service class itself.",
+    "full_pipeline_coverage": "covered_by_l1",
+    "expected_utility": "SQL table name uses snake_case plural — L2 misses it, L1 covers it if migration/DAO files are indexed"
   }
 ]

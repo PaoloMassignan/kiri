@@ -139,6 +139,12 @@ def run_smart_coding():
     print(f"  KNOWN L2 BLIND SPOTS  ({len(gap_cases)} cases — expected failures)")
     print(f"  {'=' * 58}")
 
+    COVERAGE_LABEL = {
+        "covered_by_l1": "L1 covers (if file indexed)",
+        "partial":        "Partial (L1 if indexed)",
+        "blind_spot":     "BLIND SPOT (all layers)",
+    }
+
     gap_categories = {
         "Runtime construction":   ["KF001", "KF004"],
         "Alias / partial context":["KF002"],
@@ -149,6 +155,15 @@ def run_smart_coding():
     }
     id_to_case = {c["id"]: c for c in gap_cases}
 
+    coverage_summary: Counter = Counter()
+    for c in gap_cases:
+        coverage_summary[c.get("full_pipeline_coverage", "unknown")] += 1
+
+    print(f"\n  Full-pipeline coverage summary:")
+    for key, label in COVERAGE_LABEL.items():
+        n = coverage_summary[key]
+        print(f"    {label:35s}  {n} case(s)")
+
     for category, ids in gap_categories.items():
         print(f"\n  [{category}]")
         for cid in ids:
@@ -157,11 +172,13 @@ def run_smart_coding():
                 continue
             predicted = predict_action(c["registered_symbols"], c["developer_prompt"])
             syms = [s["text"] for s in c["registered_symbols"]]
-            print(f"    {cid:6s} [{c['language']:12s}]  "
-                  f"correct={c['expected_action']:6s}  L2={predicted:6s}  "
-                  f"registered={syms}")
-            # Print gap_reason wrapped at 70 chars
+            coverage = COVERAGE_LABEL.get(c.get("full_pipeline_coverage", ""), "?")
+            print(f"    {cid:6s} [{c['language']:12s}]  L2={predicted:6s}  "
+                  f"pipeline: {coverage}")
+            # Print gap_reason wrapped at 70 chars, first sentence only unless verbose
             reason = c.get("gap_reason", "")
+            if not VERBOSE:
+                reason = reason.split(". Architecture verdict:")[0] + "."
             words = reason.split()
             line = "           "
             for word in words:
