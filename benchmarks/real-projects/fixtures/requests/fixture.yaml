@@ -1,0 +1,105 @@
+project: requests
+repo: https://github.com/psf/requests
+version: "2.32.3"
+commit: "c27e2e6"
+language: python
+description: >
+  HTTP library for Python. Session and HTTPAdapter are the key classes for
+  connection pooling and retry logic — exactly the kind of internal infrastructure
+  a company would protect if they ship a custom API client built on requests.
+
+protected_symbols:
+  - text: "Session"
+    label: "CLASS_NAME"
+  - text: "HTTPAdapter"
+    label: "CLASS_NAME"
+
+cases:
+  - id: requests-001
+    scenario: explain
+    expected_action: REDACT
+    description: "Developer asks to explain HTTPAdapter retry and pool initialization"
+    prompt: |
+      I don't fully understand how our HTTP adapter initializes the connection pool.
+      Can you explain what init_poolmanager does and when max_retries kicks in?
+
+      class HTTPAdapter(BaseAdapter):
+          max_retries = DEFAULT_RETRIES
+
+          def __init__(self, max_retries=DEFAULT_RETRIES, pool_connections=DEFAULT_POOLCONNECTIONS,
+                       pool_maxsize=DEFAULT_POOLSIZE, pool_block=DEFAULT_POOLBLOCK):
+              if max_retries == DEFAULT_RETRIES:
+                  self.max_retries = Retry(0, read=False)
+              else:
+                  self.max_retries = Retry.from_int(max_retries)
+              self.config = {}
+              self.proxy_manager = {}
+              super().__init__()
+              self.init_poolmanager(pool_connections, pool_maxsize, block=pool_block)
+
+          def init_poolmanager(self, num_connections, num_pools, block=DEFAULT_POOLBLOCK, **kw):
+              self._pool_connections = num_connections
+              self._pool_maxsize = num_pools
+              self._pool_block = block
+              self.poolmanager = PoolManager(
+                  num_pools=num_pools,
+                  maxsize=num_connections,
+                  block=block,
+                  **kw,
+              )
+
+  - id: requests-002
+    scenario: use
+    expected_action: REDACT
+    description: "Developer asks how to add exponential backoff to a shared Session"
+    prompt: |
+      Our API client uses a shared Session and we want to add automatic retries
+      with exponential backoff on 500/503 errors. How do I mount a custom
+      HTTPAdapter so the retry logic applies to all requests in this session?
+
+      session = Session()
+      session.headers.update({
+          'Authorization': f'Bearer {token}',
+          'Accept': 'application/json',
+      })
+      session.verify = ca_bundle_path
+      response = session.get(base_url + endpoint, timeout=10)
+
+  - id: requests-003
+    scenario: refactor
+    expected_action: REDACT
+    description: "Developer asks to refactor per-call Session creation to reuse the pool"
+    prompt: |
+      Refactor this function — it creates a new Session on every call, which
+      defeats connection pooling. How should I restructure it to reuse the
+      Session and the HTTPAdapter across calls?
+
+      def call_api(url: str, token: str) -> dict:
+          session = Session()
+          session.headers.update({'Authorization': f'Bearer {token}'})
+          adapter = HTTPAdapter(max_retries=3, pool_connections=10, pool_maxsize=20)
+          session.mount('https://', adapter)
+          response = session.get(url, timeout=30)
+          response.raise_for_status()
+          return response.json()
+
+  - id: requests-004
+    scenario: pass
+    expected_action: PASS
+    description: "Developer asks about urllib — no protected symbols present"
+    prompt: |
+      What is the cleanest way to make a POST request with a JSON body using
+      only the Python standard library (no third-party packages)?
+
+      import urllib.request
+      import json
+
+      def post_json(url: str, payload: dict) -> dict:
+          data = json.dumps(payload).encode('utf-8')
+          req = urllib.request.Request(
+              url, data=data,
+              headers={'Content-Type': 'application/json'},
+              method='POST',
+          )
+          with urllib.request.urlopen(req, timeout=10) as resp:
+              return json.loads(resp.read().decode('utf-8'))

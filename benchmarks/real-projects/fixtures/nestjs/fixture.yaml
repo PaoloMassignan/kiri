@@ -1,0 +1,109 @@
+project: nestjs
+repo: https://github.com/nestjs/nest
+version: "10.4.4"
+commit: "e3d9f12"
+language: typescript
+description: >
+  Enterprise-grade Node.js framework built with TypeScript. NestFactory and
+  Injectable are the entry point and core DI decorator — a company shipping
+  a microservices platform on NestJS would protect these two symbols.
+
+protected_symbols:
+  - text: "NestFactory"
+    label: "CLASS_NAME"
+  - text: "Injectable"
+    label: "DECORATOR_NAME"
+
+cases:
+  - id: nestjs-001
+    scenario: explain
+    expected_action: REDACT
+    description: "Developer asks how NestFactory bootstraps the DI container"
+    prompt: |
+      I need to understand the bootstrap sequence. When NestFactory.create() is
+      called, in what order does it instantiate providers and how does it resolve
+      circular dependencies?
+
+      async function bootstrap() {
+        const app = await NestFactory.create(AppModule, {
+          logger: ['error', 'warn', 'log'],
+          bufferLogs: true,
+        });
+        app.useGlobalPipes(new ValidationPipe({ transform: true, whitelist: true }));
+        app.useGlobalFilters(new HttpExceptionFilter());
+        app.enableCors({ origin: process.env.ALLOWED_ORIGINS?.split(',') });
+        await app.listen(3000);
+      }
+
+      @Injectable()
+      export class AppService {
+        constructor(private readonly configService: ConfigService) {}
+
+        getConfig(key: string): string {
+          return this.configService.get<string>(key) ?? '';
+        }
+      }
+
+  - id: nestjs-002
+    scenario: use
+    expected_action: REDACT
+    description: "Developer asks how to access a service outside the HTTP lifecycle"
+    prompt: |
+      I need to run a one-off data migration script that uses our NestJS services.
+      How do I use NestFactory to create a standalone application context so I
+      can call a service method without starting the HTTP server?
+
+      const app = await NestFactory.createApplicationContext(AppModule);
+      const migrationService = app.get(MigrationService);
+      await migrationService.runPendingMigrations();
+      await app.close();
+
+  - id: nestjs-003
+    scenario: refactor
+    expected_action: REDACT
+    description: "Developer asks to split an oversized @Injectable() service"
+    prompt: |
+      This @Injectable() service has grown to handle users, emails and analytics.
+      Help me split it into three focused services while keeping the existing
+      consumers working through the original interface:
+
+      @Injectable()
+      export class UserService {
+        constructor(
+          @InjectRepository(User) private readonly userRepo: Repository<User>,
+          private readonly mailerService: MailerService,
+          private readonly analyticsService: AnalyticsService,
+        ) {}
+
+        async register(dto: CreateUserDto): Promise<User> {
+          const user = this.userRepo.create(dto);
+          const saved = await this.userRepo.save(user);
+          await this.mailerService.sendWelcome(saved.email);
+          await this.analyticsService.track('user.registered', { id: saved.id });
+          return saved;
+        }
+      }
+
+  - id: nestjs-004
+    scenario: pass
+    expected_action: PASS
+    description: "Developer asks about class-validator DTOs — no protected symbols"
+    prompt: |
+      How do I write a DTO in TypeScript that validates an email, enforces a
+      minimum password length, and strips unknown properties before it reaches
+      the controller?
+
+      import { IsEmail, IsString, MinLength } from 'class-validator';
+      import { Exclude } from 'class-transformer';
+
+      export class RegisterDto {
+        @IsEmail()
+        email: string;
+
+        @IsString()
+        @MinLength(8)
+        password: string;
+
+        @Exclude()
+        internalToken?: string;
+      }

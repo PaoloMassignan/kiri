@@ -1,0 +1,122 @@
+project: express
+repo: https://github.com/expressjs/express
+version: "4.21.1"
+commit: "b2a8a84"
+language: javascript
+description: >
+  Fast, unopinionated Node.js web framework. Router and Application are the
+  two central classes — a company shipping an internal Node.js platform or
+  BFF layer built on Express would protect these.
+
+protected_symbols:
+  - text: "Router"
+    label: "CLASS_NAME"
+  - text: "Application"
+    label: "CLASS_NAME"
+
+cases:
+  - id: express-001
+    scenario: explain
+    expected_action: REDACT
+    description: "Developer asks to explain Application.handle and the Router dispatch loop"
+    prompt: |
+      I'm debugging a middleware that never calls next(). Can you explain how
+      Application.handle dispatches to the internal Router and what happens
+      when a middleware doesn't call next()?
+
+      Application.prototype.handle = function handle(req, res, callback) {
+        const router = this._router;
+        const done = callback || finalhandler(req, res, {
+          env: this.get('env'),
+          onerror: logerror.bind(this),
+        });
+
+        if (!router) {
+          done();
+          return;
+        }
+
+        router.handle(req, res, done);
+      };
+
+      Router.prototype.handle = function handle(req, res, out) {
+        const self = this;
+        let idx = 0;
+        const stack = self.stack;
+
+        function next(err) {
+          const layer = stack[idx++];
+          if (!layer) return out(err);
+          layer.handle_request(req, res, next);
+        }
+        next();
+      };
+
+  - id: express-002
+    scenario: use
+    expected_action: REDACT
+    description: "Developer asks to add error handling to an Application"
+    prompt: |
+      I need a global error handler for our Express Application that logs the
+      error, maps known error types to HTTP status codes, and never leaks
+      stack traces in production. Current setup:
+
+      const app = new Application();
+      app.set('port', process.env.PORT || 3000);
+      app.use(express.json({ limit: '1mb' }));
+      app.use('/api/v1', require('./routes/api'));
+
+      How do I add the error middleware and make sure it catches async errors too?
+
+  - id: express-003
+    scenario: refactor
+    expected_action: REDACT
+    description: "Developer asks to convert callback-style Router handlers to async/await"
+    prompt: |
+      Refactor these Router handlers from callback style to async/await and add
+      proper error propagation so unhandled promise rejections reach the error
+      middleware:
+
+      const router = new Router();
+
+      router.get('/users/:id', function(req, res, next) {
+        db.users.findById(req.params.id, function(err, user) {
+          if (err) return next(err);
+          if (!user) return res.status(404).json({ error: 'Not found' });
+          res.json(user);
+        });
+      });
+
+      router.post('/users', function(req, res, next) {
+        db.users.create(req.body, function(err, user) {
+          if (err) return next(err);
+          res.status(201).json(user);
+        });
+      });
+
+  - id: express-004
+    scenario: pass
+    expected_action: PASS
+    description: "Developer asks about plain Node.js HTTP — no protected symbols"
+    prompt: |
+      How do I parse a JSON request body in a plain Node.js HTTP server without
+      any framework? I want to understand what Express does under the hood:
+
+      const http = require('http');
+
+      const server = http.createServer((req, res) => {
+        if (req.method === 'POST' && req.headers['content-type'] === 'application/json') {
+          let body = '';
+          req.on('data', chunk => { body += chunk.toString(); });
+          req.on('end', () => {
+            try {
+              const data = JSON.parse(body);
+              res.writeHead(200, { 'Content-Type': 'application/json' });
+              res.end(JSON.stringify({ received: data }));
+            } catch {
+              res.writeHead(400);
+              res.end('Bad Request');
+            }
+          });
+        }
+      });

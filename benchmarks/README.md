@@ -1,65 +1,76 @@
 # Benchmarks
 
-Evaluation datasets and benchmark runners used to measure gateway accuracy and LLM capability.
-
-## Schema
-
-All datasets follow the detect+REDACT schema aligned with Kiri's actual filter behavior:
-
-| Field | Description |
-|-------|-------------|
-| `id` | Unique case identifier |
-| `language` | Source language |
-| `scenario` | Task verb: `refactor`, `debug`, `optimize`, `explain`, `summarize` |
-| `developer_prompt` | Natural developer request with code (as sent to the proxy) |
-| `registered_symbols` | Symbols registered in `.kiri/secrets` (L2 matching) |
-| `expected_action` | `"REDACT"` (protected symbol detected) or `"PASS"` (no match) |
-| `expected_utility` | What LLM can still do after REDACT |
-
-`smart-coding-comments` also includes `sensitive_spans` (L1/L3 inline detection) and `detection_layer: "L1_L3"`.
-
-`smart-advanced-coding` also includes `utility_tests` (behavioral equivalence checks).
+Evaluation datasets and runners used to measure Kiri's filter accuracy.
 
 ## Index
 
 | Directory | Role | Cases |
 |-----------|------|-------|
+| [`real-projects/`](real-projects/) | **Benchmark** — full FilterPipeline on 10 real open-source projects, 8 languages | 40 |
 | [`smart-coding/`](smart-coding/) | **Benchmark** — L2 precision/recall/F1 on symbol detection | 105 (94 scored + 11 known failures) |
 | [`smart-advanced-coding/`](smart-advanced-coding/) | **Corpus fixture** — labeled utility-after-REDACT examples | 64 |
 | [`smart-coding-comments/`](smart-coding-comments/) | **Corpus fixture** — labeled L1/L3 inline sensitivity spans | 60 |
-| [`smart-redaction/`](smart-redaction/) | **Benchmark** — smart redaction on legal/medical documents | 10 |
-| [`kiri/`](kiri/) | Gateway filter accuracy on real code datasets | — |
-| `rag-protection/` | RAG document protection — fixtures in `kiri/tests/` | — |
 
-**Total labeled cases: 239** across 15+ languages (Python, JavaScript, TypeScript, Java, Go, Rust, C#, Ruby, PHP, Kotlin, SQL, Bash, Swift, Scala, YAML, and more).
+**Total: 269 cases** across 15+ languages.
 
-### smart-coding breakdown (105 cases)
+`_archived/` contains the smart-redaction dataset (legal/medical document
+redaction — not Kiri's core use case).
 
-- **C001–C050** (50): core REDACT cases — proprietary symbols in realistic developer prompts
-- **OS001–OS012** (12): open-source-framework patterns — SQLAlchemy, Apache Beam, PyTorch, NestJS, Spring Boot, AWS Lambda, Go dispatch, C# MediatR, Rails ActiveJob — realistic proprietary class names
-- **TN001–TN015** (15): true-negative PASS cases — no protected symbols present
-- **NM001–NM017** (17): near-miss cases — stress-test word-boundary precision: version suffixes (`RiskScorerV2`), underscore extensions (`calculate_fee_async`), case mismatches (`InvoiceService` vs `invoice_service`), design-pattern suffixes (`FeatureStoreClient`), symbol in non-obvious positions (string literals, type annotations, imports, doc comments)
-- **KF001–KF011** (11): known-failure cases (`detection_gap: true`) — L2 blind spots excluded from F1 scoring, documented with full L1/L2/L3 architecture analysis. Categories: runtime string construction, alias/partial context, naming convention gaps, Java Impl suffix, interface/duck typing, numeric unit mismatch, numeric sig-fig precision, Infrastructure-as-Code
+---
 
-## Running benchmarks
+## real-projects — the primary benchmark
+
+40 cases drawn from real open-source code (Flask, Requests, FastAPI, Express,
+NestJS, Spring Boot, Kafka, Gin, actix-web, ASP.NET Core).  Each project has
+two protected symbols and four scenarios: `explain`, `use`, `refactor`, `pass`.
 
 ```bash
-# Simulation (regex mirrors kiri/src/filter/l2_symbols.py)
-python run_benchmarks.py
-
-# Real L2Filter only — imports actual SymbolStore + L2Filter from kiri/src
-python run_benchmarks.py --real
-
-# Full FilterPipeline — real L2->L1->L3 code path, null embedder + empty
-# VectorStore (no indexed files, no Ollama required). Reflects the production
-# scenario where only explicit @symbols are registered.
-python run_benchmarks.py --pipeline
-
-# Single suite
-python run_benchmarks.py --suite smart-coding --pipeline
-
-# Verbose: print every case
-python run_benchmarks.py --verbose
+python benchmarks/real-projects/runner.py
+python benchmarks/real-projects/runner.py --project flask
+python benchmarks/real-projects/runner.py --verbose
 ```
 
-Results are stored as `results.json` / `results.csv` in each directory. Do not commit result files unless they represent a stable baseline.
+See [`real-projects/README.md`](real-projects/README.md) for full details and
+instructions on how to reproduce each case with `kiri inspect`.
+
+---
+
+## smart-coding — L2 unit benchmark
+
+105 cases testing L2 symbol detection in isolation.  Includes 11 documented
+known-failure cases (`detection_gap: true`) with full L1/L2/L3 architecture
+analysis explaining why each case is a blind spot.
+
+```bash
+# Simulation (no kiri install required)
+python run_benchmarks.py --suite smart-coding
+
+# Full FilterPipeline (requires kiri venv)
+python run_benchmarks.py --suite smart-coding --pipeline
+```
+
+### smart-coding case breakdown
+
+- **C001–C050** (50): core REDACT — proprietary symbols in realistic prompts
+- **OS001–OS012** (12): open-source framework patterns (SQLAlchemy, PyTorch, NestJS, Spring Boot, AWS Lambda, Go dispatch, MediatR, Rails, ...)
+- **TN001–TN015** (15): true-negative PASS — no protected symbols
+- **NM001–NM017** (17): near-miss — word-boundary stress tests (version suffixes, case mismatches, separators, string literals, type annotations)
+- **KF001–KF011** (11): known failures — L2 blind spots (runtime construction, aliases, naming convention gaps, Java Impl suffix, duck typing, numeric units, IaC)
+
+---
+
+## Runner flags
+
+```bash
+# top-level runner (smart-coding / smart-advanced-coding / smart-coding-comments)
+python run_benchmarks.py                       # simulation
+python run_benchmarks.py --real                # real L2Filter only
+python run_benchmarks.py --pipeline            # full L2->L1->L3 pipeline
+python run_benchmarks.py --suite smart-coding  # single suite
+python run_benchmarks.py --verbose             # print every case
+
+# real-projects runner
+python benchmarks/real-projects/runner.py
+python benchmarks/real-projects/runner.py --project gin
+python benchmarks/real-projects/runner.py --verbose
+```

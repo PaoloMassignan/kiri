@@ -1,0 +1,128 @@
+project: aspnetcore
+repo: https://github.com/dotnet/aspnetcore
+version: "8.0.10"
+commit: "3e7a91d"
+language: csharp
+description: >
+  Microsoft's open-source ASP.NET Core framework. WebApplication and
+  WebApplicationBuilder are the minimal hosting API introduced in .NET 6 —
+  an enterprise team shipping an internal platform or API gateway on ASP.NET
+  Core would protect these two symbols.
+
+protected_symbols:
+  - text: "WebApplication"
+    label: "CLASS_NAME"
+  - text: "WebApplicationBuilder"
+    label: "CLASS_NAME"
+
+cases:
+  - id: aspnetcore-001
+    scenario: explain
+    expected_action: REDACT
+    description: "Developer asks how WebApplicationBuilder wires up DI before Build()"
+    prompt: |
+      I need to understand the order in which WebApplicationBuilder registers
+      services versus when the IServiceProvider is built. At what point does
+      calling builder.Build() freeze the container?
+
+      WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
+
+      builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+          .AddJwtBearer(options => {
+              options.TokenValidationParameters = new TokenValidationParameters {
+                  ValidateIssuer = true,
+                  ValidIssuer = builder.Configuration["Jwt:Issuer"],
+                  ValidateAudience = true,
+                  ValidAudience = builder.Configuration["Jwt:Audience"],
+                  IssuerSigningKey = new SymmetricSecurityKey(
+                      Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!)),
+              };
+          });
+
+      builder.Services.AddAuthorization();
+      builder.Services.AddControllers();
+      builder.Services.AddDbContext<AppDbContext>(o =>
+          o.UseSqlServer(builder.Configuration.GetConnectionString("Default")));
+
+      WebApplication app = builder.Build();
+
+  - id: aspnetcore-002
+    scenario: use
+    expected_action: REDACT
+    description: "Developer asks how to add health checks to a WebApplication"
+    prompt: |
+      I want to add /health and /ready endpoints to our WebApplication so our
+      Kubernetes liveness and readiness probes have distinct targets. How do I
+      configure the health check middleware with WebApplicationBuilder?
+
+      var builder = WebApplication.CreateBuilder(args);
+      builder.Services.AddSingleton<IOrderService, OrderService>();
+      builder.Services.AddSingleton<IDatabaseHealthCheck, DatabaseHealthCheck>();
+
+      var app = builder.Build();
+      app.MapControllers();
+      app.Run();
+
+  - id: aspnetcore-003
+    scenario: refactor
+    expected_action: REDACT
+    description: "Developer asks to migrate Startup class to WebApplicationBuilder"
+    prompt: |
+      Migrate this old-style Startup.cs to the minimal hosting model using
+      WebApplicationBuilder and WebApplication so we can drop the Startup class:
+
+      public class Startup {
+          public Startup(IConfiguration configuration) {
+              Configuration = configuration;
+          }
+          public IConfiguration Configuration { get; }
+
+          public void ConfigureServices(IServiceCollection services) {
+              services.AddControllers();
+              services.AddDbContext<AppDbContext>(opts =>
+                  opts.UseSqlServer(Configuration.GetConnectionString("Default")));
+              services.AddScoped<IUserRepository, UserRepository>();
+              services.AddAutoMapper(typeof(MappingProfile));
+          }
+
+          public void Configure(IApplicationBuilder app, IWebHostEnvironment env) {
+              if (env.IsDevelopment()) app.UseDeveloperExceptionPage();
+              app.UseRouting();
+              app.UseAuthentication();
+              app.UseAuthorization();
+              app.UseEndpoints(e => e.MapControllers());
+          }
+      }
+
+  - id: aspnetcore-004
+    scenario: pass
+    expected_action: PASS
+    description: "Developer asks about repository pattern in C# — no protected symbols"
+    prompt: |
+      How do I implement a clean repository pattern in C# that is not tied to
+      Entity Framework so I can swap implementations in tests?
+
+      public interface IUserRepository {
+          Task<User?> GetByIdAsync(int id, CancellationToken ct = default);
+          Task<IReadOnlyList<User>> ListActiveAsync(CancellationToken ct = default);
+          Task AddAsync(User user, CancellationToken ct = default);
+          Task SaveChangesAsync(CancellationToken ct = default);
+      }
+
+      public class EfUserRepository : IUserRepository {
+          private readonly AppDbContext _db;
+          public EfUserRepository(AppDbContext db) => _db = db;
+
+          public Task<User?> GetByIdAsync(int id, CancellationToken ct)
+              => _db.Users.FindAsync(new object[] { id }, ct).AsTask();
+
+          public async Task<IReadOnlyList<User>> ListActiveAsync(CancellationToken ct)
+              => await _db.Users.Where(u => u.IsActive).ToListAsync(ct);
+
+          public async Task AddAsync(User user, CancellationToken ct) {
+              await _db.Users.AddAsync(user, ct);
+          }
+
+          public Task SaveChangesAsync(CancellationToken ct)
+              => _db.SaveChangesAsync(ct);
+      }

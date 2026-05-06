@@ -1,0 +1,95 @@
+project: kafka
+repo: https://github.com/apache/kafka
+version: "3.8.0"
+commit: "a1c3e72"
+language: java
+description: >
+  Distributed event-streaming platform. KafkaProducer and KafkaConsumer are
+  the two client classes every application team interacts with — a company
+  with a proprietary Kafka client wrapper would protect these symbols.
+
+protected_symbols:
+  - text: "KafkaProducer"
+    label: "CLASS_NAME"
+  - text: "KafkaConsumer"
+    label: "CLASS_NAME"
+
+cases:
+  - id: kafka-001
+    scenario: explain
+    expected_action: REDACT
+    description: "Developer asks how KafkaProducer handles batching and backpressure"
+    prompt: |
+      I'm seeing occasional latency spikes under high throughput. Can you explain
+      how KafkaProducer accumulates records into batches and when send() blocks
+      due to buffer.memory being full?
+
+      Properties props = new Properties();
+      props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, brokers);
+      props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
+      props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, JsonSerializer.class);
+      props.put(ProducerConfig.LINGER_MS_CONFIG, "5");
+      props.put(ProducerConfig.BATCH_SIZE_CONFIG, "65536");
+      props.put(ProducerConfig.BUFFER_MEMORY_CONFIG, "67108864");
+
+      KafkaProducer<String, OrderEvent> producer = new KafkaProducer<>(props);
+      producer.send(new ProducerRecord<>("orders", event.getOrderId(), event),
+          (meta, ex) -> {
+              if (ex != null) metrics.recordError("send_failed");
+              else metrics.recordLatency(meta.timestamp());
+          });
+
+  - id: kafka-002
+    scenario: use
+    expected_action: REDACT
+    description: "Developer asks how to implement manual offset commit with KafkaConsumer"
+    prompt: |
+      I need our KafkaConsumer to process records in batches and commit offsets
+      only after the whole batch has been persisted to the database. How do I
+      configure manual commit and handle partition rebalancing cleanly?
+
+      Properties props = new Properties();
+      props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, brokers);
+      props.put(ConsumerConfig.GROUP_ID_CONFIG, "order-processor");
+      props.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "false");
+      props.put(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, "500");
+
+      KafkaConsumer<String, OrderEvent> consumer = new KafkaConsumer<>(props);
+      consumer.subscribe(List.of("orders"), new RebalanceListener());
+
+  - id: kafka-003
+    scenario: refactor
+    expected_action: REDACT
+    description: "Developer asks to refactor fire-and-forget KafkaProducer to handle errors"
+    prompt: |
+      Refactor this KafkaProducer code to be thread-safe, handle serialization
+      errors synchronously, and guarantee at-least-once delivery with retry:
+
+      // current: single shared producer, fire-and-forget
+      private final KafkaProducer<String, Order> producer =
+          new KafkaProducer<>(getProducerConfig());
+
+      public void publishOrder(Order order) {
+          producer.send(new ProducerRecord<>("orders", order.getId(), order));
+          // no callback — errors are silently dropped
+      }
+
+  - id: kafka-004
+    scenario: pass
+    expected_action: PASS
+    description: "Developer asks about idempotent consumer pattern — no protected symbols"
+    prompt: |
+      What is the cleanest way to implement idempotent message processing in Java
+      so that replaying the same event twice has no side effects?
+
+      public class IdempotentOrderProcessor {
+          private final Set<String> processedIds = ConcurrentHashMap.newKeySet();
+
+          public void process(String messageId, OrderEvent event) {
+              if (!processedIds.add(messageId)) {
+                  log.debug("Skipping duplicate event: {}", messageId);
+                  return;
+              }
+              orderRepository.save(Order.from(event));
+          }
+      }

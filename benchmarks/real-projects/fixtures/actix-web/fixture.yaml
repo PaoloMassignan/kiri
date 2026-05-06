@@ -1,0 +1,107 @@
+project: actix-web
+repo: https://github.com/actix/actix-web
+version: "4.9.0"
+commit: "f2d3c81"
+language: rust
+description: >
+  High-performance async web framework for Rust. HttpServer manages the
+  Tokio worker pool and TLS; App is the per-worker application builder.
+  A company shipping a Rust-based API service on actix-web would protect both.
+
+protected_symbols:
+  - text: "HttpServer"
+    label: "CLASS_NAME"
+  - text: "App"
+    label: "CLASS_NAME"
+
+cases:
+  - id: actix-web-001
+    scenario: explain
+    expected_action: REDACT
+    description: "Developer asks how HttpServer distributes workers and how App is cloned"
+    prompt: |
+      I'm trying to understand why state shared between workers must be wrapped
+      in Arc. Can you explain how HttpServer creates one App instance per worker
+      thread and what the closure passed to HttpServer::new must guarantee?
+
+      let server = HttpServer::new(move || {
+          App::new()
+              .app_data(web::Data::new(db_pool.clone()))
+              .app_data(web::Data::new(config.clone()))
+              .wrap(middleware::Logger::default())
+              .wrap(middleware::Compress::default())
+              .service(web::scope("/api/v1").configure(api_v1::config))
+              .service(web::scope("/api/v2").configure(api_v2::config))
+      })
+      .workers(num_cpus::get())
+      .shutdown_timeout(30)
+      .bind(("127.0.0.1", 8080))?
+      .run()
+      .await?;
+
+  - id: actix-web-002
+    scenario: use
+    expected_action: REDACT
+    description: "Developer asks how to add TLS to an HttpServer"
+    prompt: |
+      Our App is currently running on plain HTTP in staging. How do I configure
+      HttpServer with rustls to enable HTTPS in production while keeping HTTP
+      available on a different port for internal health checks?
+
+      let server = HttpServer::new(|| {
+          App::new()
+              .service(web::resource("/health").to(health_check))
+              .service(web::scope("/api").configure(api_config))
+      })
+      .bind("0.0.0.0:8080")?
+      .run()
+      .await?;
+
+  - id: actix-web-003
+    scenario: refactor
+    expected_action: REDACT
+    description: "Developer asks to refactor a handler that panics on db errors"
+    prompt: |
+      Refactor this actix-web handler to return proper HTTP error responses
+      instead of panicking on database failures. The App routes requests to
+      this handler via .service(web::resource("/users/{id}").to(get_user)).
+
+      async fn get_user(
+          pool: web::Data<PgPool>,
+          path: web::Path<i32>,
+      ) -> impl Responder {
+          let user_id = path.into_inner();
+          let user = sqlx::query_as!(User,
+              "SELECT id, name, email FROM users WHERE id = $1", user_id
+          )
+          .fetch_one(pool.get_ref())
+          .await
+          .unwrap();  // panics if user not found or DB error
+          HttpResponse::Ok().json(user)
+      }
+
+  - id: actix-web-004
+    scenario: pass
+    expected_action: PASS
+    description: "Developer asks about Tokio connection pools — no protected symbols"
+    prompt: |
+      How do I create a PostgreSQL connection pool in Rust using sqlx and share
+      it safely across async tasks without using global state?
+
+      use sqlx::postgres::PgPoolOptions;
+
+      #[tokio::main]
+      async fn main() -> Result<(), sqlx::Error> {
+          let pool = PgPoolOptions::new()
+              .max_connections(20)
+              .acquire_timeout(std::time::Duration::from_secs(3))
+              .connect(&std::env::var("DATABASE_URL").expect("DATABASE_URL not set"))
+              .await?;
+
+          let row: (i64,) = sqlx::query_as("SELECT COUNT(*) FROM users")
+              .fetch_one(&pool)
+              .await?;
+
+          println!("Users: {}", row.0);
+          Ok(())
+      }

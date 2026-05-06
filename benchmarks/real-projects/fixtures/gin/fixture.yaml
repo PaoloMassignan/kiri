@@ -1,0 +1,104 @@
+project: gin
+repo: https://github.com/gin-gonic/gin
+version: "1.10.0"
+commit: "c9b8a93"
+language: go
+description: >
+  High-performance HTTP web framework for Go. Engine is the core router and
+  server; RouterGroup is the building block for versioned or scoped route trees.
+  A company shipping an internal Go API platform on Gin would protect both.
+
+protected_symbols:
+  - text: "Engine"
+    label: "CLASS_NAME"
+  - text: "RouterGroup"
+    label: "CLASS_NAME"
+
+cases:
+  - id: gin-001
+    scenario: explain
+    expected_action: REDACT
+    description: "Developer asks how Engine and RouterGroup initialise the radix trie"
+    prompt: |
+      I'm trying to understand why adding routes after the first request causes
+      a panic. Can you explain how Engine initialises RouterGroup and at what
+      point the route tree is locked?
+
+      engine := &Engine{
+          RouterGroup: RouterGroup{
+              Handlers: nil,
+              basePath: "/",
+              root:     true,
+          },
+          RedirectTrailingSlash:  true,
+          RedirectFixedPath:      false,
+          HandleMethodNotAllowed: false,
+          ForwardedByClientIP:    true,
+          UseRawPath:             false,
+          UnescapePathValues:     true,
+          trees:                  make(methodTrees, 0, 9),
+          delims:                 render.Delims{Left: "{{", Right: "}}"},
+      }
+      engine.RouterGroup.engine = engine
+
+  - id: gin-002
+    scenario: use
+    expected_action: REDACT
+    description: "Developer asks how to add versioned route groups to a Gin Engine"
+    prompt: |
+      I need to run /api/v1 and /api/v2 simultaneously from the same Gin Engine,
+      each with its own middleware stack. v1 uses basic auth and v2 uses JWT.
+      How do I set up the RouterGroup hierarchy correctly?
+
+      r := &Engine{}
+      r.Use(gin.Logger(), gin.Recovery())
+
+      // v1 needs basicAuth middleware
+      // v2 needs jwtMiddleware
+      // both share /health at the root level
+
+  - id: gin-003
+    scenario: refactor
+    expected_action: REDACT
+    description: "Developer asks to extract RouterGroup setup into a separate function"
+    prompt: |
+      Refactor this Gin setup so the RouterGroup configuration lives in a
+      separate function and main() only calls engine.Run():
+
+      func main() {
+          engine := &Engine{}
+          engine.Use(gin.Logger(), gin.Recovery())
+
+          api := engine.RouterGroup.Group("/api/v1")
+          api.Use(authMiddleware())
+          api.GET("/users", listUsers)
+          api.POST("/users", createUser)
+          api.GET("/users/:id", getUser)
+          api.DELETE("/users/:id", deleteUser)
+
+          engine.Run(":8080")
+      }
+
+  - id: gin-004
+    scenario: pass
+    expected_action: PASS
+    description: "Developer asks about net/http middleware — no protected symbols"
+    prompt: |
+      How do I chain multiple middleware functions using only the Go standard
+      library net/http package? I want request logging and a timeout wrapper:
+
+      func loggingMiddleware(next http.Handler) http.Handler {
+          return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+              start := time.Now()
+              next.ServeHTTP(w, r)
+              log.Printf("%s %s %v", r.Method, r.URL.Path, time.Since(start))
+          })
+      }
+
+      func timeoutMiddleware(d time.Duration, next http.Handler) http.Handler {
+          return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+              ctx, cancel := context.WithTimeout(r.Context(), d)
+              defer cancel()
+              next.ServeHTTP(w, r.WithContext(ctx))
+          })
+      }

@@ -1,0 +1,106 @@
+project: fastapi
+repo: https://github.com/tiangolo/fastapi
+version: "0.115.0"
+commit: "d5f9f53"
+language: python
+description: >
+  Modern async web framework built on Starlette and Pydantic. FastAPI and
+  APIRouter are the primary building blocks — a company shipping an internal
+  platform or API gateway on top of FastAPI would protect these.
+
+protected_symbols:
+  - text: "FastAPI"
+    label: "CLASS_NAME"
+  - text: "APIRouter"
+    label: "CLASS_NAME"
+
+cases:
+  - id: fastapi-001
+    scenario: explain
+    expected_action: REDACT
+    description: "Developer asks how APIRouter dependency injection works"
+    prompt: |
+      I'm confused about how router-level dependencies work in FastAPI.
+      Can you explain how the dependencies in APIRouter are applied to every
+      endpoint and how they interact with path-level Depends()?
+
+      router = APIRouter(
+          prefix="/items",
+          tags=["items"],
+          dependencies=[Depends(verify_token)],
+          responses={404: {"description": "Not found"}},
+      )
+
+      @router.get("/")
+      async def list_items(db: AsyncSession = Depends(get_db)):
+          return await db.execute(select(Item)).scalars().all()
+
+      @router.get("/{item_id}")
+      async def get_item(item_id: int, db: AsyncSession = Depends(get_db)):
+          item = await db.get(Item, item_id)
+          if not item:
+              raise HTTPException(status_code=404)
+          return item
+
+  - id: fastapi-002
+    scenario: use
+    expected_action: REDACT
+    description: "Developer asks how to version an API using FastAPI and APIRouter"
+    prompt: |
+      I need to run v1 and v2 of our API simultaneously with separate route trees.
+      Here is the current setup — how do I add versioning using APIRouter so both
+      versions share the same FastAPI app but have independent middleware?
+
+      app = FastAPI(title="Payments API", version="1.0.0")
+      app.add_middleware(CORSMiddleware, allow_origins=["*"])
+
+      @app.get("/health")
+      async def health():
+          return {"status": "ok"}
+
+  - id: fastapi-003
+    scenario: refactor
+    expected_action: REDACT
+    description: "Developer asks to split a large FastAPI app into router modules"
+    prompt: |
+      Our main.py has grown to 400 lines. Help me refactor this FastAPI app
+      to use separate APIRouter modules for users and orders:
+
+      app = FastAPI()
+
+      @app.get("/users/{user_id}")
+      async def read_user(user_id: int, db: AsyncSession = Depends(get_db)):
+          return await db.get(User, user_id)
+
+      @app.post("/users/")
+      async def create_user(body: UserCreate, db: AsyncSession = Depends(get_db)):
+          user = User(**body.model_dump())
+          db.add(user)
+          await db.commit()
+          return user
+
+      @app.get("/orders/{order_id}")
+      async def read_order(order_id: int, db: AsyncSession = Depends(get_db)):
+          return await db.get(Order, order_id)
+
+  - id: fastapi-004
+    scenario: pass
+    expected_action: PASS
+    description: "Developer asks about Pydantic validation — no protected symbols"
+    prompt: |
+      How do I write a Pydantic model that validates a price field is positive
+      and rounds it to two decimal places before storing?
+
+      from decimal import Decimal
+      from pydantic import BaseModel, field_validator
+
+      class ProductIn(BaseModel):
+          name: str
+          price: Decimal
+
+          @field_validator('price')
+          @classmethod
+          def price_must_be_positive(cls, v: Decimal) -> Decimal:
+              if v <= 0:
+                  raise ValueError('price must be positive')
+              return round(v, 2)

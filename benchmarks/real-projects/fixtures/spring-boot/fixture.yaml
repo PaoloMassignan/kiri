@@ -1,0 +1,100 @@
+project: spring-boot
+repo: https://github.com/spring-projects/spring-boot
+version: "3.3.4"
+commit: "4f8a21c"
+language: java
+description: >
+  Convention-over-configuration Java application framework. SpringApplication
+  and ApplicationContext are the bootstrap and container abstractions — an
+  enterprise team building a shared internal platform on Spring Boot would
+  protect these symbols.
+
+protected_symbols:
+  - text: "SpringApplication"
+    label: "CLASS_NAME"
+  - text: "ApplicationContext"
+    label: "CLASS_NAME"
+
+cases:
+  - id: spring-boot-001
+    scenario: explain
+    expected_action: REDACT
+    description: "Developer asks how SpringApplication.run bootstraps ApplicationContext"
+    prompt: |
+      Can you explain what happens between SpringApplication.run() being called
+      and the first @Bean being available? I'm trying to understand when the
+      ApplicationContext is fully refreshed vs when listeners fire.
+
+      public static void main(String[] args) {
+          SpringApplication app = new SpringApplication(PlatformApplication.class);
+          app.setBannerMode(Banner.Mode.OFF);
+          app.addListeners(new ApplicationPidFileWriter());
+          ApplicationContext context = app.run(args);
+
+          log.info("Started {} beans", context.getBeanDefinitionCount());
+      }
+
+  - id: spring-boot-002
+    scenario: use
+    expected_action: REDACT
+    description: "Developer asks how to access ApplicationContext beans in a batch job"
+    prompt: |
+      I need to run a nightly Spring Batch job from the command line without
+      starting the full HTTP server. I'm using SpringApplication to bootstrap
+      only the batch context:
+
+      ApplicationContext context = SpringApplication.run(BatchConfiguration.class, args);
+      JobLauncher launcher = context.getBean(JobLauncher.class);
+      Job importJob = context.getBean("importOrdersJob", Job.class);
+
+      How do I pass runtime parameters to the job and handle exit codes correctly?
+
+  - id: spring-boot-003
+    scenario: refactor
+    expected_action: REDACT
+    description: "Developer asks to add profile support to a SpringApplication entry point"
+    prompt: |
+      Refactor our main class to activate the correct Spring profile based on an
+      environment variable and fail fast with a clear error if the variable is missing:
+
+      @SpringBootApplication
+      public class Application {
+          public static void main(String[] args) {
+              SpringApplication.run(Application.class, args);
+          }
+      }
+
+  - id: spring-boot-004
+    scenario: pass
+    expected_action: PASS
+    description: "Developer asks about JPA composite key — no protected symbols"
+    prompt: |
+      How do I map a legacy database table with a two-column composite primary
+      key using JPA annotations? The table is called order_lines and uses
+      order_id + line_number as its PK.
+
+      @Embeddable
+      public class OrderLineId implements Serializable {
+          @Column(name = "order_id")
+          private Long orderId;
+
+          @Column(name = "line_number")
+          private Integer lineNumber;
+
+          // equals and hashCode required by JPA spec
+          @Override
+          public boolean equals(Object o) { ... }
+
+          @Override
+          public int hashCode() { ... }
+      }
+
+      @Entity
+      @Table(name = "order_lines")
+      public class OrderLine {
+          @EmbeddedId
+          private OrderLineId id;
+
+          private String productCode;
+          private BigDecimal quantity;
+      }

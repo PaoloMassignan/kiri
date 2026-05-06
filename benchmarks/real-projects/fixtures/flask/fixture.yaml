@@ -1,0 +1,112 @@
+project: flask
+repo: https://github.com/pallets/flask
+version: "3.1.1"
+commit: "7b89b4c"
+language: python
+description: >
+  Lightweight WSGI web application framework. Flask and its Scaffold base class
+  are the core abstractions a company would register if they ship a Flask-based
+  internal platform with custom routing or extension hooks.
+
+protected_symbols:
+  - text: "Flask"
+    label: "CLASS_NAME"
+  - text: "Scaffold"
+    label: "CLASS_NAME"
+
+cases:
+  - id: flask-001
+    scenario: explain
+    expected_action: REDACT
+    description: "Developer asks Claude Code to explain the Flask class and its Scaffold base"
+    prompt: |
+      I'm trying to understand how the application factory works internally.
+      Can you explain what the Scaffold mixin provides and why Flask inherits from it?
+
+      class Flask(Scaffold):
+          def __init__(
+              self,
+              import_name: str,
+              static_url_path: t.Optional[str] = None,
+              static_folder: t.Optional[t.Union[str, os.PathLike]] = None,
+              template_folder: t.Optional[str] = "templates",
+              instance_path: t.Optional[str] = None,
+              instance_relative_config: bool = False,
+              root_path: t.Optional[str] = None,
+          ):
+              super().__init__(
+                  import_name=import_name,
+                  static_folder=static_folder,
+                  static_url_path=static_url_path,
+                  template_folder=template_folder,
+                  root_path=root_path,
+              )
+              self.instance_path = instance_path
+              self.config = self.make_config(instance_relative_config)
+              self.extensions: t.Dict[str, t.Any] = {}
+
+  - id: flask-002
+    scenario: use
+    expected_action: REDACT
+    description: "Developer asks how to add rate limiting to a Flask app factory"
+    prompt: |
+      I need to add per-route rate limiting to our application. Here is our current
+      app factory — how do I integrate a rate limiter without a third-party library?
+
+      def create_app(config=None):
+          app = Flask(__name__)
+
+          if config is not None:
+              app.config.from_object(config)
+
+          app.config.from_prefixed_env()
+
+          from .auth import bp as auth_bp
+          app.register_blueprint(auth_bp, url_prefix="/auth")
+
+          from .api import bp as api_bp
+          app.register_blueprint(api_bp, url_prefix="/api/v1")
+
+          return app
+
+  - id: flask-003
+    scenario: refactor
+    expected_action: REDACT
+    description: "Developer asks to refactor inline Flask setup to use the factory pattern"
+    prompt: |
+      Refactor this module-level Flask initialization to use the application
+      factory pattern so we can run multiple test instances:
+
+      app = Flask(__name__)
+      app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev')
+      app.config['DATABASE'] = os.path.join(app.instance_path, 'app.sqlite')
+
+      @app.before_request
+      def connect_db():
+          g.db = sqlite3.connect(app.config['DATABASE'])
+
+      @app.teardown_appcontext
+      def close_db(error):
+          if hasattr(g, 'db'):
+              g.db.close()
+
+  - id: flask-004
+    scenario: pass
+    expected_action: PASS
+    description: "Developer asks about CLI commands — no protected symbols present"
+    prompt: |
+      How do I add a custom CLI command to a Python web app using click so that
+      I can run database migrations from the terminal?
+
+      import click
+
+      @click.command('init-db')
+      def init_db_command():
+          """Clear existing data and create new tables."""
+          init_db()
+          click.echo('Initialized the database.')
+
+      def init_db():
+          db = get_db()
+          with current_app.open_resource('schema.sql') as f:
+              db.executescript(f.read().decode('utf8'))
