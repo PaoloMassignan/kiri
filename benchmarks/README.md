@@ -47,11 +47,16 @@ All datasets follow the detect+REDACT schema aligned with Kiri's actual filter b
 # Simulation (regex mirrors kiri/src/filter/l2_symbols.py)
 python run_benchmarks.py
 
-# Real L2Filter — imports actual SymbolStore + L2Filter from kiri/src
+# Real L2Filter only — imports actual SymbolStore + L2Filter from kiri/src
 python run_benchmarks.py --real
 
+# Full FilterPipeline — real L2->L1->L3 code path, null embedder + empty
+# VectorStore (no indexed files, no Ollama required). Reflects the production
+# scenario where only explicit @symbols are registered.
+python run_benchmarks.py --pipeline
+
 # Single suite
-python run_benchmarks.py --suite smart-coding --real
+python run_benchmarks.py --suite smart-coding --pipeline
 
 # Verbose: print every case
 python run_benchmarks.py --verbose

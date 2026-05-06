@@ -11,7 +11,8 @@ Usage:
   python run_benchmarks.py
   python run_benchmarks.py --suite smart-coding
   python run_benchmarks.py --verbose
-  python run_benchmarks.py --real        # use actual L2Filter from kiri/src
+  python run_benchmarks.py --real        # real L2Filter from kiri/src (L2 only)
+  python run_benchmarks.py --pipeline    # full FilterPipeline: L2->L1->L3
 """
 import json
 import re
@@ -24,6 +25,7 @@ BASE = Path(__file__).parent
 VERBOSE = "--verbose" in sys.argv
 SUITE_FILTER = next((sys.argv[i + 1] for i, a in enumerate(sys.argv) if a == "--suite"), None)
 USE_REAL = "--real" in sys.argv
+USE_PIPELINE = "--pipeline" in sys.argv
 
 SEP = "-" * 62
 
@@ -46,6 +48,62 @@ if USE_REAL:
             print("  [WARN] Falling back to simulation.")
     else:
         print(f"  [WARN] --real requested but kiri/ not found at {kiri_root}")
+
+# ── Full FilterPipeline setup (only when --pipeline) ─────────────────────────
+
+_pipeline_available = False
+_FilterPipeline = None
+_FilterDecision = None
+_L1Filter = None
+_L2Filter_p = None
+_L3Filter = None
+_SymbolStore_p = None
+_VectorStore = None
+_PipelineSettings = None
+
+
+class _NullEmbedder:
+    """Zero-vector stub — no external calls, no model loading."""
+
+    _DIM = 384  # all-MiniLM-L6-v2 output dimension
+
+    def embed_one(self, text: str) -> list[float]:  # noqa: ARG002
+        return [0.0] * self._DIM
+
+    def embed(self, texts: list[str]) -> list[list[float]]:
+        return [[0.0] * self._DIM for _ in texts]
+
+
+class _NullVectorStore:
+    """In-memory stub that always returns no results.
+
+    Replaces ChromaDB's PersistentClient so there are no files to lock or clean
+    up on Windows.  Behaviour is identical to an empty persistent store: L1 always
+    scores 0.0 -> PASS, which matches production when no files have been indexed.
+    """
+
+    def query(self, vector: list[float], top_k: int) -> list:  # noqa: ARG002
+        return []
+
+
+if USE_PIPELINE:
+    kiri_root = BASE.parent / "kiri"
+    if kiri_root.exists():
+        if str(kiri_root) not in sys.path:
+            sys.path.insert(0, str(kiri_root))
+        try:
+            from src.filter.pipeline import FilterPipeline as _FilterPipeline, Decision as _FilterDecision  # type: ignore
+            from src.filter.l1_similarity import L1Filter as _L1Filter              # type: ignore
+            from src.filter.l2_symbols import L2Filter as _L2Filter_p               # type: ignore
+            from src.filter.l3_classifier import L3Filter as _L3Filter              # type: ignore
+            from src.store.symbol_store import SymbolStore as _SymbolStore_p        # type: ignore
+            from src.config.settings import Settings as _PipelineSettings           # type: ignore
+            _pipeline_available = True
+        except ImportError as e:
+            print(f"  [WARN] --pipeline requested but import failed: {e}")
+            print("  [WARN] Falling back to simulation.")
+    else:
+        print(f"  [WARN] --pipeline requested but kiri/ not found at {kiri_root}")
 
 
 def load(path: Path) -> list[dict]:
@@ -86,7 +144,38 @@ def l2_matches(registered_symbols: list[dict], prompt: str) -> list[str]:
     return _sim_l2_matches(registered_symbols, prompt)
 
 
+def _pipeline_classify(registered_symbols: list[dict], prompt: str) -> str:
+    """Run prompt through the full FilterPipeline (L2->L1->L3).
+
+    L1 uses an empty VectorStore + _NullEmbedder so it always scores 0.0 —
+    identical to production behaviour when only explicit @symbols are registered
+    and no files have been indexed yet.  L3 fails open if Ollama is unavailable.
+    """
+    texts = [s["text"] for s in registered_symbols if s.get("text")]
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path = Path(tmp)
+        index_dir = tmp_path / "index"
+        index_dir.mkdir()
+
+        store = _SymbolStore_p(index_dir)
+        if texts:
+            store.add_explicit(texts)
+
+        settings = _PipelineSettings(workspace=tmp_path)
+        l1   = _L1Filter(vector_store=_NullVectorStore(), embedder=_NullEmbedder())
+        l2   = _L2Filter_p(store)
+        l3   = _L3Filter(settings)
+
+        pipeline = _FilterPipeline(settings=settings, l1=l1, l2=l2, l3=l3, secrets_store=None)
+        result = pipeline.run(prompt)
+        return result.decision.value.upper()
+
+
 def predict_action(registered_symbols: list[dict], prompt: str) -> str:
+    if USE_PIPELINE and _pipeline_available:
+        decision = _pipeline_classify(registered_symbols, prompt)
+        # BLOCK is not expected in any scored case; treat as REDACT for scoring
+        return "REDACT" if decision in ("REDACT", "BLOCK") else "PASS"
     return "REDACT" if l2_matches(registered_symbols, prompt) else "PASS"
 
 
@@ -109,7 +198,12 @@ def fmt(v: float) -> str:
 
 def run_smart_coding():
     print(f"\n{'=' * 62}")
-    mode = "real L2Filter" if (USE_REAL and _real_l2_available) else "simulation"
+    if USE_PIPELINE and _pipeline_available:
+        mode = "full pipeline (L2->L1->L3, null embedder)"
+    elif USE_REAL and _real_l2_available:
+        mode = "real L2Filter"
+    else:
+        mode = "simulation"
     print(f"  SUITE: smart-coding  (L2 symbol detection)  [{mode}]")
     print(f"{'=' * 62}")
 
@@ -364,7 +458,13 @@ def main():
         print(f"\n{'=' * 62}")
         print("  SUMMARY")
         print(f"{'=' * 62}")
-        print(f"  L2 detection (smart-coding) :")
+        if USE_PIPELINE and _pipeline_available:
+            label = "Full pipeline (L2->L1->L3)"
+        elif USE_REAL and _real_l2_available:
+            label = "Real L2Filter"
+        else:
+            label = "Simulation"
+        print(f"  smart-coding [{label}] :")
         print(f"    Precision {fmt(m['precision'])}  "
               f"Recall {fmt(m['recall'])}  "
               f"F1 {fmt(m['f1'])}  "
