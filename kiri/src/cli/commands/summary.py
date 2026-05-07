@@ -2,10 +2,11 @@
 from __future__ import annotations
 
 import re
+from typing import Any
 
 import typer
 
-from src.store.summary_store import SummaryStore
+from src.store.summary_store import SummaryEntry, SummaryStore
 
 # Matches standalone decimal numbers that may be proprietary constants
 # e.g. 0.0325, 2.47, 9.99 — but not plain integers like "3" or "step 1".
@@ -24,7 +25,7 @@ def _load_summary_store() -> SummaryStore:
     return SummaryStore(s.workspace / ".kiri" / "index")
 
 
-def _make_summary_generator():
+def _make_summary_generator() -> Any:
     from src.config.settings import Settings
     from src.redaction.summary_generator import SummaryGenerator
     s = Settings.load()
@@ -42,7 +43,7 @@ def summary_list() -> None:
     entries = store.all_entries()
 
     # Hide internal manual__ prefix keys from the display — show by symbol_name
-    seen: dict[str, tuple[str, object]] = {}
+    seen: dict[str, tuple[str, SummaryEntry]] = {}
     for chunk_id, entry in entries:
         symbol = entry.symbol_name or chunk_id
         # Manual entries win over ollama for the same symbol
