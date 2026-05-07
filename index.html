@@ -197,6 +197,67 @@
     .compat-table td:nth-child(2) { width: 28px; text-align: center; }
     .compat-table td:last-child { color: var(--muted); font-size: 13px; }
 
+    /* ── Architecture diagram ── */
+    .arch-diagram {
+      display: flex; align-items: center; gap: 0;
+      margin-top: 32px; overflow-x: auto;
+    }
+    .arch-boundary {
+      display: flex; align-items: center; gap: 16px;
+      border: 1px solid var(--border); border-radius: var(--radius);
+      padding: 24px 20px 20px; position: relative; background: #0d1117;
+    }
+    .arch-cloud {
+      display: flex; flex-direction: column; gap: 10px;
+      border: 1px dashed #30363d; border-radius: var(--radius);
+      padding: 28px 20px 20px; position: relative;
+    }
+    .arch-boundary-label {
+      position: absolute; top: -11px; left: 14px;
+      background: #0d1117; padding: 0 8px;
+      font-size: 11px; text-transform: uppercase; letter-spacing: .08em;
+      color: var(--muted);
+    }
+    .arch-cloud .arch-boundary-label { background: var(--bg); }
+    .arch-tools { display: flex; flex-direction: column; gap: 8px; }
+    .arch-tool {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 6px; padding: 7px 14px; font-size: 13px; white-space: nowrap;
+    }
+    .arch-tool-more { color: var(--muted); font-size: 12px; border-style: dashed; }
+    .arch-arrow-right {
+      display: flex; flex-direction: column; align-items: center;
+      gap: 4px; flex-shrink: 0;
+    }
+    .arch-arrow-label { font-size: 11px; color: #58a6ff; white-space: nowrap; }
+    .arch-arrow-clean { color: #3fb950; }
+    .arch-proxy {
+      background: #161b22; border: 1px solid #58a6ff44;
+      border-radius: var(--radius); padding: 16px 18px; min-width: 200px;
+    }
+    .arch-proxy-title {
+      font-size: 14px; font-weight: 600; color: var(--text);
+      margin-bottom: 12px;
+    }
+    .arch-port { color: var(--muted); font-weight: 400; font-size: 13px; }
+    .arch-filters { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
+    .arch-filter {
+      font-size: 12px; border-radius: 4px; padding: 4px 10px;
+      border: 1px solid transparent;
+    }
+    .arch-l2 { background: #1f2d1f; border-color: #3fb95044; color: #3fb950; }
+    .arch-l1 { background: #1a2a3a; border-color: #58a6ff44; color: #58a6ff; }
+    .arch-l3 { background: #2d1f2a; border-color: #bc8cff44; color: #bc8cff; }
+    .arch-models { display: flex; flex-wrap: wrap; gap: 6px; }
+    .arch-model-badge {
+      font-size: 11px; background: #21262d; border: 1px solid var(--border);
+      border-radius: 4px; padding: 2px 8px; color: var(--muted); font-family: var(--mono);
+    }
+    .arch-note {
+      margin-top: 16px; font-size: 13px; color: var(--muted); text-align: center;
+    }
+    .section-sub { color: var(--muted); text-align: center; margin-top: -8px; margin-bottom: 8px; }
+
     /* ── Limits ── */
     .limits { display: flex; flex-direction: column; gap: 10px; }
     .limit-card {
@@ -233,8 +294,8 @@
 <!-- ── Hero ── -->
 <div class="hero">
   <div class="container">
-    <h1>Transparent AI protection.<br><em>Zero changes to your workflow.</em></h1>
-    <p class="sub">Kiri is an on-premises proxy that intercepts every LLM call and strips proprietary source code before it reaches the cloud. Your tools work exactly as before — they just stop leaking your IP.</p>
+    <h1>Your source code<br><em>never leaves your machine.</em></h1>
+    <p class="sub">Kiri is an on-premises proxy that intercepts every LLM call and strips proprietary code before it reaches the cloud — so you keep full AI productivity without exposing your IP. Zero changes to your tools.</p>
 
     <div class="tabs">
       <button class="tab-btn active" onclick="showTab('mac')">macOS</button>
@@ -291,6 +352,61 @@
     </div>
   </div>
 </div>
+
+<!-- ── Architecture diagram ── -->
+<section id="architecture">
+  <div class="container">
+    <h2>Architecture</h2>
+    <p class="section-sub">Kiri sits between your tools and the cloud. Source code is filtered locally — only clean prompts are forwarded.</p>
+
+    <div class="arch-diagram">
+      <!-- Developer machine boundary -->
+      <div class="arch-boundary">
+        <div class="arch-boundary-label">Your machine</div>
+
+        <div class="arch-tools">
+          <div class="arch-tool">Claude Code</div>
+          <div class="arch-tool">Cursor</div>
+          <div class="arch-tool">Windsurf</div>
+          <div class="arch-tool arch-tool-more">+ any tool with a base URL</div>
+        </div>
+
+        <div class="arch-arrow-right">
+          <span class="arch-arrow-label">prompt + code</span>
+          <svg width="48" height="16" viewBox="0 0 48 16"><path d="M0 8 H40 M32 2 L46 8 L32 14" stroke="#58a6ff" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+
+        <div class="arch-proxy">
+          <div class="arch-proxy-title">Kiri Proxy <span class="arch-port">:8765</span></div>
+          <div class="arch-filters">
+            <div class="arch-filter arch-l2">L2 — symbol match</div>
+            <div class="arch-filter arch-l1">L1 — vector similarity</div>
+            <div class="arch-filter arch-l3">L3 — intent classifier</div>
+          </div>
+          <div class="arch-models">
+            <span class="arch-model-badge">all-MiniLM-L6-v2</span>
+            <span class="arch-model-badge">qwen2.5:3b</span>
+            <span class="arch-model-badge">ChromaDB</span>
+          </div>
+        </div>
+
+        <div class="arch-arrow-right">
+          <span class="arch-arrow-label arch-arrow-clean">code stripped</span>
+          <svg width="48" height="16" viewBox="0 0 48 16"><path d="M0 8 H40 M32 2 L46 8 L32 14" stroke="#3fb950" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+      </div>
+
+      <!-- Cloud boundary -->
+      <div class="arch-cloud">
+        <div class="arch-boundary-label">Cloud</div>
+        <div class="arch-tool">Anthropic API</div>
+        <div class="arch-tool">OpenAI API</div>
+      </div>
+    </div>
+
+    <p class="arch-note">All models run inside Docker on localhost. Nothing is installed on the host. The real API key lives only inside the container as a Docker secret.</p>
+  </div>
+</section>
 
 <!-- ── How it works ── -->
 <section id="how-it-works">
