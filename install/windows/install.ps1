@@ -54,7 +54,7 @@ $ErrorActionPreference = "Stop"
 $RepoRoot    = Resolve-Path "$PSScriptRoot\..\.."
 $KiriDir     = Join-Path $RepoRoot "kiri"
 $KiriData    = Join-Path $KiriDir ".kiri"
-$WrapperDir  = Join-Path $env:USERPROFILE ".kiri" "bin"
+$WrapperDir  = Join-Path $env:USERPROFILE ".kiri\bin"
 $WrapperPath = Join-Path $WrapperDir "kiri.ps1"
 
 # --------------------------------------------------------------------------- #
