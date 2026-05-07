@@ -34,7 +34,7 @@ param(
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 
-$RepoRoot    = Resolve-Path (Join-Path $PSScriptRoot ".." "..")
+$RepoRoot    = Resolve-Path "$PSScriptRoot\..\.."
 $KiriDir     = Join-Path $RepoRoot "kiri"
 $KiriData    = Join-Path $KiriDir ".kiri"
 $WrapperDir  = Join-Path $env:USERPROFILE ".kiri" "bin"
