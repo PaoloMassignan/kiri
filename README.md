@@ -1,5 +1,7 @@
 # Kiri
 
+[![CI](https://github.com/PaoloMassignan/kiri/actions/workflows/ci.yml/badge.svg)](https://github.com/PaoloMassignan/kiri/actions/workflows/ci.yml)
+
 **Use AI coding tools at full power — without sending your code to the cloud.**
 
 Kiri is an on-premises proxy that sits between your AI coding tools and the cloud. It intercepts every outgoing LLM call and strips proprietary source code before it reaches the API — your implementation stays on your hardware, always. You keep the productivity; you give up nothing.
