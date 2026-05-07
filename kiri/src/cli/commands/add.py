@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from pathlib import Path
+
 from src.cli.factory import make_secrets_store, make_symbol_store, resolve_path
 from src.config.settings import Settings
 from src.store.secrets_store import SecretsStore
@@ -28,19 +30,54 @@ def run(
         symbol_store.add_explicit([symbol])
         return f"Added @{symbol} to protected symbols"
 
+    # Explicit glob: contains wildcard or trailing path separator
+    if "*" in target or target.endswith("/") or target.endswith("\\"):
+        pattern = _normalise_glob(target, settings)
+        return _add_glob(pattern, secrets_store)
+
     path = resolve_path(target, settings)
     if not path.exists():
         raise CLIError(f"Path does not exist: {target}")
+
+    # Directory without explicit trailing slash → treat as recursive glob
     if path.is_dir():
-        files = [f.name for f in path.iterdir() if f.is_file()]
-        examples = ", ".join(files[:3]) + ("..." if len(files) > 3 else "")
-        hint = f" e.g. 'kiri add {path.name}/{files[0]}'" if files else ""
-        raise CLIError(
-            f"{target} is a directory — add individual files instead.{hint}"
-        )
+        rel = str(path.relative_to(Path(settings.workspace).resolve()))
+        pattern = rel.replace("\\", "/") + "/"
+        return _add_glob(pattern, secrets_store)
+
     secrets_store.add_path(path)
-    # Hint: indexing is handled automatically by the watcher when the gateway
-    # is running.  If the server is not running yet, use `kiri index <path>`
-    # to build the embedding index immediately.
     hint = " (run 'kiri index' to index now if server is not running)"
     return f"Added {path.name} to protected files{hint}"
+
+
+# ---------------------------------------------------------------------------
+# Helpers
+# ---------------------------------------------------------------------------
+
+def _normalise_glob(target: str, settings: Settings) -> str:
+    """Return a workspace-relative glob pattern with forward slashes."""
+    workspace = Path(settings.workspace).resolve()
+    # Strip trailing separators only when the target has no wildcard
+    # (so trailing-slash directory rules keep their slash)
+    raw = target.replace("\\", "/")
+    # If absolute, make workspace-relative
+    try:
+        abs_path = Path(raw.rstrip("/"))
+        if abs_path.is_absolute():
+            rel = str(abs_path.relative_to(workspace))
+            if raw.endswith("/"):
+                return rel.replace("\\", "/") + "/"
+            return rel.replace("\\", "/")
+    except ValueError:
+        pass
+    return raw
+
+
+def _add_glob(pattern: str, secrets_store: SecretsStore) -> str:
+    secrets_store.add_glob(pattern)
+    expanded = secrets_store.expand_glob(pattern)
+    count = len(expanded)
+    hint = " (run 'kiri index' to index now if server is not running)"
+    if count == 0:
+        return f"Added glob '{pattern}' — no files matched yet{hint}"
+    return f"Added glob '{pattern}' — {count} file(s) matched{hint}"

@@ -22,11 +22,20 @@ def run(
         symbol_store = make_symbol_store(settings)
 
     paths = secrets_store.list_paths()
+    globs = secrets_store.list_glob_rules()
     symbols = secrets_store.list_symbols()
     chunk_count = vector_store.count()
     symbol_count = len(symbol_store.all_symbols())
 
     lines: list[str] = ["=== Gateway Protection Status ==="]
+
+    lines.append(f"\nProtected directories/globs ({len(globs)}):")
+    if globs:
+        for g in globs:
+            count = len(secrets_store.expand_glob(g))
+            lines.append(f"  @glob {g}  ({count} file(s))")
+    else:
+        lines.append("  (none)")
 
     lines.append(f"\nProtected files ({len(paths)}):")
     if paths:

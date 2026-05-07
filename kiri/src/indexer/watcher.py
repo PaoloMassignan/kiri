@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import logging
 import tempfile
+import threading
+import time
 from collections.abc import Callable
 from pathlib import Path
 from typing import Any
@@ -47,7 +49,10 @@ class Watcher:
         self._summary_store = summary_store
         self._settings = settings or Settings()
         self._known_paths: set[Path] = set()
+        self._known_glob_rules: set[str] = set()
+        self._glob_expanded: dict[str, set[Path]] = {}
         self._observer: BaseObserver | None = None
+        self._glob_rescan_interval: int = 60
 
     def _store_embedded_chunks(
         self,
@@ -232,7 +237,7 @@ class Watcher:
         self._ss.remove(str(path))
 
     def initial_scan(self) -> None:
-        """Index all paths in secrets that are not yet in VectorStore.
+        """Index all paths and glob rules in secrets that are not yet in VectorStore.
 
         Already-indexed files are skipped to avoid unnecessary re-embedding.
         Missing files are logged as warnings and skipped — they do not block startup.
@@ -247,9 +252,23 @@ class Watcher:
             logger.info("initial_scan: indexing %s", path.name)
             self.index_path(path)
 
+        for pattern in self._secrets.list_glob_rules():
+            files = set(self._secrets.expand_glob(pattern))
+            for path in files:
+                if not path.exists():
+                    logger.warning("initial_scan: file not found: %s (glob '%s')", path, pattern)
+                    continue
+                if self._vs.count_prefix(path.stem) > 0:
+                    logger.debug("initial_scan: already indexed, skipping %s", path.name)
+                    continue
+                logger.info("initial_scan: indexing %s (glob '%s')", path.name, pattern)
+                self.index_path(path)
+            self._glob_expanded[pattern] = files
+
     def start(self) -> None:
         self.initial_scan()
         self._known_paths = set(self._secrets.list_paths())
+        self._known_glob_rules = set(self._secrets.list_glob_rules())
 
         secrets_path = self._secrets.secrets_path
         handler = _SecretsEventHandler(secrets_path.name, self._on_secrets_changed)
@@ -272,6 +291,8 @@ class Watcher:
         observer.start()
         self._observer = observer
 
+        self._start_glob_rescan_thread()
+
     def stop(self) -> None:
         if self._observer is not None and self._observer.is_alive():
             self._observer.stop()
@@ -288,6 +309,57 @@ class Watcher:
             self.purge_path(path)
 
         self._known_paths = new_paths
+
+        # Handle glob rule changes
+        new_glob_rules = set(self._secrets.list_glob_rules())
+        added_globs = new_glob_rules - self._known_glob_rules
+        removed_globs = self._known_glob_rules - new_glob_rules
+
+        for pattern in added_globs:
+            files = set(self._secrets.expand_glob(pattern))
+            for path in files:
+                self.index_path(path)
+            self._glob_expanded[pattern] = files
+            logger.info("watcher: glob added '%s' — %d file(s) indexed", pattern, len(files))
+
+        for pattern in removed_globs:
+            files = self._glob_expanded.pop(pattern, set())
+            for path in files:
+                if path not in new_paths:
+                    self.purge_path(path)
+            logger.info("watcher: glob removed '%s' — %d file(s) purged", pattern, len(files))
+
+        self._known_glob_rules = new_glob_rules
+
+    def _start_glob_rescan_thread(self) -> None:
+        def rescan_loop() -> None:
+            while True:
+                time.sleep(self._glob_rescan_interval)
+                try:
+                    self._rescan_globs()
+                except Exception:
+                    logger.exception("watcher: error during glob rescan")
+
+        t = threading.Thread(target=rescan_loop, daemon=True, name="kiri-glob-rescan")
+        t.start()
+
+    def _rescan_globs(self) -> None:
+        """Re-expand active glob rules; index new files and purge removed files."""
+        individual_paths = set(self._secrets.list_paths())
+        for pattern in list(self._known_glob_rules):
+            current_files = set(self._secrets.expand_glob(pattern))
+            previous_files = self._glob_expanded.get(pattern, set())
+
+            for path in current_files - previous_files:
+                logger.info("watcher: new file matched glob '%s': %s", pattern, path.name)
+                self.index_path(path)
+
+            for path in previous_files - current_files:
+                if path not in individual_paths:
+                    logger.info("watcher: file removed from glob '%s': %s", pattern, path.name)
+                    self.purge_path(path)
+
+            self._glob_expanded[pattern] = current_files
 
 
 def _is_docker() -> bool:

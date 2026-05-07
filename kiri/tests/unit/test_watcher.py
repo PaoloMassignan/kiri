@@ -46,12 +46,26 @@ class FakeSymbolStore:
 
 
 class FakeSecretsStore:
-    def __init__(self, paths: list[Path], secrets_path: Path | None = None) -> None:
+    def __init__(
+        self,
+        paths: list[Path],
+        secrets_path: Path | None = None,
+        glob_rules: list[str] | None = None,
+        glob_expanded: dict[str, list[Path]] | None = None,
+    ) -> None:
         self._paths = paths
+        self._glob_rules = glob_rules or []
+        self._glob_expanded = glob_expanded or {}
         self.secrets_path = secrets_path or Path("/fake/.kiri/secrets")
 
     def list_paths(self) -> list[Path]:
         return list(self._paths)
+
+    def list_glob_rules(self) -> list[str]:
+        return list(self._glob_rules)
+
+    def expand_glob(self, pattern: str) -> list[Path]:
+        return list(self._glob_expanded.get(pattern, []))
 
 
 class FakeEmbedder:
@@ -505,3 +519,180 @@ def test_start_uses_native_observer_outside_docker(tmp_path: Path) -> None:
 
     assert isinstance(watcher._observer, Observer)
     watcher.stop()
+
+
+# --- glob support ------------------------------------------------------------
+
+
+def make_watcher_with_globs(
+    tmp_path: Path,
+    glob_rules: list[str],
+    glob_expanded: dict[str, list[Path]],
+    chunks: list[Chunk] | None = None,
+) -> object:
+    from src.indexer.watcher import Watcher
+
+    secrets_path = tmp_path / "secrets"
+    secrets_path.write_text("", encoding="utf-8")
+    source = str(tmp_path / "engine.py")
+    default_chunks = [make_chunk("engine", 0, "def foo(): pass", source)]
+
+    return Watcher(
+        secrets_store=FakeSecretsStore(
+            paths=[],
+            secrets_path=secrets_path,
+            glob_rules=glob_rules,
+            glob_expanded=glob_expanded,
+        ),
+        vector_store=FakeVectorStore(),
+        symbol_store=FakeSymbolStore(),
+        chunker=make_chunker(chunks or default_chunks),
+        embedder=FakeEmbedder(),  # type: ignore[arg-type]
+        extractor=FakeExtractor(),  # type: ignore[arg-type]
+    )
+
+
+def test_initial_scan_indexes_files_from_glob_rules(tmp_path: Path) -> None:
+    """initial_scan must expand glob rules and index each matched file."""
+    from src.indexer.watcher import Watcher
+
+    f = tmp_path / "scorer.py"
+    f.write_text("def score(): pass", encoding="utf-8")
+    source = str(f)
+    chunks = [make_chunk("scorer", 0, "def score(): pass", source)]
+
+    secrets_path = tmp_path / "secrets"
+    secrets_path.write_text("", encoding="utf-8")
+
+    vs = FakeVectorStore()
+    ss_store = FakeSecretsStore(
+        paths=[],
+        secrets_path=secrets_path,
+        glob_rules=["src/"],
+        glob_expanded={"src/": [f]},
+    )
+
+    watcher = Watcher(
+        secrets_store=ss_store,
+        vector_store=vs,
+        symbol_store=FakeSymbolStore(),
+        chunker=make_chunker(chunks),
+        embedder=FakeEmbedder(),  # type: ignore[arg-type]
+        extractor=FakeExtractor(),  # type: ignore[arg-type]
+    )
+
+    watcher.initial_scan()
+
+    assert vs.count_prefix("scorer") == 1
+
+
+def test_initial_scan_skips_already_indexed_glob_files(tmp_path: Path) -> None:
+    """Files already in the vector store must not be re-indexed during initial_scan."""
+    from src.indexer.watcher import Watcher
+
+    f = tmp_path / "scorer.py"
+    f.write_text("def score(): pass", encoding="utf-8")
+    source = str(f)
+    chunks = [make_chunk("scorer", 0, "def score(): pass", source)]
+
+    secrets_path = tmp_path / "secrets"
+    secrets_path.write_text("", encoding="utf-8")
+
+    vs = FakeVectorStore()
+    # Pre-populate vector store so the file appears already indexed
+    vs.add("scorer__0", [1.0, 2.0], {"source_file": source, "chunk_index": "0"})
+
+    ss_store = FakeSecretsStore(
+        paths=[],
+        secrets_path=secrets_path,
+        glob_rules=["src/"],
+        glob_expanded={"src/": [f]},
+    )
+
+    watcher = Watcher(
+        secrets_store=ss_store,
+        vector_store=vs,
+        symbol_store=FakeSymbolStore(),
+        chunker=make_chunker(chunks),
+        embedder=FakeEmbedder(),  # type: ignore[arg-type]
+        extractor=FakeExtractor(),  # type: ignore[arg-type]
+    )
+
+    watcher.initial_scan()
+
+    assert vs.count_prefix("scorer") == 1  # still 1, not 2
+
+
+def test_rescan_globs_indexes_new_files(tmp_path: Path) -> None:
+    """_rescan_globs must index files that appeared after initial_scan."""
+    from src.indexer.watcher import Watcher
+
+    new_file = tmp_path / "new_scorer.py"
+    new_file.write_text("def score(): pass", encoding="utf-8")
+    source = str(new_file)
+    chunks = [make_chunk("new_scorer", 0, "def score(): pass", source)]
+
+    secrets_path = tmp_path / "secrets"
+    secrets_path.write_text("", encoding="utf-8")
+
+    vs = FakeVectorStore()
+    ss_store = FakeSecretsStore(
+        paths=[],
+        secrets_path=secrets_path,
+        glob_rules=["src/"],
+        glob_expanded={"src/": []},  # empty initially
+    )
+
+    watcher = Watcher(
+        secrets_store=ss_store,
+        vector_store=vs,
+        symbol_store=FakeSymbolStore(),
+        chunker=make_chunker(chunks),
+        embedder=FakeEmbedder(),  # type: ignore[arg-type]
+        extractor=FakeExtractor(),  # type: ignore[arg-type]
+    )
+    watcher._known_glob_rules = {"src/"}
+    watcher._glob_expanded = {"src/": set()}
+
+    # Simulate new file appearing: update the fake store's expansion
+    ss_store._glob_expanded["src/"] = [new_file]
+
+    watcher._rescan_globs()
+
+    assert vs.count_prefix("new_scorer") == 1
+
+
+def test_rescan_globs_purges_removed_files(tmp_path: Path) -> None:
+    """_rescan_globs must purge files that disappeared from the glob expansion."""
+    from src.indexer.watcher import Watcher
+
+    gone_file = tmp_path / "gone.py"
+    # Do NOT create the file — it's been deleted
+
+    secrets_path = tmp_path / "secrets"
+    secrets_path.write_text("", encoding="utf-8")
+
+    vs = FakeVectorStore()
+    sym = FakeSymbolStore()
+    ss_store = FakeSecretsStore(
+        paths=[],
+        secrets_path=secrets_path,
+        glob_rules=["src/"],
+        glob_expanded={"src/": []},  # now empty (file was removed)
+    )
+
+    watcher = Watcher(
+        secrets_store=ss_store,
+        vector_store=vs,
+        symbol_store=sym,
+        chunker=make_chunker([]),
+        embedder=FakeEmbedder(),  # type: ignore[arg-type]
+        extractor=FakeExtractor(),  # type: ignore[arg-type]
+    )
+    watcher._known_glob_rules = {"src/"}
+    watcher._glob_expanded = {"src/": {gone_file}}  # was indexed
+
+    watcher._rescan_globs()
+
+    assert "gone" in vs.deleted
+    assert str(gone_file) in sym.removed

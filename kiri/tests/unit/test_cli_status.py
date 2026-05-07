@@ -22,6 +22,12 @@ class FakeSecretsStore:
     def list_symbols(self) -> list[str]:
         return list(self._symbols)
 
+    def list_glob_rules(self) -> list[str]:
+        return []
+
+    def expand_glob(self, pattern: str) -> list[Path]:
+        return []
+
 
 class FakeVectorStore:
     def __init__(self, count: int = 0) -> None:

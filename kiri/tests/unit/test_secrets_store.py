@@ -192,6 +192,87 @@ def test_atomic_write_produces_owner_only_file(tmp_path: Path) -> None:
     assert mode & 0o077 == 0, f"secrets file is too permissive: {oct(mode)}"
 
 
+# --- glob rules ---------------------------------------------------------------
+
+
+def test_secrets_store_list_glob_rules_empty(tmp_path: Path) -> None:
+    store = make_store(tmp_path)
+    assert store.list_glob_rules() == []
+
+
+def test_secrets_store_add_glob_persists(tmp_path: Path) -> None:
+    store = make_store(tmp_path)
+    store.add_glob("src/engine/")
+    assert "src/engine/" in store.list_glob_rules()
+
+
+def test_secrets_store_add_glob_idempotent(tmp_path: Path) -> None:
+    store = make_store(tmp_path)
+    store.add_glob("src/engine/")
+    store.add_glob("src/engine/")
+    assert store.list_glob_rules().count("src/engine/") == 1
+
+
+def test_secrets_store_remove_glob(tmp_path: Path) -> None:
+    store = make_store(tmp_path)
+    store.add_glob("src/engine/")
+    store.remove_glob("src/engine/")
+    assert store.list_glob_rules() == []
+
+
+def test_secrets_store_remove_glob_noop_if_missing(tmp_path: Path) -> None:
+    store = make_store(tmp_path)
+    store.remove_glob("src/does_not_exist/")  # must not raise
+    assert store.list_glob_rules() == []
+
+
+def test_secrets_store_add_glob_does_not_appear_in_list_paths(tmp_path: Path) -> None:
+    store = make_store(tmp_path)
+    store.add_glob("src/engine/")
+    assert store.list_paths() == []
+
+
+def test_secrets_store_expand_glob_trailing_slash(tmp_path: Path) -> None:
+    store = make_store(tmp_path)
+    workspace = tmp_path / "project"
+    engine_dir = workspace / "src" / "engine"
+    engine_dir.mkdir(parents=True)
+    (engine_dir / "scorer.py").write_text("x=1", encoding="utf-8")
+    (engine_dir / "utils.py").write_text("x=2", encoding="utf-8")
+
+    results = store.expand_glob("src/engine/")
+
+    assert len(results) == 2
+    assert all(p.suffix == ".py" for p in results)
+
+
+def test_secrets_store_expand_glob_wildcard(tmp_path: Path) -> None:
+    store = make_store(tmp_path)
+    workspace = tmp_path / "project"
+    src = workspace / "src"
+    src.mkdir(parents=True)
+    (src / "a.py").write_text("x=1", encoding="utf-8")
+    (src / "b.py").write_text("x=2", encoding="utf-8")
+    (src / "c.txt").write_text("x=3", encoding="utf-8")
+
+    results = store.expand_glob("src/*.py")
+
+    assert len(results) == 2
+    assert all(p.suffix == ".py" for p in results)
+
+
+def test_secrets_store_expand_glob_no_match_returns_empty(tmp_path: Path) -> None:
+    store = make_store(tmp_path)
+    results = store.expand_glob("nonexistent/")
+    assert results == []
+
+
+def test_secrets_store_glob_not_returned_by_list_symbols(tmp_path: Path) -> None:
+    store = make_store(tmp_path)
+    store.add_glob("src/engine/")
+    assert store.list_symbols() == []
+
+
 @pytest.mark.skipif(sys.platform == "win32", reason="POSIX chmod only")
 def test_symbol_store_atomic_write_owner_only(tmp_path: Path) -> None:
     """symbols.json written via _save must not be group/other-readable."""

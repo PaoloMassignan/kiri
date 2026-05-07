@@ -332,6 +332,55 @@ class SecretsStore:
     def _non_inline_lines(self) -> list[str]:
         return self._scan_sections()[0]
 
+    # ------------------------------------------------------------------
+    # Read API — glob rules
+    # ------------------------------------------------------------------
+
+    def list_glob_rules(self) -> list[str]:
+        """All @glob entries as raw pattern strings."""
+        results: list[str] = []
+        for line in self._non_inline_lines():
+            s = line.strip()
+            if s.startswith("@glob "):
+                pattern = s.removeprefix("@glob ").strip()
+                if pattern:
+                    results.append(pattern)
+        return results
+
+    def expand_glob(self, pattern: str) -> list[Path]:
+        """Expand a workspace-relative glob pattern to absolute file Paths.
+
+        Trailing-slash patterns (e.g. ``src/engine/``) are treated as recursive
+        directory rules — equivalent to ``src/engine/**`` with all files included.
+        Standard glob syntax (``*``, ``**``, ``?``) is handled by Path.glob().
+        """
+        if pattern.endswith("/") or pattern.endswith("\\"):
+            norm = pattern.rstrip("/\\")
+            dir_path = self.workspace / norm
+            if dir_path.is_dir():
+                return sorted(p for p in dir_path.rglob("*") if p.is_file())
+            return []
+        return sorted(p for p in self.workspace.glob(pattern) if p.is_file())
+
+    # ------------------------------------------------------------------
+    # Write API — glob rules
+    # ------------------------------------------------------------------
+
+    def add_glob(self, pattern: str) -> None:
+        """Append a @glob entry (idempotent)."""
+        entry = f"@glob {pattern}"
+        lines = self._read_lines()
+        if entry not in {line.strip() for line in lines}:
+            atomic_write_lines(self.secrets_path, lines + [entry + "\n"])
+
+    def remove_glob(self, pattern: str) -> None:
+        """Remove a @glob entry (no-op if not present)."""
+        entry = f"@glob {pattern}"
+        lines = self._read_lines()
+        filtered = [line for line in lines if line.strip() != entry]
+        if len(filtered) != len(lines):
+            atomic_write_lines(self.secrets_path, filtered)
+
     def _parse_path_entries(self) -> list[str]:
         """Full-file path entries only.
 

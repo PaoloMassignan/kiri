@@ -13,12 +13,19 @@ class FakeSecretsStore:
     def __init__(self) -> None:
         self.added_paths: list[Path] = []
         self.added_symbols: list[str] = []
+        self.added_globs: list[str] = []
 
     def add_path(self, path: Path) -> None:
         self.added_paths.append(path)
 
     def add_symbol(self, symbol: str) -> None:
         self.added_symbols.append(symbol)
+
+    def add_glob(self, pattern: str) -> None:
+        self.added_globs.append(pattern)
+
+    def expand_glob(self, pattern: str) -> list[Path]:
+        return []  # no files in fake workspace
 
 
 class FakeSymbolStore:
@@ -212,27 +219,12 @@ def test_add_relative_path_nonexistent_in_both_raises(tmp_path: Path) -> None:
         run("ghost/engine.py", Settings(workspace=tmp_path), secrets_store=ss, symbol_store=sym)  # type: ignore[arg-type]
 
 
-# --- directory rejection ------------------------------------------------------
+# --- directory → glob ---------------------------------------------------------
 
 
-def test_add_directory_raises_cli_error(tmp_path: Path) -> None:
-    """Passing a directory to kiri add must raise CLIError, not silently accept it."""
-    from src.cli.commands.add import CLIError, run
-
-    src_dir = tmp_path / "PricingEngine"
-    src_dir.mkdir()
-    (src_dir / "DynamicPricer.cs").write_text("class X {}", encoding="utf-8")
-
-    ss = FakeSecretsStore()
-    sym = FakeSymbolStore()
-
-    with pytest.raises(CLIError, match="directory"):
-        run("PricingEngine", Settings(workspace=tmp_path), secrets_store=ss, symbol_store=sym)  # type: ignore[arg-type]
-
-
-def test_add_directory_does_not_write_to_store(tmp_path: Path) -> None:
-    """No path must be written to secrets when a directory is passed."""
-    from src.cli.commands.add import CLIError, run
+def test_add_directory_calls_add_glob(tmp_path: Path) -> None:
+    """Passing a directory adds it as a recursive glob, not a file path."""
+    from src.cli.commands.add import run
 
     src_dir = tmp_path / "PricingEngine"
     src_dir.mkdir()
@@ -241,22 +233,80 @@ def test_add_directory_does_not_write_to_store(tmp_path: Path) -> None:
     ss = FakeSecretsStore()
     sym = FakeSymbolStore()
 
-    with pytest.raises(CLIError):
-        run("PricingEngine", Settings(workspace=tmp_path), secrets_store=ss, symbol_store=sym)  # type: ignore[arg-type]
+    run("PricingEngine", Settings(workspace=tmp_path), secrets_store=ss, symbol_store=sym)  # type: ignore[arg-type]
 
+    assert ss.added_globs == ["PricingEngine/"]
     assert ss.added_paths == []
 
 
-def test_add_directory_error_message_contains_example_file(tmp_path: Path) -> None:
-    """The error message must suggest an example file from inside the directory."""
-    from src.cli.commands.add import CLIError, run
+def test_add_directory_message_contains_glob_pattern(tmp_path: Path) -> None:
+    from src.cli.commands.add import run
 
     src_dir = tmp_path / "PricingEngine"
     src_dir.mkdir()
-    (src_dir / "DynamicPricer.cs").write_text("class X {}", encoding="utf-8")
 
     ss = FakeSecretsStore()
     sym = FakeSymbolStore()
 
-    with pytest.raises(CLIError, match="DynamicPricer.cs"):
-        run("PricingEngine", Settings(workspace=tmp_path), secrets_store=ss, symbol_store=sym)  # type: ignore[arg-type]
+    result = run("PricingEngine", Settings(workspace=tmp_path), secrets_store=ss, symbol_store=sym)  # type: ignore[arg-type]
+
+    assert "PricingEngine/" in result
+
+
+def test_add_trailing_slash_calls_add_glob(tmp_path: Path) -> None:
+    """kiri add src/engine/ (explicit trailing slash) adds a glob directly."""
+    from src.cli.commands.add import run
+
+    src_dir = tmp_path / "src" / "engine"
+    src_dir.mkdir(parents=True)
+
+    ss = FakeSecretsStore()
+    sym = FakeSymbolStore()
+
+    run("src/engine/", Settings(workspace=tmp_path), secrets_store=ss, symbol_store=sym)  # type: ignore[arg-type]
+
+    assert ss.added_globs == ["src/engine/"]
+
+
+def test_add_glob_wildcard_calls_add_glob(tmp_path: Path) -> None:
+    """kiri add 'src/**/*.py' stores the glob pattern."""
+    from src.cli.commands.add import run
+
+    ss = FakeSecretsStore()
+    sym = FakeSymbolStore()
+
+    run("src/**/*.py", Settings(workspace=tmp_path), secrets_store=ss, symbol_store=sym)  # type: ignore[arg-type]
+
+    assert ss.added_globs == ["src/**/*.py"]
+    assert ss.added_paths == []
+
+
+def test_add_glob_message_contains_pattern(tmp_path: Path) -> None:
+    from src.cli.commands.add import run
+
+    ss = FakeSecretsStore()
+    sym = FakeSymbolStore()
+
+    result = run("src/**/*.py", Settings(workspace=tmp_path), secrets_store=ss, symbol_store=sym)  # type: ignore[arg-type]
+
+    assert "src/**/*.py" in result
+
+
+def test_add_glob_with_real_files_reports_count(tmp_path: Path) -> None:
+    """Message should report the number of currently matched files."""
+    from src.cli.commands.add import run
+    from src.store.secrets_store import SecretsStore
+
+    src = tmp_path / "src"
+    src.mkdir()
+    (src / "a.py").write_text("x=1", encoding="utf-8")
+    (src / "b.py").write_text("x=2", encoding="utf-8")
+
+    secrets_file = tmp_path / ".kiri" / "secrets"
+    secrets_file.parent.mkdir()
+    secrets_file.touch()
+    real_ss = SecretsStore(secrets_path=secrets_file, workspace=tmp_path)
+
+    result = run("src/", Settings(workspace=tmp_path), secrets_store=real_ss)  # type: ignore[arg-type]
+
+    assert "2 file(s)" in result

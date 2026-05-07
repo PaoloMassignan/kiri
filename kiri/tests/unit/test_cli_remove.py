@@ -11,12 +11,22 @@ class FakeSecretsStore:
     def __init__(self) -> None:
         self.removed_paths: list[Path] = []
         self.removed_symbols: list[str] = []
+        self.removed_globs: list[str] = []
 
     def remove_path(self, path: Path) -> None:
         self.removed_paths.append(path)
 
     def remove_symbol(self, symbol: str) -> None:
         self.removed_symbols.append(symbol)
+
+    def remove_glob(self, pattern: str) -> None:
+        self.removed_globs.append(pattern)
+
+    def expand_glob(self, pattern: str) -> list[Path]:
+        return []
+
+    def list_paths(self) -> list[Path]:
+        return []
 
 
 class FakeVectorStore:
@@ -190,6 +200,73 @@ def test_remove_vector_store_uses_stem(tmp_path: Path) -> None:
     run(str(f), Settings(workspace=tmp_path), secrets_store=ss, vector_store=vs, symbol_store=sym)  # type: ignore[arg-type]
 
     assert "risk_scorer" in vs.deleted
+
+
+# --- remove glob --------------------------------------------------------------
+
+
+def test_remove_glob_trailing_slash_calls_remove_glob(tmp_path: Path) -> None:
+    from src.cli.commands.remove import run
+
+    ss = FakeSecretsStore()
+    vs = FakeVectorStore()
+    sym = FakeSymbolStore()
+
+    run("src/engine/", Settings(workspace=tmp_path), secrets_store=ss, vector_store=vs, symbol_store=sym)  # type: ignore[arg-type]
+
+    assert ss.removed_globs == ["src/engine/"]
+    assert ss.removed_paths == []
+
+
+def test_remove_glob_wildcard_calls_remove_glob(tmp_path: Path) -> None:
+    from src.cli.commands.remove import run
+
+    ss = FakeSecretsStore()
+    vs = FakeVectorStore()
+    sym = FakeSymbolStore()
+
+    run("src/**/*.py", Settings(workspace=tmp_path), secrets_store=ss, vector_store=vs, symbol_store=sym)  # type: ignore[arg-type]
+
+    assert ss.removed_globs == ["src/**/*.py"]
+
+
+def test_remove_glob_message_contains_pattern(tmp_path: Path) -> None:
+    from src.cli.commands.remove import run
+
+    ss = FakeSecretsStore()
+    vs = FakeVectorStore()
+    sym = FakeSymbolStore()
+
+    result = run("src/engine/", Settings(workspace=tmp_path), secrets_store=ss, vector_store=vs, symbol_store=sym)  # type: ignore[arg-type]
+
+    assert "src/engine/" in result
+
+
+def test_remove_glob_purges_expanded_files(tmp_path: Path) -> None:
+    """Files matched by the glob must be purged from vector and symbol stores."""
+    from src.cli.commands.remove import run
+    from src.store.secrets_store import SecretsStore
+
+    src = tmp_path / "src"
+    src.mkdir()
+    f = src / "scorer.py"
+    f.write_text("x=1", encoding="utf-8")
+
+    secrets_file = tmp_path / ".kiri" / "secrets"
+    secrets_file.parent.mkdir()
+    secrets_file.write_text("@glob src/\n", encoding="utf-8")
+    real_ss = SecretsStore(secrets_path=secrets_file, workspace=tmp_path)
+
+    vs = FakeVectorStore()
+    sym = FakeSymbolStore()
+
+    run("src/", Settings(workspace=tmp_path), secrets_store=real_ss, vector_store=vs, symbol_store=sym)  # type: ignore[arg-type]
+
+    assert "scorer" in vs.deleted
+    assert any("scorer.py" in k for k in sym.removed)
+
+
+# --- path resolution ----------------------------------------------------------
 
 
 def test_remove_relative_path_resolved_from_workspace(tmp_path: Path) -> None:
