@@ -4,7 +4,7 @@
 
 Point your AI tool at `localhost:8765` instead of `api.anthropic.com`. Everything else stays the same.
 
-> Built for Claude with Claude. This project was developed using Claude Code by Anthropic — a deliberate choice: we used the tool we're protecting against to build the protection itself.
+> Built with Claude Code. Works with every AI coding tool. This project was developed using Claude Code — a deliberate choice: we used the tool we're protecting against to build the protection itself.
 
 ---
 

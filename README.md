@@ -9,7 +9,7 @@ Works for a single developer or an entire team:
 - **Single developer** — run the one-line installer, done in under 10 minutes.
 - **Team** — deploy Kiri as a shared Docker service; each developer gets a personal `kr-` key and connects with a single command. No changes to their existing tools.
 
-> Built with Claude for Claude. Kiri was developed using Claude Code — a deliberate choice: we used the tool we're protecting against to build the protection itself.
+> Built with Claude Code. Works with every AI coding tool. Kiri was developed using Claude Code — a deliberate choice: we used the tool we're protecting against to build the protection itself.
 
 ## Prerequisites
 
