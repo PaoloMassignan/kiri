@@ -41,17 +41,18 @@ The installer asks for your API key and which tool you use (Claude Code, Cursor,
 ### Linux
 
 ```bash
-pip install --user pipx && python3 -m pipx ensurepath
-# reopen terminal, then:
-pipx install --editable ./kiri
-
-mkdir -p .kiri
-echo "sk-ant-YOUR-KEY" > .kiri/upstream.key
-kiri key create    # → kr-AbCdEfGhIjKlMnOpQrSt12
-kiri serve
+git clone https://github.com/PaoloMassignan/kiri
+cd kiri
+./install/linux/install.sh
 ```
 
-A dedicated Linux installer is on the roadmap. For Docker deployment on Linux see [docs/guides/quickstart.md](docs/guides/quickstart.md).
+Requires Docker Engine with the Compose plugin. If Docker requires `sudo` on your system, add your user to the `docker` group first:
+
+```bash
+sudo usermod -aG docker $USER   # then log out and back in
+```
+
+Autostart is configured via a systemd user service (`~/.config/systemd/user/kiri-gateway.service`). On systems without systemd, a startup command is added to your shell profile instead.
 
 ### Joining a team gateway
 
@@ -59,6 +60,7 @@ If your admin has already deployed a shared Kiri gateway:
 
 ```bash
 ./install/macos/connect.sh    # macOS
+./install/linux/connect.sh    # Linux
 .\install\windows\connect.ps1 # Windows
 ```
 
@@ -69,6 +71,9 @@ The script asks for the gateway URL and your personal `kr-` key, then sets the r
 ```bash
 ./install/macos/uninstall.sh           # macOS — keeps .kiri/ data
 ./install/macos/uninstall.sh --purge-data
+
+./install/linux/uninstall.sh           # Linux — keeps .kiri/ data
+./install/linux/uninstall.sh --purge-data
 
 .\install\windows\uninstall.ps1        # Windows — keeps .kiri\ data
 .\install\windows\uninstall.ps1 -PurgeData
