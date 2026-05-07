@@ -514,13 +514,13 @@
         <strong style="font-size:15px">AI coding tools</strong>
         <table class="compat-table" style="margin-top:12px">
           <tbody>
-            <tr><td>Claude Code</td><td>✅</td><td>Set <code>ANTHROPIC_BASE_URL</code></td></tr>
+            <tr><td>Claude Code (API key)</td><td>✅</td><td>Set <code>ANTHROPIC_BASE_URL</code></td></tr>
+            <tr><td>Claude Code (Pro/Max)</td><td>✅</td><td>OAuth passthrough mode</td></tr>
             <tr><td>Cursor</td><td>✅</td><td>Base URL in Settings</td></tr>
             <tr><td>Windsurf</td><td>✅</td><td>Base URL in Settings</td></tr>
             <tr><td>Cline / Continue.dev</td><td>✅</td><td>Provider URL in config</td></tr>
             <tr><td>OpenCode / Codex CLI</td><td>✅</td><td>Set <code>OPENAI_BASE_URL</code></td></tr>
             <tr><td>GitHub Copilot</td><td>❌</td><td>Hardcoded endpoint</td></tr>
-            <tr><td>Claude Pro / Max</td><td>❌</td><td>OAuth tokens — roadmap</td></tr>
           </tbody>
         </table>
       </div>
@@ -554,13 +554,6 @@
         <div>
           <strong>GitHub Copilot</strong>
           <p>Copilot uses a hardcoded endpoint that cannot be redirected to a custom gateway. There is no client-side workaround.</p>
-        </div>
-      </div>
-      <div class="limit-card">
-        <span class="limit-icon">🔑</span>
-        <div>
-          <strong>Claude Pro / Max subscriptions</strong>
-          <p>These plans use OAuth session tokens instead of static API keys. A standard Anthropic API account is required. On the roadmap.</p>
         </div>
       </div>
       <div class="limit-card">

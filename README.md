@@ -97,11 +97,22 @@ Every outgoing LLM call passes through three filter levels:
 
 Point your tool at the gateway with two environment variables. The real upstream key stays inside the Docker container and is never exposed.
 
-**Claude Code**
+**Claude Code (API key)**
 ```bash
 export ANTHROPIC_BASE_URL=http://localhost:8765
 export ANTHROPIC_API_KEY=kr-your-key-here
 ```
+
+**Claude Code (Pro/Max — OAuth)**
+
+Add `oauth_passthrough: true` to `.kiri/config.yaml`, then set only the base URL:
+
+```bash
+export ANTHROPIC_BASE_URL=http://localhost:8765
+# Do not set ANTHROPIC_API_KEY — Claude Code keeps its own OAuth session
+```
+
+See [docs/guides/claude-pro-max.md](docs/guides/claude-pro-max.md) for the full walkthrough.
 
 **Cursor / Windsurf / Cline / Continue.dev** — set base URL and API key in each tool's settings panel.
 
@@ -132,13 +143,13 @@ The gateway routes `/v1/messages` → Anthropic and `/v1/chat/completions` → O
 | Tool | Status | Notes |
 |------|--------|-------|
 | Claude Code (API key) | ✅ Supported | |
+| Claude Code (Pro/Max) | ✅ Supported | OAuth passthrough — see [guide](docs/guides/claude-pro-max.md) |
 | Cursor | ✅ Supported | |
 | Windsurf | ✅ Supported | |
 | Cline | ✅ Supported | |
 | Continue.dev | ✅ Supported | |
 | OpenCode | ✅ Supported | |
 | Codex CLI | ✅ Supported | |
-| Claude Pro / Max | ❌ Not supported | OAuth session tokens — roadmap |
 | GitHub Copilot | ❌ Not supported | Hardcoded endpoint, cannot be redirected |
 | AWS Bedrock | ❌ Not supported | IAM credentials, not API keys |
 | Azure OpenAI | ⚠️ Untested | Configurable in principle, not validated |

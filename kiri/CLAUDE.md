@@ -226,6 +226,29 @@ A `BLOCK` (HTTP 403) is returned only when L3 detects explicit intent to extract
 
 ---
 
+## Claude Pro / Max (OAuth passthrough)
+
+If you use Claude Code with a Pro or Max subscription (no static API key),
+enable OAuth passthrough mode in `.kiri/config.yaml`:
+
+```yaml
+oauth_passthrough: true
+```
+
+Then set only the base URL — do not set `ANTHROPIC_API_KEY`:
+
+```bash
+export ANTHROPIC_BASE_URL=http://localhost:8765
+```
+
+Claude Code will continue using its own OAuth session. The gateway intercepts
+every request, runs the full filter pipeline, and forwards with the original token.
+
+> The dual-key bypass-prevention guarantee does not apply in this mode.
+> See `docs/guides/claude-pro-max.md` for the full walkthrough.
+
+---
+
 ## Setup
 
 **One-time: store the real Anthropic key as a Docker secret**
