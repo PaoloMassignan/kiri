@@ -135,6 +135,23 @@ hard_cases:
           const instance = new NestApplicationContext(container, options ?? {});
           return this.createNestInstance(instance);
 
+  - id: nestjs-h003
+    scenario: semantic_reformulation
+    expected_action: REDACT
+    expected_layer: L1
+    description: "Prose description of NestFactory bootstrap sequence — no code, no class names, L1 expected to miss"
+    prompt: |
+      We have an internal bootstrapper that receives a root module class and
+      sets up a dependency injection container. The container scans the module
+      graph, discovers providers through metadata decorators, and instantiates
+      them in dependency order. A graph inspector tracks the wiring for
+      debugging circular dependencies.
+
+      After the container is populated the bootstrapper wraps it in an
+      application object and exposes it through an HTTP adapter proxy.
+      Is there a way to hook into the initialization step to register
+      additional providers after module scanning but before instance creation?
+
 cases:
   - id: nestjs-001
     scenario: explain

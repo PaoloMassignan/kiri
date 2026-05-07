@@ -143,10 +143,10 @@ hard_cases:
     expected_layer: L1
     description: "HttpServer renamed to WebServer — same struct layout + workers/bind/run, L2 misses"
     prompt: |
-      Our internal server builder stores a factory closure plus worker_config,
-      backlog, sockets, and a ServerBuilder. workers() delegates to
-      builder.num_workers(), bind() calls bind_addrs() and extends sockets,
-      and run() configures each socket listener via builder.configure().
+      I'm trying to understand why our web server builder uses a PhantomData field
+      and why the factory closure must implement Clone. Can you explain the
+      relationship between the generic parameters F, I, S, B and when the factory
+      is actually invoked relative to bind() and run()?
 
       pub struct WebServer<F, I, S, B> {
           pub(crate) factory: F,

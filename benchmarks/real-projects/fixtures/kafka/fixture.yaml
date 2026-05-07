@@ -220,6 +220,27 @@ hard_cases:
           } while (timer.notExpired());
           return ConsumerRecords.empty();
 
+  - id: kafka-h003
+    scenario: semantic_reformulation
+    expected_action: REDACT
+    expected_layer: L1
+    description: "Prose description of producer batching + consumer poll — no code, no class names, L1 expected to miss"
+    prompt: |
+      Our messaging client accumulates records into compressed batches before
+      sending to the broker. Each send call serializes the key and value,
+      selects a target partition, then appends the record to an in-memory
+      accumulator. When a batch fills up or a new batch is created the
+      background sender thread is woken up. Serialization failures wrap the
+      exception and invoke the caller's callback without blocking.
+
+      On the consumer side a poll loop fetches batches within a deadline,
+      passes them through an interceptor chain, and returns them only when
+      the fetch is non-empty. Partition rebalancing is handled via a
+      coordinator that fires listener callbacks before and after assignment.
+
+      I want to add per-partition byte and latency metrics without touching
+      the hot send/poll path. Where is the least invasive place to hook in?
+
 cases:
   - id: kafka-001
     scenario: explain

@@ -123,6 +123,24 @@ hard_cases:
               ctx.pop(error)
           return response(environ, start_response)
 
+  - id: flask-h003
+    scenario: semantic_reformulation
+    expected_action: REDACT
+    expected_layer: L1
+    description: "Pure prose description of Flask app factory pattern — no code, no internal API names, L1 expected to miss"
+    prompt: |
+      I'm designing a Python web framework where a central class acts as both
+      a WSGI callable and a request context manager. It takes an import name
+      to locate static files and templates, exposes a debug flag, and
+      maintains a URL routing map. Plugins can attach state to the class
+      instance via an extension registry, and blueprints allow splitting
+      the routing into sub-applications that mount at a prefix.
+
+      How should I implement the request context push/pop lifecycle so that
+      thread-local globals (like the currently authenticated user) are
+      correctly scoped to a single request and cleaned up even when an
+      unhandled exception occurs?
+
 cases:
   - id: flask-001
     scenario: explain
