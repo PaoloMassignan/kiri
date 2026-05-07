@@ -344,18 +344,23 @@ $settings = New-ScheduledTaskSettingsSet `
 $principal = New-ScheduledTaskPrincipal `
     -UserId    $env:USERNAME `
     -LogonType Interactive `
-    -RunLevel  Highest
+    -RunLevel  Limited
 
-Register-ScheduledTask `
-    -TaskName    $TaskName `
-    -Action      $action `
-    -Trigger     $trigger `
-    -Settings    $settings `
-    -Principal   $principal `
-    -Description "Starts the Kiri gateway Docker stack at user login" `
-    -Force | Out-Null
-
-Write-Ok "Scheduled Task '$TaskName' created -- auto-starts at next login"
+try {
+    Register-ScheduledTask `
+        -TaskName    $TaskName `
+        -Action      $action `
+        -Trigger     $trigger `
+        -Settings    $settings `
+        -Principal   $principal `
+        -Description "Starts the Kiri gateway Docker stack at user login" `
+        -Force -ErrorAction Stop | Out-Null
+    Write-Ok "Scheduled Task '$TaskName' created -- auto-starts at next login"
+} catch {
+    Write-Warn "Could not create Scheduled Task: $_"
+    Write-Info "Kiri will not auto-start at login. Start it manually with:"
+    Write-Host "      docker compose --project-directory `"$KiriDir`" up -d" -ForegroundColor DarkGray
+}
 
 # -- Step 11: CLI wrapper -----------------------------------------------------
 
