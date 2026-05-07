@@ -14,11 +14,14 @@ Works for a single developer or an entire team:
 ## Prerequisites
 
 - Docker Desktop — [download](https://www.docker.com/products/docker-desktop/)
-- An Anthropic API key (`sk-ant-...`) from [console.anthropic.com](https://console.anthropic.com)
+- An API key for the provider(s) you use:
+  - Anthropic (`sk-ant-...`) from [console.anthropic.com](https://console.anthropic.com)
+  - OpenAI (`sk-...`) from [platform.openai.com](https://platform.openai.com) — only if you use GPT models via Cursor or similar tools
 
-> **Claude Code Max / subscription:** Kiri requires a standard API key (`sk-ant-...`).
-> The OAuth token used by Claude Code Max subscriptions is not yet supported.
-> Subscription support is on the roadmap.
+> **Claude Pro / Max subscriptions:** Kiri requires a standard Anthropic API key
+> (`sk-ant-...`). Claude Pro and Claude Max use OAuth-based session tokens that are
+> not yet supported — you need a paid API account at console.anthropic.com, billed
+> separately from any Claude subscription. API support for subscriptions is on the roadmap.
 
 ## Installation
 
@@ -110,8 +113,8 @@ export ANTHROPIC_BASE_URL=http://localhost:8765
 export ANTHROPIC_API_KEY=kr-your-key-here
 ```
 
-> **Requires an Anthropic API key** (`sk-ant-...`). Claude Code Max subscriptions
-> (OAuth-based auth) are not yet supported — see note in Prerequisites above.
+> **Requires an Anthropic API key** (`sk-ant-...`). Claude Pro and Max subscriptions
+> are not yet supported — see note in Prerequisites above.
 
 ### Cursor / VS Code (.env)
 
