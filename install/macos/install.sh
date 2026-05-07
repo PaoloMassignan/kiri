@@ -5,7 +5,6 @@
 #   ./install.sh
 #   ./install.sh --anthropic-key sk-ant-xxx
 #   ./install.sh --anthropic-key sk-ant-xxx --openai-key sk-xxx
-#   ./install.sh --skip-build
 #
 # No sudo required.
 # Docker Desktop must be installed: https://www.docker.com/products/docker-desktop/
@@ -25,13 +24,11 @@ PLIST_PATH="$LAUNCH_AGENTS/$PLIST_LABEL.plist"
 
 ANTHROPIC_KEY=""
 OPENAI_KEY=""
-SKIP_BUILD=false
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --anthropic-key) ANTHROPIC_KEY="$2"; shift 2 ;;
         --openai-key)    OPENAI_KEY="$2";    shift 2 ;;
-        --skip-build)    SKIP_BUILD=true;    shift   ;;
         *) printf "Unknown argument: %s\n" "$1" >&2; exit 1 ;;
     esac
 done
@@ -203,22 +200,11 @@ PYEOF
     fi
 fi
 
-# -- Step 5: Build ------------------------------------------------------------
-
-if [[ "$SKIP_BUILD" == false ]]; then
-    write_step "Building Docker image (first run: ~3-5 min)..."
-    docker compose --project-directory "$KIRI_DIR" build || \
-        fail "docker compose build failed. See output above."
-    write_ok "Image built"
-else
-    write_step "Skipping build (--skip-build)"
-    write_ok "Using existing image"
-fi
-
-# -- Step 6: Start stack ------------------------------------------------------
+# -- Step 5: Start stack ------------------------------------------------------
 
 write_step "Starting Kiri stack..."
-write_info "First run downloads the Ollama model (~2 GB) -- this can take 5-30 minutes."
+write_info "First run pulls the image from ghcr.io and downloads the Ollama model (~2 GB)."
+write_info "This can take 5-30 minutes depending on your connection."
 
 docker compose --project-directory "$KIRI_DIR" up -d || \
     fail "docker compose up -d failed. See output above."

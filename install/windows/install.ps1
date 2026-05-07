@@ -8,12 +8,12 @@
 
     What this script does:
       1. Verifies Docker Desktop is installed and running
-      2. Stores your LLM provider key(s) as Docker secrets (never in git or logs)
-      3. Builds the Docker image and starts the full stack (Kiri + Ollama)
-      4. Asks which tools you use (Claude Code, Cursor, both) and sets the
-         right environment variables in your user registry
+      2. Asks which tools you use (Claude Code, Cursor, both)
+      3. Stores your LLM provider key(s) as Docker secrets (never in git or logs)
+      4. Pulls the pre-built image from ghcr.io and starts the full stack (Kiri + Ollama)
       5. Creates a Scheduled Task so the stack restarts automatically at login
-      6. Installs a kiri.ps1 wrapper on your PATH
+      6. Sets the right environment variables in your user registry
+      7. Installs a kiri.ps1 wrapper on your PATH
 
     After installation your chosen tools route automatically through the gateway.
 
@@ -24,14 +24,10 @@
     OpenAI API key (sk-...). Only prompted when you select Cursor/OpenAI tools.
     Skip with Enter if you only use Claude models via Cursor.
 
-.PARAMETER SkipBuild
-    Skip docker compose build (image already built).
-
 .EXAMPLE
     .\install.ps1
     .\install.ps1 -AnthropicKey sk-ant-xxx
     .\install.ps1 -AnthropicKey sk-ant-xxx -OpenAIKey sk-xxx
-    .\install.ps1 -SkipBuild
 
 .NOTES
     No elevated prompt required.
@@ -40,8 +36,7 @@
 
 param(
     [string]$AnthropicKey = "",
-    [string]$OpenAIKey    = "",
-    [switch]$SkipBuild
+    [string]$OpenAIKey    = ""
 )
 
 Set-StrictMode -Version Latest
@@ -236,27 +231,11 @@ if ($configureOpenAI -and (Test-Path $OpenAIKeyFile)) {
     }
 }
 
-# -- Step 5: Build ------------------------------------------------------------
-
-if (-not $SkipBuild) {
-    Write-Step "Building Docker image (first run: ~3-5 min)..."
-    Push-Location $KiriDir
-    try {
-        docker compose build
-        if ($LASTEXITCODE -ne 0) { Fail "docker compose build failed. See output above." }
-    } finally {
-        Pop-Location
-    }
-    Write-Ok "Image built"
-} else {
-    Write-Step "Skipping build (-SkipBuild)"
-    Write-Ok "Using existing image"
-}
-
-# -- Step 6: Start stack ------------------------------------------------------
+# -- Step 5: Start stack ------------------------------------------------------
 
 Write-Step "Starting Kiri stack..."
-Write-Info "First run downloads the Ollama model (~2 GB) -- this can take 5-30 minutes."
+Write-Info "First run pulls the image from ghcr.io and downloads the Ollama model (~2 GB)."
+Write-Info "This can take 5-30 minutes depending on your connection."
 
 Push-Location $KiriDir
 try {
