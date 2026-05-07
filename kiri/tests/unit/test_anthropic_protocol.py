@@ -200,3 +200,106 @@ def test_extract_prompt_image_block_data_not_extracted() -> None:
 
     assert "describe this image" in result
     assert "abc123" not in result  # binary image data must not leak
+
+
+# --- redact_body -------------------------------------------------------------
+
+
+def _upper(text: str) -> str:
+    return text.upper()
+
+
+def test_redact_body_plain_string_content() -> None:
+    from src.proxy.protocols.anthropic import redact_body
+
+    body = {"messages": [{"role": "user", "content": "hello"}]}
+    result = redact_body(body, _upper)
+    assert result["messages"][0]["content"] == "HELLO"  # type: ignore[index]
+
+
+def test_redact_body_text_block() -> None:
+    from src.proxy.protocols.anthropic import redact_body
+
+    body = {"messages": [{"role": "user", "content": [{"type": "text", "text": "hello"}]}]}
+    result = redact_body(body, _upper)
+    assert result["messages"][0]["content"][0]["text"] == "HELLO"  # type: ignore[index]
+
+
+def test_redact_body_tool_result_nested_block() -> None:
+    """File content inside a tool_result nested text block must be redacted."""
+    from src.proxy.protocols.anthropic import redact_body
+
+    body = {
+        "messages": [
+            {
+                "role": "user",
+                "content": [
+                    {
+                        "type": "tool_result",
+                        "tool_use_id": "toolu_x",
+                        "content": [{"type": "text", "text": "secret_code"}],
+                    }
+                ],
+            }
+        ]
+    }
+    result = redact_body(body, _upper)
+    inner = result["messages"][0]["content"][0]["content"][0]  # type: ignore[index]
+    assert inner["text"] == "SECRET_CODE"
+
+
+def test_redact_body_tool_result_string_content() -> None:
+    """File content as a plain string inside tool_result must be redacted."""
+    from src.proxy.protocols.anthropic import redact_body
+
+    body = {
+        "messages": [
+            {
+                "role": "user",
+                "content": [
+                    {
+                        "type": "tool_result",
+                        "tool_use_id": "toolu_x",
+                        "content": "secret_code",
+                    }
+                ],
+            }
+        ]
+    }
+    result = redact_body(body, _upper)
+    assert result["messages"][0]["content"][0]["content"] == "SECRET_CODE"  # type: ignore[index]
+
+
+def test_redact_body_does_not_mutate_original() -> None:
+    from src.proxy.protocols.anthropic import redact_body
+
+    body = {
+        "messages": [
+            {
+                "role": "user",
+                "content": [
+                    {
+                        "type": "tool_result",
+                        "content": [{"type": "text", "text": "original"}],
+                    }
+                ],
+            }
+        ]
+    }
+    redact_body(body, _upper)
+    inner = body["messages"][0]["content"][0]["content"][0]  # type: ignore[index]
+    assert inner["text"] == "original"
+
+
+def test_redact_body_skips_assistant_messages() -> None:
+    from src.proxy.protocols.anthropic import redact_body
+
+    body = {
+        "messages": [
+            {"role": "assistant", "content": "assistant text"},
+            {"role": "user", "content": "user text"},
+        ]
+    }
+    result = redact_body(body, _upper)
+    assert result["messages"][0]["content"] == "assistant text"
+    assert result["messages"][1]["content"] == "USER TEXT"  # type: ignore[index]

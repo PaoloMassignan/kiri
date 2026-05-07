@@ -122,7 +122,10 @@ def create_app(
             if result.decision == Decision.REDACT and redaction_engine is not None:
                 redaction = redaction_engine.redact(prompt)
                 if redaction.was_redacted:
-                    body = extractor.replace_prompt(body, redaction.redacted_prompt)
+                    body = extractor.redact_body(
+                        body,
+                        lambda t: redaction_engine.redact(t).redacted_prompt,
+                    )
                     body_override = json.dumps(body).encode()
                     redacted_prompt = redaction.redacted_prompt
 

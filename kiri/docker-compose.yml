@@ -8,7 +8,7 @@ services:
       - "127.0.0.1:8765:8765"
     volumes:
       - ${WORKSPACE_HOST:-.}:/workspace:ro  # set WORKSPACE_HOST in .env to point at your project root
-      - ./.kiri:/workspace/.kiri      # gateway state (index, keys, audit log) read-write
+      - ${KIRI_STATE_HOST:-./.kiri}:/workspace/.kiri      # gateway state (index, keys, audit log) read-write
     environment:
       - WORKSPACE=/workspace
       - KIRI_CONFIG=/workspace/.kiri/config.yaml

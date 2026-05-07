@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from collections.abc import Callable
+
 
 def extract_prompt(body: dict[str, object]) -> str:
     """Concatenate all text content from the messages list.
@@ -91,3 +93,67 @@ def replace_prompt(body: dict[str, object], new_text: str) -> dict[str, object]:
         return {**body, "messages": updated_messages}
 
     return body
+
+
+def redact_body(
+    body: dict[str, object],
+    redact_fn: Callable[[str], str],
+) -> dict[str, object]:
+    """Apply *redact_fn* to every text string in every user-role message.
+
+    Unlike replace_prompt, recurses into nested content (tool_result blocks
+    included) so that file content returned by Read tools is also redacted
+    before being forwarded to the upstream LLM.
+    """
+    messages = body.get("messages")
+    if not isinstance(messages, list):
+        return body
+
+    new_messages = list(messages)
+    changed = False
+    for i, msg in enumerate(messages):
+        if not isinstance(msg, dict) or msg.get("role") != "user":
+            continue
+        new_content = _redact_content(msg.get("content"), redact_fn)
+        if new_content is not msg.get("content"):
+            new_messages[i] = {**msg, "content": new_content}
+            changed = True
+
+    return {**body, "messages": new_messages} if changed else body
+
+
+def _redact_content(
+    content: object,
+    redact_fn: Callable[[str], str],
+) -> object:
+    if isinstance(content, str):
+        redacted = redact_fn(content)
+        return redacted if redacted != content else content
+    if isinstance(content, list):
+        new_list = list(content)
+        changed = False
+        for j, block in enumerate(new_list):
+            if isinstance(block, dict):
+                new_block = _redact_block(block, redact_fn)
+                if new_block is not block:
+                    new_list[j] = new_block
+                    changed = True
+        return new_list if changed else content
+    return content
+
+
+def _redact_block(
+    block: dict[str, object],
+    redact_fn: Callable[[str], str],
+) -> dict[str, object]:
+    updates: dict[str, object] = {}
+    text = block.get("text")
+    if isinstance(text, str):
+        new_text = redact_fn(text)
+        if new_text != text:
+            updates["text"] = new_text
+    if "content" in block:
+        new_content = _redact_content(block["content"], redact_fn)
+        if new_content is not block["content"]:
+            updates["content"] = new_content
+    return {**block, **updates} if updates else block

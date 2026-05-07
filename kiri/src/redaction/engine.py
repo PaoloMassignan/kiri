@@ -45,6 +45,18 @@ def _block_re(name: str) -> re.Pattern[str]:
 
 
 @lru_cache(maxsize=256)
+def _numbered_def_re(name: str) -> re.Pattern[str]:
+    """Match a function/class def line prefixed with a line number (e.g. '1: def foo')."""
+    return re.compile(
+        rf'^(\d+):\s*(?:(?:async\s+)?def\s+{re.escape(name)}\b|class\s+{re.escape(name)}\b)',
+        re.MULTILINE,
+    )
+
+
+_NUMBERED_LINE_STRIP_RE = re.compile(r'^\d+:[ \t]?', re.MULTILINE)
+
+
+@lru_cache(maxsize=256)
 def _symbol_re(name: str) -> re.Pattern[str]:
     return re.compile(rf"\b{re.escape(name)}\b")
 
@@ -81,6 +93,14 @@ class RedactionEngine:
         spans: list[RedactedSpan] = []
 
         for symbol in matched_symbols:
+            # 0. Handle line-numbered file content (e.g. OpenCode's Read tool: "1: def foo")
+            numbered = self._try_redact_numbered_python_block(result_prompt, symbol)
+            if numbered is not None:
+                original, replacement = numbered
+                result_prompt = result_prompt.replace(original, replacement, 1)
+                spans.append(RedactedSpan(symbol=symbol, original=original, replacement=replacement))
+                continue
+
             # 1. Try Python/indentation-based matching first
             match = _block_re(symbol).search(result_prompt)
             if match:
@@ -122,6 +142,58 @@ class RedactionEngine:
             was_redacted=len(spans) > 0,
             redacted_spans=spans,
         )
+
+    # ------------------------------------------------------------------
+    # Numbered-line content (OpenCode "N: code" format)
+    # ------------------------------------------------------------------
+
+    def _try_redact_numbered_python_block(
+        self, prompt: str, symbol: str
+    ) -> tuple[str, str] | None:
+        """Handle file content where each line is prefixed with 'N: ' (e.g. OpenCode Read tool).
+
+        Finds the function/class block, strips the line-number prefixes, generates
+        the stub via _python_stub, and returns (original_text, stub).
+        Returns None if no numbered def line is found for *symbol*.
+        """
+        m = _numbered_def_re(symbol).search(prompt)
+        if m is None:
+            return None
+
+        # Walk line-by-line from the def line, collecting the full block.
+        # A block ends when we encounter a numbered line whose content is non-empty
+        # and starts with a non-whitespace character (= new top-level statement).
+        line_start = prompt.rfind('\n', 0, m.start())
+        line_start = line_start + 1 if line_start >= 0 else 0
+
+        found_def = False
+        block_end = line_start
+
+        for lm in re.finditer(r'^(\d+):[ \t]?(.*)', prompt[line_start:], re.MULTILINE):
+            content = lm.group(2)
+            abs_end = line_start + lm.end()
+            if not found_def:
+                if re.match(
+                    rf'(?:(?:async\s+)?def\s+{re.escape(symbol)}\b|class\s+{re.escape(symbol)}\b)',
+                    content,
+                ):
+                    found_def = True
+                    block_end = abs_end
+                continue
+            if not content.strip():
+                block_end = abs_end
+            elif content[0].isspace():
+                block_end = abs_end
+            else:
+                break
+
+        if not found_def:
+            return None
+
+        original = prompt[line_start:block_end]
+        stripped = _NUMBERED_LINE_STRIP_RE.sub('', original)
+        stub = self._python_stub(stripped, symbol)
+        return (original, stub)
 
     # ------------------------------------------------------------------
     # Python (indentation-based) stub
