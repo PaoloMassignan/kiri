@@ -127,7 +127,7 @@ def create_app(
                         lambda t: redaction_engine.redact(t).redacted_prompt,
                     )
                     body_override = json.dumps(body).encode()
-                    redacted_prompt = redaction.redacted_prompt
+                    redacted_prompt = extractor.extract_prompt(body)
 
             if audit_log is not None:
                 audit_log.record(result, prompt, key=audit_key, redacted_prompt=redacted_prompt)

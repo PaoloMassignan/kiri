@@ -61,6 +61,14 @@ def _symbol_re(name: str) -> re.Pattern[str]:
     return re.compile(rf"\b{re.escape(name)}\b")
 
 
+def _is_numeric(symbol: str) -> bool:
+    try:
+        float(symbol)
+        return True
+    except ValueError:
+        return False
+
+
 @dataclass
 class RedactedSpan:
     symbol: str
@@ -126,7 +134,12 @@ class RedactionEngine:
                 )
                 continue
 
-            # 3. Fallback: replace inline occurrence of the symbol name
+            # 3. Fallback: replace inline occurrence of the symbol name.
+            # Skip numeric literals — they are matched by L2 for detection but
+            # replacing "1.7" inline creates mangled prompts when no code block
+            # is present (the number is already gone if a block was redacted).
+            if _is_numeric(symbol):
+                continue
             if _symbol_re(symbol).search(result_prompt):
                 result_prompt = _symbol_re(symbol).sub(
                     f"[PROTECTED:{symbol}]", result_prompt, count=1
