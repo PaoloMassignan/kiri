@@ -438,7 +438,9 @@ class TestL3Block:
 
             # L1 mocked: grace-zone score (between 0.75 and 0.90)
             l1_mock = MagicMock()
-            l1_mock.check.return_value = L1Result(top_score=0.82, top_doc_id="scorer__0", top_source_file="scorer.py")
+            l1_mock.check.return_value = L1Result(
+                top_score=0.82, top_doc_id="scorer__0", top_source_file="scorer.py"
+            )
 
             # L2 mocked: no symbol match (so L3 is reached)
             l2_mock = MagicMock()
