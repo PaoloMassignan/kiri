@@ -5,14 +5,18 @@
 
 .DESCRIPTION
     Removes everything the installer created:
-      - Stops and removes the Docker stack
+      - Stops and removes the Docker stack (skipped if Docker is not present)
       - Deletes the Scheduled Task (KiriGateway)
-      - Removes ANTHROPIC_BASE_URL from user environment
+      - Removes Kiri environment variables (ANTHROPIC_BASE_URL, OPENAI_BASE_URL,
+        OPENAI_API_BASE) -- only when set to http://localhost:8765
       - Removes the kiri.ps1 wrapper and its directory from PATH
 
     It does NOT delete the .kiri\ data directory (keys, index, audit log)
     so you can reinstall without losing configuration.
     Use -PurgeData to remove it too.
+
+    If you connected via connect.ps1 (team gateway, no local Docker),
+    use disconnect.ps1 instead -- it only removes env vars.
 
 .PARAMETER PurgeData
     Also delete the .kiri\ directory inside the repo (keys, index, audit log).
@@ -50,7 +54,12 @@ Write-Host ""
 
 Write-Step "Stopping Docker stack..."
 
-if (Test-Path $KiriDir) {
+$hasDocker = [bool](Get-Command docker -ErrorAction SilentlyContinue)
+if (-not $hasDocker) {
+    Write-Info "Docker not found -- skipping (team install? Use disconnect.ps1 for env-only cleanup)"
+} elseif (-not (Test-Path $KiriDir)) {
+    Write-Info "Kiri directory not found -- skipping"
+} else {
     Push-Location $KiriDir
     try {
         docker compose down 2>&1 | Out-Null
@@ -62,8 +71,6 @@ if (Test-Path $KiriDir) {
     } finally {
         Pop-Location
     }
-} else {
-    Write-Info "Kiri directory not found -- skipping"
 }
 
 # -- Scheduled Task -----------------------------------------------------------
