@@ -14,6 +14,123 @@ protected_symbols:
   - text: "APIRouter"
     label: "CLASS_NAME"
 
+source_files:
+  - filename: "api.py"
+    content: |
+      class FastAPI(Starlette):
+          def __init__(self, *, debug=False, routes=None, title="FastAPI",
+                       summary=None, description="", version="0.1.0",
+                       openapi_url="/openapi.json", openapi_tags=None,
+                       servers=None, dependencies=None, default_response_class=Default(JSONResponse),
+                       redirect_slashes=True, docs_url="/docs", redoc_url="/redoc",
+                       swagger_ui_oauth2_redirect_url="/docs/oauth2-redirect",
+                       swagger_ui_init_oauth=None, middleware=None, exception_handlers=None,
+                       on_startup=None, on_shutdown=None, terms_of_service=None,
+                       contact=None, license_info=None, openapi_prefix="",
+                       root_path="", root_path_in_servers=True,
+                       responses=None, callbacks=None, generate_unique_id_function=Default(generate_unique_id)):
+              super().__init__(
+                  debug=debug,
+                  routes=routes,
+                  middleware=middleware,
+                  exception_handlers=exception_handlers,
+                  on_startup=on_startup,
+                  on_shutdown=on_shutdown,
+              )
+              self.title = title
+              self.summary = summary
+              self.description = description
+              self.version = version
+              self.openapi_url = openapi_url
+              self.openapi_tags = openapi_tags or []
+              self.root_path_in_servers = root_path_in_servers
+              self.docs_url = docs_url
+              self.redoc_url = redoc_url
+              self.state = State()
+              self.router: routing.APIRouter = routing.APIRouter(
+                  routes=routes,
+                  dependency_overrides_provider=self,
+                  on_startup=on_startup,
+                  on_shutdown=on_shutdown,
+                  default_response_class=default_response_class,
+                  dependencies=dependencies,
+                  callbacks=callbacks,
+                  generate_unique_id_function=generate_unique_id_function,
+              )
+
+          def add_api_route(self, path, endpoint, *, response_model=None, status_code=200,
+                            tags=None, dependencies=None, methods=None, **kwargs):
+              self.router.add_api_route(
+                  path, endpoint,
+                  response_model=response_model,
+                  status_code=status_code,
+                  tags=tags,
+                  dependencies=dependencies,
+                  methods=methods,
+                  **kwargs,
+              )
+
+hard_cases:
+  - id: fastapi-h001
+    scenario: renamed_class
+    expected_action: REDACT
+    expected_layer: L1
+    description: "FastAPI renamed to AppCore, Starlette to BaseApp — L2 misses, L1 should catch"
+    prompt: |
+      I'm looking at our internal API framework class and trying to understand
+      the router wiring. Why does AppCore create its own APIRouter instance
+      internally rather than accepting one from outside?
+
+      class AppCore(BaseApp):
+          def __init__(self, *, debug=False, routes=None, title="AppCore",
+                       summary=None, description="", version="0.1.0",
+                       openapi_url="/openapi.json", openapi_tags=None,
+                       dependencies=None, default_response_class=Default(JSONResponse),
+                       redirect_slashes=True, docs_url="/docs", redoc_url="/redoc",
+                       middleware=None, exception_handlers=None,
+                       on_startup=None, on_shutdown=None):
+              super().__init__(
+                  debug=debug, routes=routes, middleware=middleware,
+                  exception_handlers=exception_handlers,
+                  on_startup=on_startup, on_shutdown=on_shutdown,
+              )
+              self.title = title
+              self.description = description
+              self.version = version
+              self.openapi_url = openapi_url
+              self.openapi_tags = openapi_tags or []
+              self.docs_url = docs_url
+              self.redoc_url = redoc_url
+              self.state = State()
+              self.router = routing.APIRouter(
+                  routes=routes,
+                  dependency_overrides_provider=self,
+                  on_startup=on_startup,
+                  on_shutdown=on_shutdown,
+                  default_response_class=default_response_class,
+                  dependencies=dependencies,
+              )
+
+  - id: fastapi-h002
+    scenario: partial_snippet
+    expected_action: REDACT
+    expected_layer: L1
+    description: "add_api_route delegation pattern without class name — tests L1 on method body"
+    prompt: |
+      Why does the route registration method delegate to self.router rather
+      than handling the route directly? Is there a reason this indirection
+      exists?
+
+          self.router.add_api_route(
+              path, endpoint,
+              response_model=response_model,
+              status_code=status_code,
+              tags=tags,
+              dependencies=dependencies,
+              methods=methods,
+              **kwargs,
+          )
+
 cases:
   - id: fastapi-001
     scenario: explain

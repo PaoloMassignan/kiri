@@ -14,6 +14,115 @@ protected_symbols:
   - text: "Scaffold"
     label: "CLASS_NAME"
 
+source_files:
+  - filename: "flask.py"
+    content: |
+      class Flask(Scaffold):
+          def __init__(self, import_name, static_url_path=None, static_folder=None,
+                       template_folder="templates", instance_path=None,
+                       instance_relative_config=False, root_path=None):
+              super().__init__(
+                  import_name=import_name,
+                  static_folder=static_folder,
+                  static_url_path=static_url_path,
+                  template_folder=template_folder,
+                  root_path=root_path,
+              )
+              self.instance_path = instance_path or self._get_instance_path()
+              self.config = self.make_config(instance_relative_config)
+              self.extensions = {}
+              self._before_request_funcs = {}
+              self._after_request_funcs = {}
+              self._teardown_request_funcs = {}
+              self._error_handler_spec = {}
+
+          def make_config(self, instance_relative=False):
+              root = self.root_path if not instance_relative else self.instance_path
+              return self.config_class(root, self.default_config)
+
+          def make_response(self, rv):
+              if isinstance(rv, self.response_class):
+                  return rv
+              if isinstance(rv, tuple):
+                  rv, status, headers = rv + (None,) * (3 - len(rv))
+              else:
+                  status = headers = None
+              if isinstance(rv, (str, bytes, bytearray)):
+                  rv = self.response_class(rv, status=status)
+              if status is not None:
+                  rv.status_code = status
+              if headers:
+                  rv.headers.update(headers)
+              return rv
+
+          def wsgi_app(self, environ, start_response):
+              ctx = self.request_context(environ)
+              error = None
+              try:
+                  ctx.push()
+                  response = self.full_dispatch_request()
+              except Exception as e:
+                  error = e
+                  response = self.handle_exception(e)
+              finally:
+                  ctx.pop(error)
+              return response(environ, start_response)
+
+hard_cases:
+  - id: flask-h001
+    scenario: renamed_class
+    expected_action: REDACT
+    expected_layer: L1
+    description: "Flask renamed to WebKernel, Scaffold to PlugBase — L2 misses, L1 should catch"
+    prompt: |
+      I'm reviewing this internal web framework class and trying to understand
+      how the config and response factories are wired up. Can you explain the
+      design?
+
+      class WebKernel(PlugBase):
+          def __init__(self, import_name, static_url_path=None, static_folder=None,
+                       template_folder="templates", instance_path=None,
+                       instance_relative_config=False, root_path=None):
+              super().__init__(
+                  import_name=import_name,
+                  static_folder=static_folder,
+                  static_url_path=static_url_path,
+                  template_folder=template_folder,
+                  root_path=root_path,
+              )
+              self.instance_path = instance_path or self._get_instance_path()
+              self.config = self.make_config(instance_relative_config)
+              self.extensions = {}
+              self._before_request_funcs = {}
+              self._after_request_funcs = {}
+              self._teardown_request_funcs = {}
+              self._error_handler_spec = {}
+
+          def make_config(self, instance_relative=False):
+              root = self.root_path if not instance_relative else self.instance_path
+              return self.config_class(root, self.default_config)
+
+  - id: flask-h002
+    scenario: partial_snippet
+    expected_action: REDACT
+    expected_layer: L1
+    description: "wsgi_app body pasted without class name — tests L1 on method fragment"
+    prompt: |
+      Why does this WSGI handler use a finally block to pop the context even
+      when an exception has already been caught and converted to a response?
+
+          ctx = self.request_context(environ)
+          error = None
+          try:
+              ctx.push()
+              response = self.full_dispatch_request()
+          except Exception as e:
+              error = e
+              response = self.handle_exception(e)
+          finally:
+              ctx.pop(error)
+          return response(environ, start_response)
+
 cases:
   - id: flask-001
     scenario: explain

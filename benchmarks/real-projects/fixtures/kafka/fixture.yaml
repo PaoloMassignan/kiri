@@ -14,6 +14,212 @@ protected_symbols:
   - text: "KafkaConsumer"
     label: "CLASS_NAME"
 
+source_files:
+  - filename: "KafkaProducer.java"
+    content: |
+      public class KafkaProducer<K, V> implements Producer<K, V> {
+
+          private final RecordAccumulator accumulator;
+          private final Sender sender;
+          private final Thread ioThread;
+          private final Serializer<K> keySerializer;
+          private final Serializer<V> valueSerializer;
+          private final ProducerInterceptors<K, V> interceptors;
+          private final long maxBlockTimeMs;
+          private final int maxRequestSize;
+          private volatile boolean closed = false;
+
+          @Override
+          public Future<RecordMetadata> send(ProducerRecord<K, V> record) {
+              return send(record, null);
+          }
+
+          @Override
+          public Future<RecordMetadata> send(ProducerRecord<K, V> record, Callback callback) {
+              ProducerRecord<K, V> interceptedRecord = this.interceptors.onSend(record);
+              return doSend(interceptedRecord, callback);
+          }
+
+          private Future<RecordMetadata> doSend(ProducerRecord<K, V> record, Callback callback) {
+              TopicPartition tp = null;
+              try {
+                  throwIfProducerClosed();
+                  long nowMs = time.milliseconds();
+                  byte[] serializedKey = keySerializer.serialize(record.topic(), record.headers(), record.key());
+                  byte[] serializedValue = valueSerializer.serialize(record.topic(), record.headers(), record.value());
+                  int partition = partition(record, serializedKey, serializedValue, cluster);
+                  tp = new TopicPartition(record.topic(), partition);
+                  RecordAccumulator.RecordAppendResult result = accumulator.append(
+                          tp, nowMs, serializedKey, serializedValue, record.headers(),
+                          interceptCallback, remainingWaitMs, false, nowMs, cluster);
+                  if (result.batchIsFull || result.newBatchCreated) {
+                      this.sender.wakeup();
+                  }
+                  return result.future;
+              } catch (ApiException e) {
+                  if (callback != null) callback.onCompletion(null, e);
+                  return new FutureFailure(e);
+              }
+          }
+
+          @Override
+          public void close(Duration timeout) {
+              long timeoutMs = timeout.toMillis();
+              if (timeoutMs < 0) throw new IllegalArgumentException("Timeout must not be negative.");
+              synchronized (this) {
+                  boolean firstClose = !this.closed;
+                  this.closed = true;
+                  if (firstClose) {
+                      this.sender.initiateClose();
+                  }
+              }
+              if (timeoutMs > 0) {
+                  this.sender.forceClose();
+              }
+              try {
+                  this.ioThread.join(timeoutMs);
+              } catch (InterruptedException e) {
+                  Thread.currentThread().interrupt();
+              }
+          }
+      }
+
+  - filename: "KafkaConsumer.java"
+    content: |
+      public class KafkaConsumer<K, V> implements Consumer<K, V> {
+
+          private final ConsumerCoordinator coordinator;
+          private final Fetcher<K, V> fetcher;
+          private final ConsumerInterceptors<K, V> interceptors;
+          private final Deserializer<K> keyDeserializer;
+          private final Deserializer<V> valueDeserializer;
+          private volatile boolean closed = false;
+
+          @Override
+          public void subscribe(Collection<String> topics, ConsumerRebalanceListener listener) {
+              acquireAndEnsureOpen();
+              try {
+                  if (topics == null)
+                      throw new IllegalArgumentException("Topic collection to subscribe to cannot be null");
+                  if (topics.isEmpty()) {
+                      this.unsubscribe();
+                  } else {
+                      throwIfNoAssignorsConfigured();
+                      this.subscriptions.subscribe(new HashSet<>(topics), listener);
+                      this.metadata.setTopics(this.subscriptions.metadataTopics());
+                  }
+              } finally {
+                  release();
+              }
+          }
+
+          @Override
+          public ConsumerRecords<K, V> poll(final Duration timeout) {
+              return poll(time.timer(timeout), true);
+          }
+
+          private ConsumerRecords<K, V> poll(final Timer timer, final boolean includeMetadataInTimeout) {
+              acquireAndEnsureOpen();
+              try {
+                  this.kafkaConsumerMetrics.recordPollStart(timer.currentTimeMs());
+                  if (this.subscriptions.hasNoSubscriptionOrUserAssignment()) {
+                      throw new IllegalStateException(
+                              "Consumer is not subscribed to any topics or assigned any partitions");
+                  }
+                  do {
+                      final Fetch<K, V> fetch = pollForFetches(timer);
+                      if (!fetch.isEmpty()) {
+                          if (fetcher.sendFetches() > 0 || client.hasPendingRequests()) {
+                              client.transmitSends();
+                          }
+                          final ConsumerRecords<K, V> interceptedRecords =
+                                  this.interceptors.onConsume(new ConsumerRecords<>(fetch.records()));
+                          return interceptedRecords;
+                      }
+                  } while (timer.notExpired());
+                  return ConsumerRecords.empty();
+              } finally {
+                  release();
+                  this.kafkaConsumerMetrics.recordPollEnd(timer.currentTimeMs());
+              }
+          }
+      }
+
+hard_cases:
+  - id: kafka-h001
+    scenario: renamed_class
+    expected_action: REDACT
+    expected_layer: L1
+    description: "KafkaProducer renamed to EventProducer — same send/doSend/accumulator flow, L2 misses"
+    prompt: |
+      Our internal event producer sometimes drops callbacks silently on
+      serialization errors. Can you explain the doSend flow and tell me where
+      I should add retry logic before the accumulator.append call?
+
+      public class EventProducer<K, V> implements Producer<K, V> {
+
+          private final RecordAccumulator accumulator;
+          private final Sender sender;
+          private final Serializer<K> keySerializer;
+          private final Serializer<V> valueSerializer;
+          private final ProducerInterceptors<K, V> interceptors;
+          private volatile boolean closed = false;
+
+          @Override
+          public Future<RecordMetadata> send(ProducerRecord<K, V> record, Callback callback) {
+              ProducerRecord<K, V> interceptedRecord = this.interceptors.onSend(record);
+              return doSend(interceptedRecord, callback);
+          }
+
+          private Future<RecordMetadata> doSend(ProducerRecord<K, V> record, Callback callback) {
+              try {
+                  throwIfProducerClosed();
+                  byte[] serializedKey = keySerializer.serialize(record.topic(), record.headers(), record.key());
+                  byte[] serializedValue = valueSerializer.serialize(record.topic(), record.headers(), record.value());
+                  int partition = partition(record, serializedKey, serializedValue, cluster);
+                  TopicPartition tp = new TopicPartition(record.topic(), partition);
+                  RecordAccumulator.RecordAppendResult result = accumulator.append(
+                          tp, nowMs, serializedKey, serializedValue, record.headers(),
+                          interceptCallback, remainingWaitMs, false, nowMs, cluster);
+                  if (result.batchIsFull || result.newBatchCreated) {
+                      this.sender.wakeup();
+                  }
+                  return result.future;
+              } catch (ApiException e) {
+                  if (callback != null) callback.onCompletion(null, e);
+                  return new FutureFailure(e);
+              }
+          }
+      }
+
+  - id: kafka-h002
+    scenario: partial_snippet
+    expected_action: REDACT
+    expected_layer: L1
+    description: "KafkaConsumer.poll() body fragment — timer loop without class name"
+    prompt: |
+      I'm seeing our consumer loop spin without actually returning records even
+      though the broker has data. Can you explain when pollForFetches returns an
+      empty fetch vs a non-empty one, and why the do-while exits early?
+
+          this.kafkaConsumerMetrics.recordPollStart(timer.currentTimeMs());
+          if (this.subscriptions.hasNoSubscriptionOrUserAssignment()) {
+              throw new IllegalStateException(
+                      "Consumer is not subscribed to any topics or assigned any partitions");
+          }
+          do {
+              final Fetch<K, V> fetch = pollForFetches(timer);
+              if (!fetch.isEmpty()) {
+                  if (fetcher.sendFetches() > 0 || client.hasPendingRequests()) {
+                      client.transmitSends();
+                  }
+                  final ConsumerRecords<K, V> interceptedRecords =
+                          this.interceptors.onConsume(new ConsumerRecords<>(fetch.records()));
+                  return interceptedRecords;
+              }
+          } while (timer.notExpired());
+          return ConsumerRecords.empty();
+
 cases:
   - id: kafka-001
     scenario: explain

@@ -15,6 +15,158 @@ protected_symbols:
   - text: "WebApplicationBuilder"
     label: "CLASS_NAME"
 
+source_files:
+  - filename: "WebApplication.cs"
+    content: |
+      public sealed class WebApplication : IHost, IApplicationBuilder, IEndpointRouteBuilder, IAsyncDisposable
+      {
+          internal const string GlobalEndpointRouteBuilderKey = "__GlobalEndpointRouteBuilder";
+          internal const string EndpointRouteBuilderKey = "__EndpointRouteBuilder";
+
+          private readonly IHost _host;
+          private readonly List<EndpointDataSource> _dataSources = new();
+
+          internal WebApplication(IHost host)
+          {
+              _host = host;
+              ApplicationBuilder = new ApplicationBuilder(host.Services, ServerFeatures);
+              Logger = host.Services.GetRequiredService<ILoggerFactory>()
+                  .CreateLogger(Environment.ApplicationName ?? nameof(WebApplication));
+              Properties[GlobalEndpointRouteBuilderKey] = this;
+          }
+
+          public static WebApplicationBuilder CreateBuilder() =>
+              new WebApplicationBuilder(new WebApplicationOptions());
+
+          public static WebApplicationBuilder CreateBuilder(string[] args) =>
+              new WebApplicationBuilder(new WebApplicationOptions { Args = args });
+
+          public static WebApplication Create(string[]? args = null) =>
+              new WebApplicationBuilder(new WebApplicationOptions { Args = args }).Build();
+
+          public Task StartAsync(CancellationToken cancellationToken = default) =>
+              _host.StartAsync(cancellationToken);
+
+          public Task StopAsync(CancellationToken cancellationToken = default) =>
+              _host.StopAsync(cancellationToken);
+
+          public Task RunAsync(string? url = null)
+          {
+              Listen(url);
+              return HostingAbstractionsHostExtensions.RunAsync(this, default);
+          }
+
+          public void Run(string? url = null)
+          {
+              Listen(url);
+              HostingAbstractionsHostExtensions.Run(this);
+          }
+
+          public ValueTask DisposeAsync() => ((IAsyncDisposable)_host).DisposeAsync();
+      }
+
+  - filename: "WebApplicationBuilder.cs"
+    content: |
+      public sealed class WebApplicationBuilder
+      {
+          private readonly HostApplicationBuilder _hostApplicationBuilder;
+          private readonly ServiceDescriptor _genericWebHostServiceDescriptor;
+
+          private WebApplication? _builtApplication;
+
+          internal WebApplicationBuilder(WebApplicationOptions options, Action<IHostBuilder>? configureDefaults = null)
+          {
+              var configuration = new ConfigurationManager();
+              configuration.AddEnvironmentVariables(prefix: "ASPNETCORE_");
+              _hostApplicationBuilder = new HostApplicationBuilder(new HostApplicationBuilderSettings
+              {
+                  Args = options.Args,
+                  ApplicationName = options.ApplicationName,
+                  EnvironmentName = options.EnvironmentName,
+                  ContentRootPath = options.ContentRootPath,
+                  Configuration = configuration,
+              });
+              _genericWebHostServiceDescriptor = InitializeWebHostSettings(options);
+          }
+
+          public ConfigurationManager Configuration => _hostApplicationBuilder.Configuration;
+          public IServiceCollection Services => _hostApplicationBuilder.Services;
+          public ILoggingBuilder Logging => _hostApplicationBuilder.Logging;
+          public IWebHostEnvironment Environment { get; }
+          public IHostBuilder Host => _hostApplicationBuilder;
+
+          public WebApplication Build()
+          {
+              _hostApplicationBuilder.Services.Add(_genericWebHostServiceDescriptor);
+              var host = _hostApplicationBuilder.Build();
+              return _builtApplication = new WebApplication(host);
+          }
+      }
+
+hard_cases:
+  - id: aspnetcore-h001
+    scenario: renamed_class
+    expected_action: REDACT
+    expected_layer: L1
+    description: "WebApplication renamed to ApiGateway — same IHost wrapper + CreateBuilder/Run, L2 misses"
+    prompt: |
+      I'm looking at our internal gateway class and I don't understand why
+      CreateBuilder is a static factory on the class itself rather than a
+      separate factory type. Can you explain the relationship between
+      ApiGateway and ApiGatewayBuilder?
+
+      public sealed class ApiGateway : IHost, IApplicationBuilder, IEndpointRouteBuilder, IAsyncDisposable
+      {
+          private readonly IHost _host;
+          private readonly List<EndpointDataSource> _dataSources = new();
+
+          internal ApiGateway(IHost host)
+          {
+              _host = host;
+              ApplicationBuilder = new ApplicationBuilder(host.Services, ServerFeatures);
+              Logger = host.Services.GetRequiredService<ILoggerFactory>()
+                  .CreateLogger(Environment.ApplicationName ?? nameof(ApiGateway));
+              Properties["__GlobalEndpointRouteBuilder"] = this;
+          }
+
+          public static ApiGatewayBuilder CreateBuilder() =>
+              new ApiGatewayBuilder(new GatewayOptions());
+
+          public static ApiGatewayBuilder CreateBuilder(string[] args) =>
+              new ApiGatewayBuilder(new GatewayOptions { Args = args });
+
+          public static ApiGateway Create(string[]? args = null) =>
+              new ApiGatewayBuilder(new GatewayOptions { Args = args }).Build();
+
+          public Task StartAsync(CancellationToken cancellationToken = default) =>
+              _host.StartAsync(cancellationToken);
+
+          public Task StopAsync(CancellationToken cancellationToken = default) =>
+              _host.StopAsync(cancellationToken);
+
+          public void Run(string? url = null)
+          {
+              Listen(url);
+              HostingAbstractionsHostExtensions.Run(this);
+          }
+
+          public ValueTask DisposeAsync() => ((IAsyncDisposable)_host).DisposeAsync();
+      }
+
+  - id: aspnetcore-h002
+    scenario: partial_snippet
+    expected_action: REDACT
+    expected_layer: L1
+    description: "WebApplicationBuilder.Build() body without class name — host construction pattern"
+    prompt: |
+      Why does Build() add _genericWebHostServiceDescriptor just before calling
+      _hostApplicationBuilder.Build()? If I add the descriptor earlier in the
+      constructor, will it break anything?
+
+              _hostApplicationBuilder.Services.Add(_genericWebHostServiceDescriptor);
+              var host = _hostApplicationBuilder.Build();
+              return _builtApplication = new WebApplication(host);
+
 cases:
   - id: aspnetcore-001
     scenario: explain

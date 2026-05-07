@@ -1,41 +1,31 @@
 #!/usr/bin/env python3
 """
-Kiri — Real-Projects Benchmark Runner
+Kiri -- Real-Projects Benchmark Runner
 
 Tests the full FilterPipeline against realistic developer prompts drawn from
-10 well-known open-source projects.  For each project a fixture.yaml defines
-the protected symbols and the expected decision (REDACT / PASS) for each case.
+10 well-known open-source projects.
 
-Three attack scenarios per project:
-  explain  — developer asks Claude Code to explain a protected class
-  use      — developer asks how to use a protected class in new code
-  refactor — developer asks to refactor existing code that calls a protected class
+Two tiers of cases per project
+-------------------------------
+easy (cases)       L2 only -- symbol appears verbatim in the prompt.
+                   Uses NullEmbedder + NullVectorStore: no external calls,
+                   no Ollama required.  Expected F1 ~ 1.0.
 
-Plus one baseline:
-  pass     — realistic prompt with no protected symbols present
+hard (hard_cases)  L1 + L2 + L3 -- symbol does NOT appear verbatim.
+                   The project's source code is indexed with the real
+                   sentence-transformers embedder (all-MiniLM-L6-v2).
+                   L1 fires on semantic similarity; L3 (Ollama qwen2.5:3b)
+                   arbitrates the grace zone 0.75-0.90.
+                   Expected F1 < 1.0 -- documents genuine L1 capabilities
+                   and gaps.
 
 Usage
 -----
-  # from repo root (requires kiri venv or kiri deps installed):
   python benchmarks/real-projects/runner.py
   python benchmarks/real-projects/runner.py --project flask
   python benchmarks/real-projects/runner.py --verbose
-
-  # or from this directory:
-  python runner.py --project gin
-
-How to reproduce manually (requires a running Kiri workspace):
-  kiri add @Flask @Scaffold
-  kiri inspect --file fixtures/flask/prompts/flask-001.txt
-
-Pipeline mode
--------------
-L2 : real SymbolStore populated from fixture protected_symbols
-L1 : NullVectorStore + NullEmbedder — always scores 0.0 (no indexed files)
-L3 : real L3Filter, fails open if Ollama unavailable
-
-This mirrors the production scenario where a developer has registered
-explicit @symbols but has not yet indexed any source files.
+  python benchmarks/real-projects/runner.py --easy-only
+  python benchmarks/real-projects/runner.py --hard-only
 """
 
 import sys
@@ -52,6 +42,8 @@ except ImportError:
 BASE = Path(__file__).parent
 KIRI_ROOT = BASE.parent.parent / "kiri"
 VERBOSE = "--verbose" in sys.argv
+EASY_ONLY = "--easy-only" in sys.argv
+HARD_ONLY = "--hard-only" in sys.argv
 PROJECT_FILTER = next(
     (sys.argv[i + 1] for i, a in enumerate(sys.argv) if a == "--project"), None
 )
@@ -64,17 +56,18 @@ if not KIRI_ROOT.exists():
 
 sys.path.insert(0, str(KIRI_ROOT))
 try:
-    from src.filter.pipeline import FilterPipeline   # type: ignore
-    from src.filter.l1_similarity import L1Filter    # type: ignore
-    from src.filter.l2_symbols import L2Filter       # type: ignore
-    from src.filter.l3_classifier import L3Filter    # type: ignore
-    from src.store.symbol_store import SymbolStore   # type: ignore
-    from src.config.settings import Settings         # type: ignore
+    from src.filter.pipeline import FilterPipeline            # type: ignore
+    from src.filter.l1_similarity import L1Filter             # type: ignore
+    from src.filter.l2_symbols import L2Filter                # type: ignore
+    from src.filter.l3_classifier import L3Filter             # type: ignore
+    from src.store.symbol_store import SymbolStore            # type: ignore
+    from src.store.vector_store import QueryResult            # type: ignore
+    from src.config.settings import Settings                  # type: ignore
 except ImportError as exc:
     print(f"ERROR: cannot import from kiri/src: {exc}")
-    print("Make sure you are running inside the kiri virtual environment.")
     sys.exit(1)
 
+# ── Null stubs (easy-case mode) ───────────────────────────────────────────────
 
 class _NullEmbedder:
     _DIM = 384
@@ -87,32 +80,107 @@ class _NullEmbedder:
 
 
 class _NullVectorStore:
-    """In-memory stub — always empty, no ChromaDB files on disk."""
-
     def query(self, vector: list[float], top_k: int) -> list:  # noqa: ARG002
         return []
 
 
-# ── Pipeline ──────────────────────────────────────────────────────────────────
+# ── In-memory vector store (hard-case mode) ───────────────────────────────────
 
-def classify(symbols: list[str], prompt: str) -> str:
-    """Run prompt through FilterPipeline. Returns 'REDACT', 'PASS', or 'BLOCK'."""
+class _InMemoryVectorStore:
+    """ChromaDB EphemeralClient — no files on disk, no Windows file-lock issues."""
+
+    def __init__(self) -> None:
+        import chromadb
+        self._col = chromadb.EphemeralClient().get_or_create_collection(
+            "kiri_bench", metadata={"hnsw:space": "cosine"}
+        )
+
+    def add(self, doc_id: str, vector: list[float], metadata: dict) -> None:
+        self._col.upsert(ids=[doc_id], embeddings=[vector], metadatas=[metadata])
+
+    def query(self, vector: list[float], top_k: int) -> list[QueryResult]:
+        n = min(top_k, self._col.count())
+        if n == 0:
+            return []
+        raw = self._col.query(
+            query_embeddings=[vector],
+            n_results=n,
+            include=["distances", "metadatas"],
+        )
+        return [
+            QueryResult(
+                doc_id=did,
+                similarity=round(1.0 - dist / 2.0, 6),
+                source_file=meta["source_file"],
+                chunk_index=int(meta["chunk_index"]),
+            )
+            for did, dist, meta in zip(
+                raw["ids"][0], raw["distances"][0], raw["metadatas"][0]
+            )
+        ]
+
+
+# ── Classify helpers ──────────────────────────────────────────────────────────
+
+def _make_pipeline(symbols, l1, settings, tmp_path):
+    index_dir = tmp_path / "index"
+    index_dir.mkdir(exist_ok=True)
+    store = SymbolStore(index_dir)
+    if symbols:
+        store.add_explicit(symbols)
+    return FilterPipeline(
+        settings=settings,
+        l1=l1,
+        l2=L2Filter(store),
+        l3=L3Filter(settings),
+        secrets_store=None,
+    )
+
+
+def classify_easy(symbols: list[str], prompt: str) -> tuple[str, list[str], float, str]:
+    """L2-only: NullEmbedder + NullVectorStore."""
     with tempfile.TemporaryDirectory() as tmp:
-        index_dir = Path(tmp) / "index"
-        index_dir.mkdir()
-
-        store = SymbolStore(index_dir)
-        if symbols:
-            store.add_explicit(symbols)
-
-        settings = Settings(workspace=Path(tmp))
+        tmp_path = Path(tmp)
+        settings = Settings(workspace=tmp_path)
         l1 = L1Filter(vector_store=_NullVectorStore(), embedder=_NullEmbedder())
-        l2 = L2Filter(store)
-        l3 = L3Filter(settings)
+        pipeline = _make_pipeline(symbols, l1, settings, tmp_path)
+        r = pipeline.run(prompt)
+        return r.decision.value.upper(), r.matched_symbols, r.top_similarity, r.reason
 
-        pipeline = FilterPipeline(settings=settings, l1=l1, l2=l2, l3=l3, secrets_store=None)
-        result = pipeline.run(prompt)
-        return result.decision.value.upper(), result.matched_symbols
+
+def classify_full(
+    symbols: list[str],
+    prompt: str,
+    source_files: list[dict],
+) -> tuple[str, list[str], float, str]:
+    """Full pipeline: real Embedder (L1), SymbolStore (L2), Ollama L3."""
+    from src.indexer.chunker import chunk as do_chunk  # type: ignore
+    from src.indexer.embedder import Embedder           # type: ignore
+
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path = Path(tmp)
+        settings = Settings(workspace=tmp_path)
+        embedder = Embedder(settings=settings)
+        vs = _InMemoryVectorStore()
+
+        for sf in source_files:
+            src_path = tmp_path / sf["filename"]
+            src_path.write_text(sf["content"], encoding="utf-8")
+            chunks = do_chunk(src_path)
+            if not chunks:
+                continue
+            vectors = embedder.embed([c.text for c in chunks])
+            for i, (ch, vec) in enumerate(zip(chunks, vectors)):
+                vs.add(
+                    f"{sf['filename']}__{i}",
+                    vec,
+                    {"source_file": sf["filename"], "chunk_index": str(i)},
+                )
+
+        l1 = L1Filter(vector_store=vs, embedder=embedder)
+        pipeline = _make_pipeline(symbols, l1, settings, tmp_path)
+        r = pipeline.run(prompt)
+        return r.decision.value.upper(), r.matched_symbols, r.top_similarity, r.reason
 
 
 # ── Metrics ───────────────────────────────────────────────────────────────────
@@ -134,34 +202,30 @@ def metrics(tp: int, fp: int, fn: int, tn: int) -> dict:
                 tp=tp, fp=fp, fn=fn, tn=tn, total=total)
 
 
-# ── Project runner ────────────────────────────────────────────────────────────
-
-def run_project(fixture_dir: Path) -> dict:
-    fixture = yaml.safe_load((fixture_dir / "fixture.yaml").read_text(encoding="utf-8"))
-    project  = fixture["project"]
-    symbols  = [s["text"] for s in fixture.get("protected_symbols", [])]
-    cases    = fixture.get("cases", [])
-
-    print(f"\n{'=' * 62}")
-    print(f"  PROJECT : {project}  ({fixture.get('language', '?')})")
-    print(f"  Repo    : {fixture.get('repo', '-')}")
-    print(f"  Symbols : {symbols}")
-    print(f"{'=' * 62}")
+def _run_cases(
+    cases: list[dict],
+    symbols: list[str],
+    classify_fn,
+    label: str,
+) -> dict:
+    if not cases:
+        return {}
 
     tp = fp = fn = tn = 0
     by_scenario: dict[str, dict] = defaultdict(lambda: {"ok": 0, "total": 0})
 
     for c in cases:
-        prompt   = c["prompt"]
+        prompt = c["prompt"]
         expected = c["expected_action"].upper()
-        decision, matched = classify(symbols, prompt)
+        decision, matched, score, reason = classify_fn(symbols, prompt)
 
-        scored  = "REDACT" if decision in ("REDACT", "BLOCK") else "PASS"
+        scored = "REDACT" if decision in ("REDACT", "BLOCK") else "PASS"
         correct = scored == expected
 
-        by_scenario[c["scenario"]]["total"] += 1
+        scenario = c.get("scenario", "?")
+        by_scenario[scenario]["total"] += 1
         if correct:
-            by_scenario[c["scenario"]]["ok"] += 1
+            by_scenario[scenario]["ok"] += 1
 
         if expected == "REDACT" and scored == "REDACT":
             tp += 1
@@ -174,21 +238,59 @@ def run_project(fixture_dir: Path) -> dict:
 
         if VERBOSE or not correct:
             mark = "OK" if correct else "XX"
-            sym_info = f"  matched={matched}" if matched else ""
-            print(f"  {mark} {c['id']:18s} [{c['scenario']:8s}]  "
-                  f"expected={expected:6s}  got={scored:6s}{sym_info}")
+            score_str = f"  sim={score:.3f}" if score > 0 else ""
+            sym_str = f"  matched={matched}" if matched else ""
+            print(f"  {mark} {c['id']:20s} [{scenario:16s}]  "
+                  f"expected={expected:6s}  got={scored:6s}{score_str}{sym_str}")
+            if not correct and not VERBOSE:
+                print(f"       reason: {reason}")
 
     m = metrics(tp, fp, fn, tn)
     print(f"\n  {SEP}")
-    print(f"  Cases: {m['total']}   TP={tp}  FP={fp}  FN={fn}  TN={tn}")
+    print(f"  {label}: {m['total']} cases   "
+          f"TP={tp}  FP={fp}  FN={fn}  TN={tn}")
     print(f"  Precision={fmt(m['precision'])}  Recall={fmt(m['recall'])}  "
           f"F1={fmt(m['f1'])}  Accuracy={fmt(m['accuracy'])}")
+
     if not VERBOSE:
         print(f"  Scenarios:")
         for sc, v in sorted(by_scenario.items()):
-            pct = v["ok"] / v["total"] if v["total"] else 0
-            print(f"    {sc:10s}  {v['ok']}/{v['total']}  ({pct:.0%})")
-    return {**m, "project": project}
+            pct = v["ok"] / v["total"] if v["total"] else 0.0
+            print(f"    {sc:20s}  {v['ok']}/{v['total']}  ({pct:.0%})")
+
+    return m
+
+
+# ── Project runner ────────────────────────────────────────────────────────────
+
+def run_project(fixture_dir: Path) -> dict:
+    fixture = yaml.safe_load((fixture_dir / "fixture.yaml").read_text(encoding="utf-8"))
+    project      = fixture["project"]
+    symbols      = [s["text"] for s in fixture.get("protected_symbols", [])]
+    easy_cases   = fixture.get("cases", [])
+    hard_cases   = fixture.get("hard_cases", [])
+    source_files = fixture.get("source_files", [])
+
+    print(f"\n{'=' * 62}")
+    print(f"  PROJECT : {project}  ({fixture.get('language', '?')})")
+    print(f"  Repo    : {fixture.get('repo', '-')}")
+    print(f"  Symbols : {symbols}")
+    print(f"{'=' * 62}")
+
+    easy_m = hard_m = {}
+
+    if not HARD_ONLY and easy_cases:
+        print(f"\n  -- EASY (L2 only) --")
+        easy_m = _run_cases(easy_cases, symbols, classify_easy, "Easy cases")
+
+    if not EASY_ONLY and hard_cases and source_files:
+        print(f"\n  -- HARD (L1 + L2 + L3, Ollama active) --")
+        classify_hard = lambda sym, prompt: classify_full(sym, prompt, source_files)  # noqa: E731
+        hard_m = _run_cases(hard_cases, symbols, classify_hard, "Hard cases")
+    elif not EASY_ONLY and hard_cases and not source_files:
+        print("  [WARN] hard_cases defined but no source_files — skipping hard tier")
+
+    return {"project": project, "easy": easy_m, "hard": hard_m}
 
 
 # ── Main ──────────────────────────────────────────────────────────────────────
@@ -207,9 +309,10 @@ def main():
             print(f"ERROR: project {PROJECT_FILTER!r} not found.  Available: {available}")
             sys.exit(1)
 
+    tier = "hard only" if HARD_ONLY else ("easy only" if EASY_ONLY else "easy + hard")
     print(f"\n{'=' * 62}")
-    print(f"  Kiri -- Real-Projects Benchmark")
-    print(f"  {len(all_dirs)} project(s)   pipeline: L2->L1->L3 (null embedder)")
+    print(f"  Kiri -- Real-Projects Benchmark  [{tier}]")
+    print(f"  {len(all_dirs)} project(s)")
     print(f"{'=' * 62}")
 
     results = [run_project(d) for d in all_dirs]
@@ -218,25 +321,36 @@ def main():
         print()
         return
 
-    agg = {k: sum(r[k] for r in results) for k in ("tp", "fp", "fn", "tn")}
-    m = metrics(**agg)
-    total_cases = sum(r["total"] for r in results)
+    def _agg(tier_key: str) -> dict | None:
+        tier_results = [r[tier_key] for r in results if r[tier_key]]
+        if not tier_results:
+            return None
+        agg = {k: sum(r[k] for r in tier_results) for k in ("tp", "fp", "fn", "tn")}
+        return metrics(**agg)
 
     print(f"\n{'=' * 62}")
-    print(f"  OVERALL  ({len(results)} projects, {total_cases} cases)")
+    print(f"  OVERALL  ({len(results)} projects)")
     print(f"{'=' * 62}")
-    print(f"  Precision : {fmt(m['precision'])}")
-    print(f"  Recall    : {fmt(m['recall'])}")
-    print(f"  F1        : {fmt(m['f1'])}")
-    print(f"  Accuracy  : {fmt(m['accuracy'])}")
-    print(f"\n  Confusion matrix:")
-    print(f"                Predicted REDACT   Predicted PASS")
-    print(f"  Actual REDACT    {agg['tp']:5d} (TP)        {agg['fn']:5d} (FN)")
-    print(f"  Actual PASS      {agg['fp']:5d} (FP)        {agg['tn']:5d} (TN)")
-    print(f"\n  Per project:")
+
+    for label, key in [("Easy (L2)", "easy"), ("Hard (L1+L2+L3)", "hard")]:
+        m = _agg(key)
+        if m:
+            print(f"\n  {label}:")
+            print(f"    Precision={fmt(m['precision'])}  "
+                  f"Recall={fmt(m['recall'])}  "
+                  f"F1={fmt(m['f1'])}  "
+                  f"Accuracy={fmt(m['accuracy'])}")
+            print(f"    TP={m['tp']}  FP={m['fp']}  FN={m['fn']}  TN={m['tn']}  "
+                  f"total={m['total']}")
+
+    print(f"\n  Per-project:")
     for r in results:
-        bar = "#" * int(r["accuracy"] * 20)
-        print(f"    {r['project']:22s}  {r['accuracy']:.0%}  {bar}")
+        parts = []
+        if r["easy"]:
+            parts.append(f"easy={r['easy']['accuracy']:.0%}")
+        if r["hard"]:
+            parts.append(f"hard={r['hard']['accuracy']:.0%}")
+        print(f"    {r['project']:22s}  {', '.join(parts)}")
     print()
 
 

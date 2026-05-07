@@ -14,6 +14,127 @@ protected_symbols:
   - text: "Injectable"
     label: "DECORATOR_NAME"
 
+source_files:
+  - filename: "factory.ts"
+    content: |
+      export class NestFactory {
+        static async create<T extends INestApplication = INestApplication>(
+          module: any,
+          serverOrOptions?: AbstractHttpAdapter | NestApplicationOptions,
+          options?: NestApplicationOptions,
+        ): Promise<T> {
+          const [httpServer, appOptions] = this.isHttpServer(serverOrOptions)
+            ? [serverOrOptions, options]
+            : [new ExpressAdapter(), serverOrOptions];
+
+          const applicationConfig = new ApplicationConfig();
+          const container = new NestContainer(applicationConfig);
+          const graphInspector = new GraphInspector(container);
+          this.setAbortOnError(serverOrOptions, options);
+          this.registerLoggerConfiguration(appOptions);
+
+          await this.initialize(module, container, graphInspector, applicationConfig, httpServer);
+          const instance = new NestApplication(
+            container, httpServer, applicationConfig, graphInspector, appOptions,
+          );
+          const target = this.createNestInstance(instance);
+          return this.createAdapterProxy<T>(target, httpServer);
+        }
+
+        static async createApplicationContext(
+          module: any,
+          options?: NestApplicationContextOptions,
+        ): Promise<INestApplicationContext> {
+          const applicationConfig = new ApplicationConfig();
+          const container = new NestContainer(applicationConfig);
+          const graphInspector = new GraphInspector(container);
+          this.setAbortOnError(options);
+          this.registerLoggerConfiguration(options);
+          await this.initialize(module, container, graphInspector, applicationConfig);
+          const instance = new NestApplicationContext(container, options ?? {});
+          return this.createNestInstance(instance);
+        }
+
+        private static async initialize(
+          module: any, container: NestContainer, graphInspector: GraphInspector,
+          config = new ApplicationConfig(), httpServer: HttpServer = null,
+        ) {
+          const instanceLoader = new InstanceLoader(container, graphInspector);
+          const metadataScanner = new MetadataScanner();
+          const dependenciesScanner = new DependenciesScanner(container, metadataScanner, graphInspector, config);
+          await dependenciesScanner.scan(module);
+          await instanceLoader.createInstancesOfDependencies();
+          dependenciesScanner.applyApplicationProviders();
+        }
+      }
+
+hard_cases:
+  - id: nestjs-h001
+    scenario: renamed_class
+    expected_action: REDACT
+    expected_layer: L1
+    description: "NestFactory renamed to AppBootstrapper — same create/initialize flow"
+    prompt: |
+      I'm trying to understand how our internal bootstrapper sets up the DI
+      container before creating the application instance. Can you explain the
+      initialize step?
+
+      export class AppBootstrapper {
+        static async create<T extends INestApplication = INestApplication>(
+          module: any,
+          serverOrOptions?: AbstractHttpAdapter | NestApplicationOptions,
+          options?: NestApplicationOptions,
+        ): Promise<T> {
+          const [httpServer, appOptions] = this.isHttpServer(serverOrOptions)
+            ? [serverOrOptions, options]
+            : [new ExpressAdapter(), serverOrOptions];
+
+          const applicationConfig = new ApplicationConfig();
+          const container = new NestContainer(applicationConfig);
+          const graphInspector = new GraphInspector(container);
+          this.setAbortOnError(serverOrOptions, options);
+          this.registerLoggerConfiguration(appOptions);
+
+          await this.initialize(module, container, graphInspector, applicationConfig, httpServer);
+          const instance = new NestApplication(
+            container, httpServer, applicationConfig, graphInspector, appOptions,
+          );
+          const target = this.createNestInstance(instance);
+          return this.createAdapterProxy<T>(target, httpServer);
+        }
+
+        private static async initialize(
+          module: any, container: NestContainer, graphInspector: GraphInspector,
+          config = new ApplicationConfig(), httpServer: HttpServer = null,
+        ) {
+          const instanceLoader = new InstanceLoader(container, graphInspector);
+          const metadataScanner = new MetadataScanner();
+          const dependenciesScanner = new DependenciesScanner(container, metadataScanner, graphInspector, config);
+          await dependenciesScanner.scan(module);
+          await instanceLoader.createInstancesOfDependencies();
+          dependenciesScanner.applyApplicationProviders();
+        }
+      }
+
+  - id: nestjs-h002
+    scenario: partial_snippet
+    expected_action: REDACT
+    expected_layer: L1
+    description: "createApplicationContext body without class name — standalone context pattern"
+    prompt: |
+      When I call createApplicationContext I need the container to be fully
+      initialized before I call app.get(). Is await on initialize() sufficient
+      or do I need to wait for something else?
+
+          const applicationConfig = new ApplicationConfig();
+          const container = new NestContainer(applicationConfig);
+          const graphInspector = new GraphInspector(container);
+          this.setAbortOnError(options);
+          this.registerLoggerConfiguration(options);
+          await this.initialize(module, container, graphInspector, applicationConfig);
+          const instance = new NestApplicationContext(container, options ?? {});
+          return this.createNestInstance(instance);
+
 cases:
   - id: nestjs-001
     scenario: explain

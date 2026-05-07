@@ -14,6 +14,132 @@ protected_symbols:
   - text: "Application"
     label: "CLASS_NAME"
 
+source_files:
+  - filename: "application.js"
+    content: |
+      Application.prototype.handle = function handle(req, res, callback) {
+        const router = this._router;
+        const done = callback || finalhandler(req, res, {
+          env: this.get('env'),
+          onerror: logerror.bind(this),
+        });
+        if (!router) {
+          done();
+          return;
+        }
+        router.handle(req, res, done);
+      };
+
+      Application.prototype.use = function use(fn) {
+        let offset = 0;
+        let path = '/';
+        if (typeof fn !== 'function') {
+          let arg = fn;
+          while (Array.isArray(arg) && arg.length !== 0) {
+            arg = arg[0];
+          }
+          if (typeof arg !== 'function') {
+            offset = 1;
+            path = fn;
+          }
+        }
+        const callbacks = flatten(slice.call(arguments, offset));
+        if (callbacks.length === 0) {
+          throw new TypeError('Application.use() requires a middleware function');
+        }
+        this.lazyrouter();
+        const router = this._router;
+        callbacks.forEach(function (fn) {
+          router.use(path, function mounted_app(req, res, next) {
+            const orig = req.app;
+            fn.handle(req, res, function (err) {
+              setPrototypeOf(req, orig.request);
+              setPrototypeOf(res, orig.response);
+              next(err);
+            });
+          });
+        });
+        return this;
+      };
+
+hard_cases:
+  - id: express-h001
+    scenario: renamed_class
+    expected_action: REDACT
+    expected_layer: L1
+    description: "Application renamed to AppCore — same handle/use logic, L2 misses"
+    prompt: |
+      Can you explain why the handle method checks for this._router before
+      calling router.handle? What happens when there are no routes registered?
+
+      AppCore.prototype.handle = function handle(req, res, callback) {
+        const router = this._router;
+        const done = callback || finalhandler(req, res, {
+          env: this.get('env'),
+          onerror: logerror.bind(this),
+        });
+        if (!router) {
+          done();
+          return;
+        }
+        router.handle(req, res, done);
+      };
+
+      AppCore.prototype.use = function use(fn) {
+        let offset = 0;
+        let path = '/';
+        if (typeof fn !== 'function') {
+          let arg = fn;
+          while (Array.isArray(arg) && arg.length !== 0) {
+            arg = arg[0];
+          }
+          if (typeof arg !== 'function') {
+            offset = 1;
+            path = fn;
+          }
+        }
+        const callbacks = flatten(slice.call(arguments, offset));
+        if (callbacks.length === 0) {
+          throw new TypeError('use() requires a middleware function');
+        }
+        this.lazyrouter();
+        const router = this._router;
+        callbacks.forEach(function (fn) {
+          router.use(path, function mounted_app(req, res, next) {
+            const orig = req.app;
+            fn.handle(req, res, function (err) {
+              setPrototypeOf(req, orig.request);
+              setPrototypeOf(res, orig.response);
+              next(err);
+            });
+          });
+        });
+        return this;
+      };
+
+  - id: express-h002
+    scenario: partial_snippet
+    expected_action: REDACT
+    expected_layer: L1
+    description: "lazyrouter + mounted_app pattern without Application name"
+    prompt: |
+      I don't understand what the mounted_app wrapper inside the forEach does.
+      Why does it restore the prototype chain on req and res after calling
+      the sub-app's handle?
+
+        this.lazyrouter();
+        const router = this._router;
+        callbacks.forEach(function (fn) {
+          router.use(path, function mounted_app(req, res, next) {
+            const orig = req.app;
+            fn.handle(req, res, function (err) {
+              setPrototypeOf(req, orig.request);
+              setPrototypeOf(res, orig.response);
+              next(err);
+            });
+          });
+        });
+
 cases:
   - id: express-001
     scenario: explain

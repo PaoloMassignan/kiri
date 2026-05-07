@@ -15,6 +15,145 @@ protected_symbols:
   - text: "ApplicationContext"
     label: "CLASS_NAME"
 
+source_files:
+  - filename: "SpringApplication.java"
+    content: |
+      public class SpringApplication {
+
+          private Class<?>[] primarySources;
+          private Set<String> sources = new LinkedHashSet<>();
+          private Class<?> mainApplicationClass;
+          private Banner.Mode bannerMode = Banner.Mode.CONSOLE;
+          private boolean logStartupInfo = true;
+          private boolean addCommandLineProperties = true;
+          private boolean addConversionService = true;
+          private boolean headless = true;
+          private boolean registerShutdownHook = true;
+          private List<ApplicationContextInitializer<?>> initializers;
+          private List<ApplicationListener<?>> listeners;
+          private Map<String, Object> defaultProperties;
+          private List<BootstrapRegistryInitializer> bootstrapRegistryInitializers;
+          private Set<String> additionalProfiles = Collections.emptySet();
+          private boolean allowBeanDefinitionOverriding = false;
+          private boolean allowCircularReferences = false;
+          private WebApplicationType webApplicationType;
+
+          public SpringApplication(Class<?>... primarySources) {
+              this(null, primarySources);
+          }
+
+          public SpringApplication(ResourceLoader resourceLoader, Class<?>... primarySources) {
+              this.resourceLoader = resourceLoader;
+              Assert.notNull(primarySources, "PrimarySources must not be null");
+              this.primarySources = new LinkedHashSet<>(Arrays.asList(primarySources));
+              this.webApplicationType = WebApplicationType.deduceFromClasspath();
+              this.bootstrapRegistryInitializers = new ArrayList<>(getSpringFactoriesInstances(BootstrapRegistryInitializer.class));
+              setInitializers((Collection) getSpringFactoriesInstances(ApplicationContextInitializer.class));
+              setListeners((Collection) getSpringFactoriesInstances(ApplicationListener.class));
+              this.mainApplicationClass = deduceMainApplicationClass();
+          }
+
+          public ConfigurableApplicationContext run(String... args) {
+              Startup startup = Startup.create();
+              if (this.registerShutdownHook) {
+                  SpringApplication.shutdownHook.enableShutdownHookAddition();
+              }
+              DefaultBootstrapContext bootstrapContext = createBootstrapContext();
+              ConfigurableApplicationContext context = null;
+              configureHeadlessProperty();
+              SpringApplicationRunListeners listeners = getRunListeners(args);
+              listeners.starting(bootstrapContext, this.mainApplicationClass);
+              try {
+                  ApplicationArguments applicationArguments = new DefaultApplicationArguments(args);
+                  ConfigurableEnvironment environment = prepareEnvironment(listeners, bootstrapContext, applicationArguments);
+                  Banner printedBanner = printBanner(environment);
+                  context = createApplicationContext();
+                  context.setApplicationStartup(this.applicationStartup);
+                  prepareContext(bootstrapContext, context, environment, listeners, applicationArguments, printedBanner);
+                  refreshContext(context);
+                  afterRefresh(context, applicationArguments);
+                  startup.started();
+                  listeners.started(context, startup.timeTakenToStarted());
+                  callRunners(context, applicationArguments);
+              } catch (Throwable ex) {
+                  throw handleRunFailure(context, ex, listeners);
+              }
+              return context;
+          }
+      }
+
+hard_cases:
+  - id: spring-boot-h001
+    scenario: renamed_class
+    expected_action: REDACT
+    expected_layer: L1
+    description: "SpringApplication renamed to PlatformLauncher — same run() flow, L2 misses"
+    prompt: |
+      Can you explain the lifecycle in this launcher's run() method? I want
+      to understand the order: environment preparation, context creation,
+      context refresh, and runner callbacks.
+
+      public class PlatformLauncher {
+          private Class<?>[] primarySources;
+          private WebApplicationType webApplicationType;
+          private boolean registerShutdownHook = true;
+          private ApplicationStartup applicationStartup = ApplicationStartup.DEFAULT;
+
+          public PlatformLauncher(Class<?>... primarySources) {
+              this.primarySources = new LinkedHashSet<>(Arrays.asList(primarySources));
+              this.webApplicationType = WebApplicationType.deduceFromClasspath();
+              setInitializers((Collection) getSpringFactoriesInstances(ApplicationContextInitializer.class));
+              setListeners((Collection) getSpringFactoriesInstances(ApplicationListener.class));
+          }
+
+          public ConfigurableApplicationContext run(String... args) {
+              DefaultBootstrapContext bootstrapContext = createBootstrapContext();
+              ConfigurableApplicationContext context = null;
+              SpringApplicationRunListeners listeners = getRunListeners(args);
+              listeners.starting(bootstrapContext, this.mainApplicationClass);
+              try {
+                  ApplicationArguments applicationArguments = new DefaultApplicationArguments(args);
+                  ConfigurableEnvironment environment = prepareEnvironment(listeners, bootstrapContext, applicationArguments);
+                  context = createApplicationContext();
+                  context.setApplicationStartup(this.applicationStartup);
+                  prepareContext(bootstrapContext, context, environment, listeners, applicationArguments, null);
+                  refreshContext(context);
+                  afterRefresh(context, applicationArguments);
+                  callRunners(context, applicationArguments);
+              } catch (Throwable ex) {
+                  throw handleRunFailure(context, ex, listeners);
+              }
+              return context;
+          }
+      }
+
+  - id: spring-boot-h002
+    scenario: partial_snippet
+    expected_action: REDACT
+    expected_layer: L1
+    description: "run() method body fragment — bootstrap context and listener lifecycle"
+    prompt: |
+      Why does the run method create a DefaultBootstrapContext separately from
+      the main application context? What is its role and when is it closed?
+
+          DefaultBootstrapContext bootstrapContext = createBootstrapContext();
+          ConfigurableApplicationContext context = null;
+          configureHeadlessProperty();
+          SpringApplicationRunListeners listeners = getRunListeners(args);
+          listeners.starting(bootstrapContext, this.mainApplicationClass);
+          try {
+              ApplicationArguments applicationArguments = new DefaultApplicationArguments(args);
+              ConfigurableEnvironment environment = prepareEnvironment(listeners, bootstrapContext, applicationArguments);
+              context = createApplicationContext();
+              prepareContext(bootstrapContext, context, environment, listeners, applicationArguments, printedBanner);
+              refreshContext(context);
+              afterRefresh(context, applicationArguments);
+              callRunners(context, applicationArguments);
+          } catch (Throwable ex) {
+              throw handleRunFailure(context, ex, listeners);
+          }
+          return context;
+
 cases:
   - id: spring-boot-001
     scenario: explain

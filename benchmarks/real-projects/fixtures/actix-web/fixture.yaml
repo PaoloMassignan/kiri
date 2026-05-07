@@ -14,6 +14,221 @@ protected_symbols:
   - text: "App"
     label: "CLASS_NAME"
 
+source_files:
+  - filename: "server.rs"
+    content: |
+      pub struct HttpServer<F, I, S, B> {
+          pub(crate) factory: F,
+          worker_config: ServerWorkerConfig,
+          backlog: u32,
+          sockets: Vec<Socket>,
+          builder: ServerBuilder,
+          on_connect_fn: Option<Arc<dyn Fn(&dyn Any, &mut Extensions) + Send + Sync>>,
+          _phantom: PhantomData<(I, S, B)>,
+      }
+
+      impl<F, I, S, B> HttpServer<F, I, S, B> {
+          pub fn new(factory: F) -> Self {
+              HttpServer {
+                  factory,
+                  worker_config: ServerWorkerConfig::default(),
+                  backlog: 1024,
+                  sockets: Vec::new(),
+                  builder: ServerBuilder::default(),
+                  on_connect_fn: None,
+                  _phantom: PhantomData,
+              }
+          }
+
+          pub fn workers(mut self, num: usize) -> Self {
+              self.builder = self.builder.num_workers(num);
+              self
+          }
+
+          pub fn shutdown_timeout(mut self, sec: u64) -> Self {
+              self.builder = self.builder.shutdown_timeout(sec);
+              self
+          }
+
+          pub fn bind<A: net::ToSocketAddrs>(mut self, addrs: A) -> io::Result<Self> {
+              let sockets = bind_addrs(addrs, self.backlog)?;
+              self.sockets.extend(sockets);
+              Ok(self)
+          }
+
+          pub async fn run(self) -> io::Result<()> {
+              let sockets = self.sockets;
+              let factory = self.factory;
+              let config = self.worker_config;
+              self.builder
+                  .configure(move |sb| {
+                      for socket in &sockets {
+                          let factory = factory.clone();
+                          let config = config.clone();
+                          sb.listen(socket.clone(), move || {
+                              build_service(factory.clone(), config.clone())
+                          });
+                      }
+                  })
+                  .run()
+                  .await
+          }
+      }
+
+  - filename: "app.rs"
+    content: |
+      pub struct App<T> {
+          endpoint: T,
+          services: Vec<Box<dyn AppServiceFactory>>,
+          default: Option<Rc<HttpNewService>>,
+          factory_ref: Rc<RefCell<Option<AppRoutingFactory>>>,
+          extensions: Extensions,
+          external: Vec<ResourceDef>,
+          error_handlers: Rc<ErrorHandlers<BoxBody>>,
+      }
+
+      impl App<AppEntry> {
+          pub fn new() -> Self {
+              let fref = Rc::new(RefCell::new(None));
+              App {
+                  endpoint: AppEntry::new(fref.clone()),
+                  services: Vec::new(),
+                  default: None,
+                  factory_ref: fref,
+                  extensions: Extensions::new(),
+                  external: Vec::new(),
+                  error_handlers: Rc::new(ErrorHandlers::new()),
+              }
+          }
+      }
+
+      impl<T> App<T> {
+          pub fn app_data<U: 'static>(mut self, ext: U) -> Self {
+              self.extensions.insert(ext);
+              self
+          }
+
+          pub fn service<F>(mut self, factory: F) -> Self
+          where
+              F: HttpServiceFactory + 'static,
+          {
+              self.services.push(Box::new(factory));
+              self
+          }
+
+          pub fn wrap<M, B>(
+              self,
+              mw: M,
+          ) -> App<impl ServiceFactory<ServiceRequest, Config = (), Response = ServiceResponse<B>, Error = Error, InitError = ()>>
+          where
+              M: Transform<T::Service, ServiceRequest, Response = ServiceResponse<B>, Error = Error, InitError = ()> + 'static,
+              B: MessageBody,
+          {
+              App {
+                  endpoint: apply(mw, self.endpoint),
+                  services: self.services,
+                  default: self.default,
+                  factory_ref: self.factory_ref,
+                  extensions: self.extensions,
+                  external: self.external,
+                  error_handlers: self.error_handlers,
+              }
+          }
+      }
+
+hard_cases:
+  - id: actix-web-h001
+    scenario: renamed_class
+    expected_action: REDACT
+    expected_layer: L1
+    description: "HttpServer renamed to WebServer — same struct layout + workers/bind/run, L2 misses"
+    prompt: |
+      Our internal server builder stores a factory closure plus worker_config,
+      backlog, sockets, and a ServerBuilder. workers() delegates to
+      builder.num_workers(), bind() calls bind_addrs() and extends sockets,
+      and run() configures each socket listener via builder.configure().
+
+      pub struct WebServer<F, I, S, B> {
+          pub(crate) factory: F,
+          worker_config: ServerWorkerConfig,
+          backlog: u32,
+          sockets: Vec<Socket>,
+          builder: ServerBuilder,
+          on_connect_fn: Option<Arc<dyn Fn(&dyn Any, &mut Extensions) + Send + Sync>>,
+          _phantom: PhantomData<(I, S, B)>,
+      }
+
+      impl<F, I, S, B> WebServer<F, I, S, B> {
+          pub fn new(factory: F) -> Self {
+              WebServer {
+                  factory,
+                  worker_config: ServerWorkerConfig::default(),
+                  backlog: 1024,
+                  sockets: Vec::new(),
+                  builder: ServerBuilder::default(),
+                  on_connect_fn: None,
+                  _phantom: PhantomData,
+              }
+          }
+
+          pub fn workers(mut self, num: usize) -> Self {
+              self.builder = self.builder.num_workers(num);
+              self
+          }
+
+          pub fn bind<A: net::ToSocketAddrs>(mut self, addrs: A) -> io::Result<Self> {
+              let sockets = bind_addrs(addrs, self.backlog)?;
+              self.sockets.extend(sockets);
+              Ok(self)
+          }
+
+          pub async fn run(self) -> io::Result<()> {
+              let sockets = self.sockets;
+              let factory = self.factory;
+              let config = self.worker_config;
+              self.builder
+                  .configure(move |sb| {
+                      for socket in &sockets {
+                          let factory = factory.clone();
+                          sb.listen(socket.clone(), move || {
+                              build_service(factory.clone(), config.clone())
+                          });
+                      }
+                  })
+                  .run()
+                  .await
+          }
+      }
+
+  - id: actix-web-h002
+    scenario: partial_snippet
+    expected_action: REDACT
+    expected_layer: L1
+    description: "App::new() and service() body without struct name — per-worker factory pattern"
+    prompt: |
+      Why is factory_ref wrapped in Rc<RefCell<Option<...>>> and then shared
+      between App and AppEntry? What gets written into it during the service
+      registration phase and when is it first read?
+
+          let fref = Rc::new(RefCell::new(None));
+          App {
+              endpoint: AppEntry::new(fref.clone()),
+              services: Vec::new(),
+              default: None,
+              factory_ref: fref,
+              extensions: Extensions::new(),
+              external: Vec::new(),
+              error_handlers: Rc::new(ErrorHandlers::new()),
+          }
+
+          pub fn service<F>(mut self, factory: F) -> Self
+          where
+              F: HttpServiceFactory + 'static,
+          {
+              self.services.push(Box::new(factory));
+              self
+          }
+
 cases:
   - id: actix-web-001
     scenario: explain
