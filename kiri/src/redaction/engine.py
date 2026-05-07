@@ -106,7 +106,9 @@ class RedactionEngine:
             if numbered is not None:
                 original, replacement = numbered
                 result_prompt = result_prompt.replace(original, replacement, 1)
-                spans.append(RedactedSpan(symbol=symbol, original=original, replacement=replacement))
+                spans.append(
+                    RedactedSpan(symbol=symbol, original=original, replacement=replacement)
+                )
                 continue
 
             # 1. Try Python/indentation-based matching first
