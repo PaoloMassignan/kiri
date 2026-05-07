@@ -75,7 +75,7 @@ hard_cases:
     scenario: renamed_class
     expected_action: REDACT
     expected_layer: L1
-    description: "FastAPI renamed to AppCore, Starlette to BaseApp — L2 misses, L1 should catch"
+    description: "FastAPI renamed to AppCore — but routing.APIRouter still present in body; L2 catches via symbol leak through internal API call, not L1"
     prompt: |
       I'm looking at our internal API framework class and trying to understand
       the router wiring. Why does AppCore create its own APIRouter instance

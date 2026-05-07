@@ -109,7 +109,7 @@ hard_cases:
     scenario: renamed_class
     expected_action: REDACT
     expected_layer: L1
-    description: "Engine renamed to HttpRouter — same struct layout + New() + ServeHTTP, L2 misses"
+    description: "Engine renamed to HttpRouter — but RouterGroup still present as embedded struct field; L2 catches via symbol leak, not L1"
     prompt: |
       I'm trying to understand how our router's context pool works. Why does
       ServeHTTP use a sync.Pool and what happens if allocateContext returns an

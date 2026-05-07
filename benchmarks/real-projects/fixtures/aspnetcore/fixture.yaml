@@ -157,7 +157,7 @@ hard_cases:
     scenario: partial_snippet
     expected_action: REDACT
     expected_layer: L1
-    description: "WebApplicationBuilder.Build() body without class name — host construction pattern"
+    description: "WebApplicationBuilder.Build() partial snippet — new WebApplication(host) present in body; L2 catches via symbol leak in method fragment, not L1"
     prompt: |
       Why does Build() add _genericWebHostServiceDescriptor just before calling
       _hostApplicationBuilder.Build()? If I add the descriptor earlier in the
