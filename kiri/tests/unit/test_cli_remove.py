@@ -212,7 +212,9 @@ def test_remove_glob_trailing_slash_calls_remove_glob(tmp_path: Path) -> None:
     vs = FakeVectorStore()
     sym = FakeSymbolStore()
 
-    run("src/engine/", Settings(workspace=tmp_path), secrets_store=ss, vector_store=vs, symbol_store=sym)  # type: ignore[arg-type]
+    run(  # type: ignore[arg-type]
+        "src/engine/", Settings(workspace=tmp_path), secrets_store=ss, vector_store=vs, symbol_store=sym
+    )
 
     assert ss.removed_globs == ["src/engine/"]
     assert ss.removed_paths == []
@@ -225,7 +227,9 @@ def test_remove_glob_wildcard_calls_remove_glob(tmp_path: Path) -> None:
     vs = FakeVectorStore()
     sym = FakeSymbolStore()
 
-    run("src/**/*.py", Settings(workspace=tmp_path), secrets_store=ss, vector_store=vs, symbol_store=sym)  # type: ignore[arg-type]
+    run(  # type: ignore[arg-type]
+        "src/**/*.py", Settings(workspace=tmp_path), secrets_store=ss, vector_store=vs, symbol_store=sym
+    )
 
     assert ss.removed_globs == ["src/**/*.py"]
 
@@ -237,7 +241,9 @@ def test_remove_glob_message_contains_pattern(tmp_path: Path) -> None:
     vs = FakeVectorStore()
     sym = FakeSymbolStore()
 
-    result = run("src/engine/", Settings(workspace=tmp_path), secrets_store=ss, vector_store=vs, symbol_store=sym)  # type: ignore[arg-type]
+    result = run(  # type: ignore[arg-type]
+        "src/engine/", Settings(workspace=tmp_path), secrets_store=ss, vector_store=vs, symbol_store=sym
+    )
 
     assert "src/engine/" in result
 
@@ -260,7 +266,9 @@ def test_remove_glob_purges_expanded_files(tmp_path: Path) -> None:
     vs = FakeVectorStore()
     sym = FakeSymbolStore()
 
-    run("src/", Settings(workspace=tmp_path), secrets_store=real_ss, vector_store=vs, symbol_store=sym)  # type: ignore[arg-type]
+    run(  # type: ignore[arg-type]
+        "src/", Settings(workspace=tmp_path), secrets_store=real_ss, vector_store=vs, symbol_store=sym
+    )
 
     assert "scorer" in vs.deleted
     assert any("scorer.py" in k for k in sym.removed)

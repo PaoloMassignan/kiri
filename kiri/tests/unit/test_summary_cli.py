@@ -8,10 +8,8 @@ Components under test:
 """
 from __future__ import annotations
 
-from pathlib import Path
 from unittest.mock import MagicMock, patch
 
-import pytest
 from typer.testing import CliRunner
 
 from src.cli.app import app
@@ -85,7 +83,9 @@ class TestSummaryStoreMetadata:
     def test_find_by_symbol_returns_entry_matching_text(self, tmp_path):
         from src.store.summary_store import SummaryStore
         store = SummaryStore(tmp_path)
-        store.save("scorer__0", "# [PROTECTED] _weighted_sum\n# Purpose: x", symbol_name="_weighted_sum")
+        store.save(
+            "scorer__0", "# [PROTECTED] _weighted_sum\n# Purpose: x", symbol_name="_weighted_sum"
+        )
         result = store.find_by_symbol("_weighted_sum")
         assert result is not None
         chunk_id, entry = result
@@ -144,7 +144,9 @@ class TestRedactionEngineManualPriority:
                 return None
             from src.store.summary_store import SummaryEntry
             source = "manual" if chunk_id.startswith("manual__") else "ollama"
-            return SummaryEntry(text=text, source=source, updated_at="", chunk_text="", symbol_name="fn")
+            return SummaryEntry(
+                text=text, source=source, updated_at="", chunk_text="", symbol_name="fn"
+            )
 
         summary_store.get.side_effect = get_side_effect
         summary_store.all_chunk_ids.side_effect = all_chunk_ids_side_effect
@@ -283,7 +285,9 @@ class TestSummarySetCommand:
             from src.store.summary_store import SummaryStore
             store = SummaryStore(tmp_path / "index")
             mock_load.return_value = store
-            result = runner.invoke(app, ["summary", "set", "fn", "Uses discount rate 0.0325 and tier 2.47."])
+            result = runner.invoke(
+                app, ["summary", "set", "fn", "Uses discount rate 0.0325 and tier 2.47."]
+            )
         assert result.exit_code == 0
         assert "Warning" in result.output or "warning" in result.output.lower()
 
@@ -362,8 +366,12 @@ class TestSummaryResetCommand:
         ):
             from src.store.summary_store import SummaryStore
             store = SummaryStore(tmp_path / "index")
-            store.save("scorer__0", "# [PROTECTED] fn_a", chunk_text="def fn_a(): ...", symbol_name="fn_a")
-            store.save("scorer__1", "# [PROTECTED] fn_b", chunk_text="def fn_b(): ...", symbol_name="fn_b")
+            store.save(
+                "scorer__0", "# [PROTECTED] fn_a", chunk_text="def fn_a(): ...", symbol_name="fn_a"
+            )
+            store.save(
+                "scorer__1", "# [PROTECTED] fn_b", chunk_text="def fn_b(): ...", symbol_name="fn_b"
+            )
             mock_load.return_value = store
 
             mock_gen = MagicMock()
