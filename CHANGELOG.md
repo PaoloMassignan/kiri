@@ -7,6 +7,22 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [0.2.0] — 2026-05-07
+
+### Added
+- Directory and glob pattern protection: `kiri add src/engine/`, `kiri add "src/**/*.py"` — stored as `@glob` rules with automatic 60 s rescan for new files (US-14)
+- OAuth passthrough mode for Claude Code Pro/Max: set `oauth_passthrough: true` in `.kiri/config.yaml`; the gateway accepts OAuth session tokens, runs the full filter pipeline, and forwards with the original token unchanged (US-16, REQ-S-010)
+- Linux installer (`install/linux/`) with systemd user service and loginctl linger support
+- All installers (macOS, Linux, Windows) now prompt for auth mode: API key or Claude Pro/Max OAuth
+- How-to guide for Claude Code Pro/Max: `docs/guides/claude-pro-max.md`
+- 65 new unit tests; 593 passing total
+
+### Changed
+- `kiri status` now shows protected directories/globs with file count before individual file paths
+- `kiri rm <dir>/` removes the `@glob` rule and purges associated vectors (no double-purge for individually-listed files)
+
+---
+
 ## [0.1.0] — 2026-04-27
 
 ### Added

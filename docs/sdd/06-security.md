@@ -78,8 +78,23 @@ The container cannot modify the project's source code.
 ### 9. Audit trail with key attribution (REQ-S-004)
 
 Every audit log entry includes `key_id` (first 12 characters of the `kr-` key).
+In OAuth passthrough mode, `key_id` is set to `"oauth-passthrough"` instead.
 Allows correlating an event to a specific developer and revoking the key in case
 of an incident.
+
+### 10. OAuth passthrough mode (REQ-S-010)
+
+When `oauth_passthrough: true` is set in `config.yaml`, the gateway accepts
+Anthropic OAuth tokens (`sk-ant-` prefix) directly, runs the full filter pipeline,
+and forwards the request with the original token unchanged.
+
+**Tradeoff:** the dual-key bypass-prevention guarantee does not apply. A developer
+who knows the gateway URL can call Anthropic directly by unsetting `ANTHROPIC_BASE_URL`.
+The filter pipeline protects against accidental exfiltration but not against deliberate bypass.
+
+**Default:** `oauth_passthrough: false` — OAuth tokens are rejected with HTTP 401.
+
+See [REQ-S-010](../requirements/security.md) and [US-16](../user-stories/US-16-oauth-support.md).
 
 ---
 

@@ -21,7 +21,7 @@ AI-Layer/   ← Kiri repository
 │   ├── adr/           ← Architecture Decision Records (why, not what)
 │   ├── sdd/           ← Software Design Document (01-overview through 06-security)
 │   ├── diagrams/      ← sequence and integration diagrams
-│   ├── user-stories/  ← US-01 through US-14
+│   ├── user-stories/  ← US-01 through US-16
 │   └── guides/        ← coding rules, technology stack, project structure
 │
 └── benchmarks/        ← evaluation datasets and runners

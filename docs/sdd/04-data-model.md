@@ -50,6 +50,7 @@ ollama_base_url: http://localhost:11434
 ollama_model: qwen2.5:3b
 embedding_model: all-MiniLM-L6-v2
 openai_upstream_url: https://api.openai.com
+oauth_passthrough: false   # set to true for Claude Pro/Max (OAuth) users — see REQ-S-010
 ```
 
 **Loading:** `Settings` in `src/config/settings.py` (Pydantic v2).
