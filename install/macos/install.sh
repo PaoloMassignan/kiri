@@ -142,21 +142,48 @@ write_step "Storing upstream API key(s)..."
 mkdir -p "$KIRI_DATA"
 
 ANTHROPIC_KEY_FILE="$KIRI_DATA/upstream.key"
+claude_auth_mode="api_key"   # api_key | oauth
+
 if [[ -f "$ANTHROPIC_KEY_FILE" ]]; then
     write_ok "Anthropic key already stored -- skipping (delete $ANTHROPIC_KEY_FILE to replace)"
 elif [[ "$configure_claude" == true || "$tool_choice" == "4" ]]; then
+    # Ask auth mode only when no key was passed on the command line
     if [[ -z "$ANTHROPIC_KEY" ]]; then
         printf "\n"
-        printf "      ${YELLOW}Your key is stored only inside the Docker container as a secret.${NC}\n"
-        printf "      ${YELLOW}It never appears in logs, env dumps, or docker inspect output.${NC}\n\n"
-        read -rp "      Anthropic API key (sk-ant-...): " ANTHROPIC_KEY
+        printf "  ${WHITE}How does Claude Code authenticate?${NC}\n\n"
+        printf "  ${WHITE}[1] API key (sk-ant-...)      ${GRAY}recommended — full bypass-prevention${NC}\n"
+        printf "  ${WHITE}[2] Claude Pro / Max (OAuth)  ${GRAY}no API key needed, filter pipeline still active${NC}\n\n"
+        read -rp "  Choice [1-2, default: 1]: " auth_choice
+        [[ -z "$auth_choice" || ! "$auth_choice" =~ ^[1-2]$ ]] && auth_choice="1"
+        [[ "$auth_choice" == "2" ]] && claude_auth_mode="oauth"
         printf "\n"
     fi
-    [[ "$ANTHROPIC_KEY" != sk-ant-* ]] && \
-        fail "Expected an Anthropic key (sk-ant-...). Re-run with the correct key."
-    printf "%s" "$ANTHROPIC_KEY" > "$ANTHROPIC_KEY_FILE"
-    chmod 600 "$ANTHROPIC_KEY_FILE"
-    write_ok "Anthropic key stored at $ANTHROPIC_KEY_FILE"
+
+    if [[ "$claude_auth_mode" == "oauth" ]]; then
+        # OAuth passthrough: no real upstream key. Create a placeholder so
+        # docker-compose secrets don't fail; the gateway never uses it in passthrough mode.
+        printf "oauth-passthrough" > "$ANTHROPIC_KEY_FILE"
+        chmod 600 "$ANTHROPIC_KEY_FILE"
+        # Enable oauth_passthrough in config.yaml
+        config_path="$KIRI_DATA/config.yaml"
+        if [[ ! -f "$config_path" ]] || ! grep -q "oauth_passthrough" "$config_path" 2>/dev/null; then
+            printf "\noauth_passthrough: true\n" >> "$config_path"
+        fi
+        write_ok "OAuth passthrough enabled -- no upstream API key required"
+        write_info "See docs/guides/claude-pro-max.md for details"
+    else
+        if [[ -z "$ANTHROPIC_KEY" ]]; then
+            printf "      ${YELLOW}Your key is stored only inside the Docker container as a secret.${NC}\n"
+            printf "      ${YELLOW}It never appears in logs, env dumps, or docker inspect output.${NC}\n\n"
+            read -rp "      Anthropic API key (sk-ant-...): " ANTHROPIC_KEY
+            printf "\n"
+        fi
+        [[ "$ANTHROPIC_KEY" != sk-ant-* ]] && \
+            fail "Expected an Anthropic key (sk-ant-...). Re-run with the correct key."
+        printf "%s" "$ANTHROPIC_KEY" > "$ANTHROPIC_KEY_FILE"
+        chmod 600 "$ANTHROPIC_KEY_FILE"
+        write_ok "Anthropic key stored at $ANTHROPIC_KEY_FILE"
+    fi
 fi
 
 OPENAI_KEY_FILE="$KIRI_DATA/openai.key"
@@ -223,15 +250,21 @@ if ! wait_for_gateway 600; then
 fi
 write_ok "Gateway healthy at http://localhost:8765"
 
-# -- Step 8: Developer key ----------------------------------------------------
+# -- Step 8: Developer key (API key mode only) --------------------------------
 
-write_step "Generating your Kiri developer key..."
+kiri_key=""
+if [[ "$claude_auth_mode" != "oauth" ]]; then
+    write_step "Generating your Kiri developer key..."
 
-raw_output=$(docker compose --project-directory "$KIRI_DIR" exec -T kiri kiri key create 2>&1)
-kiri_key=$(printf "%s" "$raw_output" | tail -1 | tr -d '[:space:]')
+    raw_output=$(docker compose --project-directory "$KIRI_DIR" exec -T kiri kiri key create 2>&1)
+    kiri_key=$(printf "%s" "$raw_output" | tail -1 | tr -d '[:space:]')
 
-[[ "$kiri_key" != kr-* ]] && fail "Key creation failed. Output: $raw_output"
-write_ok "Key: $kiri_key"
+    [[ "$kiri_key" != kr-* ]] && fail "Key creation failed. Output: $raw_output"
+    write_ok "Key: $kiri_key"
+else
+    write_step "OAuth mode -- skipping developer key generation"
+    write_info "Claude Code will use its own OAuth session token directly"
+fi
 
 # -- Step 9: Environment variables --------------------------------------------
 
@@ -349,15 +382,27 @@ printf "\n  ${GREEN}================================${NC}\n"
 printf   "  ${GREEN}Kiri installed successfully!${NC}\n"
 printf   "  ${GREEN}================================${NC}\n\n"
 printf   "  Gateway :  http://localhost:8765\n"
-printf   "  Your key:  %s\n\n" "$kiri_key"
+if [[ -n "$kiri_key" ]]; then
+    printf "  Your key:  %s\n" "$kiri_key"
+else
+    printf "  Auth mode: Claude Pro/Max (OAuth passthrough)\n"
+fi
+printf "\n"
 
 printf "  ${YELLOW}Next steps:${NC}\n\n"
 
 if [[ "$configure_claude" == true ]]; then
     printf "  ${CYAN}Claude Code${NC}\n"
     printf "  -----------\n"
-    printf "  Set ANTHROPIC_API_KEY to your Kiri key:\n"
-    printf "  ${GRAY}export ANTHROPIC_API_KEY=%s${NC}\n\n" "$kiri_key"
+    if [[ "$claude_auth_mode" == "oauth" ]]; then
+        printf "  OAuth passthrough is active. Just run:\n"
+        printf "  ${GRAY}source %s${NC}\n" "$(detect_profile)"
+        printf "  ${GRAY}claude \"hello\"${NC}\n\n"
+        printf "  ${GRAY}ANTHROPIC_BASE_URL is set. Do NOT set ANTHROPIC_API_KEY.${NC}\n\n"
+    else
+        printf "  Set ANTHROPIC_API_KEY to your Kiri key:\n"
+        printf "  ${GRAY}export ANTHROPIC_API_KEY=%s${NC}\n\n" "$kiri_key"
+    fi
 fi
 
 if [[ "$configure_openai" == true ]]; then

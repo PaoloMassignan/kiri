@@ -170,25 +170,49 @@ Write-Step "Storing upstream API key(s)..."
 
 New-Item -ItemType Directory -Path $KiriData -Force | Out-Null
 
-# Anthropic key -- required when using Claude Code or when skipping manual setup
 $AnthropicKeyFile = Join-Path $KiriData "upstream.key"
+$ClaudeAuthMode   = "api_key"   # api_key | oauth
+
 if (Test-Path $AnthropicKeyFile) {
     Write-Ok "Anthropic key already stored -- skipping (delete $AnthropicKeyFile to replace)"
 } elseif ($configureClaude -or $toolChoice -eq "4") {
-    # Always ask for Anthropic key unless user chose OpenAI-only
     if ($AnthropicKey -eq "") {
         Write-Host ""
-        Write-Host "      Your key is stored only inside the Docker container as a secret." -ForegroundColor Yellow
-        Write-Host "      It never appears in logs, env dumps, or docker inspect output." -ForegroundColor Yellow
+        Write-Host "  How does Claude Code authenticate?" -ForegroundColor White
         Write-Host ""
-        $AnthropicKey = Read-Host "      Anthropic API key (sk-ant-...)"
+        Write-Host "  [1] API key (sk-ant-...)      recommended -- full bypass-prevention" -ForegroundColor White
+        Write-Host "  [2] Claude Pro / Max (OAuth)  no API key needed, filter pipeline still active" -ForegroundColor White
+        Write-Host ""
+        $authChoice = Read-Host "  Choice [1-2, default: 1]"
+        if ($authChoice -eq "" -or $authChoice -notmatch "^[1-2]$") { $authChoice = "1" }
+        if ($authChoice -eq "2") { $ClaudeAuthMode = "oauth" }
         Write-Host ""
     }
-    if (-not $AnthropicKey.StartsWith("sk-ant-")) {
-        Fail "Expected an Anthropic key (sk-ant-...). Re-run with the correct key."
+
+    if ($ClaudeAuthMode -eq "oauth") {
+        [System.IO.File]::WriteAllText($AnthropicKeyFile, "oauth-passthrough")
+        $ConfigPath = Join-Path $KiriData "config.yaml"
+        $configContent = if (Test-Path $ConfigPath) { Get-Content $ConfigPath -Raw } else { "" }
+        if ($configContent -notmatch "oauth_passthrough") {
+            Add-Content -Path $ConfigPath -Value "`noauth_passthrough: true"
+        }
+        Write-Ok "OAuth passthrough enabled -- no upstream API key required"
+        Write-Info "See docs/guides/claude-pro-max.md for details"
+    } else {
+        if ($AnthropicKey -eq "") {
+            Write-Host ""
+            Write-Host "      Your key is stored only inside the Docker container as a secret." -ForegroundColor Yellow
+            Write-Host "      It never appears in logs, env dumps, or docker inspect output." -ForegroundColor Yellow
+            Write-Host ""
+            $AnthropicKey = Read-Host "      Anthropic API key (sk-ant-...)"
+            Write-Host ""
+        }
+        if (-not $AnthropicKey.StartsWith("sk-ant-")) {
+            Fail "Expected an Anthropic key (sk-ant-...). Re-run with the correct key."
+        }
+        [System.IO.File]::WriteAllText($AnthropicKeyFile, $AnthropicKey)
+        Write-Ok "Anthropic key stored at $AnthropicKeyFile"
     }
-    [System.IO.File]::WriteAllText($AnthropicKeyFile, $AnthropicKey)
-    Write-Ok "Anthropic key stored at $AnthropicKeyFile"
 }
 
 # OpenAI key -- optional, only for OpenAI-compatible upstream calls
@@ -261,22 +285,28 @@ if (-not (Wait-ForGateway -TimeoutSeconds 600)) {
 }
 Write-Ok "Gateway healthy at http://localhost:8765"
 
-# -- Step 8: Developer key ----------------------------------------------------
+# -- Step 8: Developer key (API key mode only) --------------------------------
 
-Write-Step "Generating your Kiri developer key..."
+$KiriKey = ""
+if ($ClaudeAuthMode -ne "oauth") {
+    Write-Step "Generating your Kiri developer key..."
 
-Push-Location $KiriDir
-try {
-    $rawOutput = docker compose exec kiri kiri key create 2>&1
-    $KiriKey   = ($rawOutput | Select-Object -Last 1).ToString().Trim()
-} finally {
-    Pop-Location
+    Push-Location $KiriDir
+    try {
+        $rawOutput = docker compose exec kiri kiri key create 2>&1
+        $KiriKey   = ($rawOutput | Select-Object -Last 1).ToString().Trim()
+    } finally {
+        Pop-Location
+    }
+
+    if (-not $KiriKey.StartsWith("kr-")) {
+        Fail "Key creation failed. Output: $rawOutput"
+    }
+    Write-Ok "Key: $KiriKey"
+} else {
+    Write-Step "OAuth mode -- skipping developer key generation"
+    Write-Info "Claude Code will use its own OAuth session token directly"
 }
-
-if (-not $KiriKey.StartsWith("kr-")) {
-    Fail "Key creation failed. Output: $rawOutput"
-}
-Write-Ok "Key: $KiriKey"
 
 # -- Step 9: Environment variables --------------------------------------------
 
@@ -380,7 +410,11 @@ Write-Host "  Kiri installed successfully!" -ForegroundColor Green
 Write-Host "  ==================================" -ForegroundColor Green
 Write-Host ""
 Write-Host "  Gateway :  http://localhost:8765" -ForegroundColor White
-Write-Host "  Your key:  $KiriKey"             -ForegroundColor White
+if ($KiriKey -ne "") {
+    Write-Host "  Your key:  $KiriKey" -ForegroundColor White
+} else {
+    Write-Host "  Auth mode: Claude Pro/Max (OAuth passthrough)" -ForegroundColor White
+}
 Write-Host ""
 
 # Tool-specific next steps
@@ -390,9 +424,17 @@ Write-Host ""
 if ($configureClaude) {
     Write-Host "  Claude Code" -ForegroundColor Cyan
     Write-Host "  -----------" -ForegroundColor DarkGray
-    Write-Host "  Set ANTHROPIC_API_KEY to your Kiri key (not the Anthropic key):" -ForegroundColor White
-    Write-Host "  [Environment]::SetEnvironmentVariable('ANTHROPIC_API_KEY','$KiriKey','User')" -ForegroundColor DarkGray
-    Write-Host ""
+    if ($ClaudeAuthMode -eq "oauth") {
+        Write-Host "  OAuth passthrough is active. Open a new terminal and run:" -ForegroundColor White
+        Write-Host "  claude `"hello`"" -ForegroundColor DarkGray
+        Write-Host ""
+        Write-Host "  ANTHROPIC_BASE_URL is set. Do NOT set ANTHROPIC_API_KEY." -ForegroundColor DarkGray
+        Write-Host ""
+    } else {
+        Write-Host "  Set ANTHROPIC_API_KEY to your Kiri key (not the Anthropic key):" -ForegroundColor White
+        Write-Host "  [Environment]::SetEnvironmentVariable('ANTHROPIC_API_KEY','$KiriKey','User')" -ForegroundColor DarkGray
+        Write-Host ""
+    }
 }
 
 if ($configureOpenAI) {
