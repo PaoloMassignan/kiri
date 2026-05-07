@@ -13,106 +13,88 @@ Works for a single developer or an entire team:
 
 ## Prerequisites
 
-- Python 3.11+
-- An API key for the LLM provider you use — Anthropic (`sk-ant-...`) or OpenAI (`sk-...`)
+- Docker Desktop — [download](https://www.docker.com/products/docker-desktop/)
+- An Anthropic API key (`sk-ant-...`) from [console.anthropic.com](https://console.anthropic.com)
 
-For the Docker deployment path: Docker Desktop (see [quickstart](docs/guides/quickstart.md)).
+> **Claude Code Max / subscription:** Kiri requires a standard API key (`sk-ant-...`).
+> The OAuth token used by Claude Code Max subscriptions is not yet supported.
+> Subscription support is on the roadmap.
 
-> **Note — Claude Code subscription (Max plan):** Kiri currently requires a standard
-> Anthropic API key (`sk-ant-...`). The OAuth-based session token used by Claude Code
-> Max subscriptions is not yet supported. Subscription support is on the roadmap.
-> For now, a paid API account at [console.anthropic.com](https://console.anthropic.com) is required.
+## Installation
 
-## Quick start
+Clone the repository, then run the one-line installer for your OS.
+The installer handles Docker, keys, autostart, and tool configuration automatically.
 
-**1. Install**
+### macOS
 
-**macOS / Linux**
 ```bash
-git clone https://github.com/PaoloMassignan/kiri kiri
-cd kiri
-pip install --user pipx && python3 -m pipx ensurepath
+git clone https://github.com/PaoloMassignan/AI-Layer
+cd AI-Layer
+./install/macos/install.sh
 ```
 
-**Windows (PowerShell)**
+### Windows (PowerShell)
+
 ```powershell
-git clone https://github.com/PaoloMassignan/kiri kiri
-cd kiri
-pip install --user pipx; python -m pipx ensurepath
+git clone https://github.com/PaoloMassignan/AI-Layer
+cd AI-Layer
+.\install\windows\install.ps1
 ```
 
-Close and reopen your terminal, then:
+The installer will ask for your Anthropic key, which tool you use (Claude Code, Cursor, or both), then set everything up — Docker stack, autostart, environment variables, and a `kiri` CLI wrapper.
 
-**macOS / Linux**
+### Joining a team gateway
+
+If your admin has already deployed a shared Kiri gateway, you only need to configure your machine to point at it — no Docker required:
+
 ```bash
+# macOS
+./install/macos/connect.sh
+
+# Windows
+.\install\windows\connect.ps1
+```
+
+The script asks for the gateway URL and your personal `kr-` key (issued by your admin), then sets the right environment variables.
+
+### To uninstall
+
+```bash
+# macOS
+./install/macos/uninstall.sh           # keeps .kiri/ data
+./install/macos/uninstall.sh --purge-data
+
+# Windows
+.\install\windows\uninstall.ps1        # keeps .kiri\ data
+.\install\windows\uninstall.ps1 -PurgeData
+```
+
+---
+
+## Quick start (manual / Linux)
+
+If you prefer a manual setup or are on Linux:
+
+```bash
+pip install --user pipx && python3 -m pipx ensurepath
+# reopen terminal, then:
 pipx install --editable ./kiri
 ```
 
-**Windows (PowerShell)**
-```powershell
-pipx install --editable .\kiri
-```
-
-Verify: `kiri --help`
-
-**2. Create a project directory and protect a file** *(single terminal, no server needed)*
-
-Open a new terminal — this is your **project directory**, separate from the `kiri/` repo you just cloned.
-
-**macOS / Linux**
-```bash
-mkdir ~/my-project && cd ~/my-project
-```
-
-**Windows (PowerShell)**
-```powershell
-New-Item -ItemType Directory -Force "$HOME\my-project"; cd "$HOME\my-project"
-```
-
-Create a file with proprietary logic — save it as `pricing.py`:
-
-```python
-def calculate_final_price(quantity, is_premium):
-    subtotal = 9.99 * quantity
-    discount = subtotal * 0.0325
-    tier = 2.47 if is_premium else 0.0
-    return round(subtotal - discount + tier, 2)
-```
+Store your upstream key and start the gateway:
 
 ```bash
-# Protect and index it
-kiri add pricing.py
-kiri index pricing.py
-
-# Verify the filter works — no server required
-kiri inspect "explain calculate_final_price"
-# Decision   : REDACT
-# Reason     : symbol match: calculate_final_price
-# Similarity : 0.0000
-```
-
-**3. Start the proxy** (blocking — open a second terminal for subsequent commands)
-
-```bash
-# In ~/my-project — store your real upstream key, then create a gateway key
 mkdir -p .kiri
-echo "sk-ant-YOUR-KEY" > .kiri/upstream.key   # macOS/Linux
-# Windows: "sk-ant-YOUR-KEY" | Set-Content .kiri\upstream.key
-
-kiri key create          # → kr-AbCdEfGhIjKlMnOpQrSt12
-kiri serve               # leave this running
+echo "sk-ant-YOUR-KEY" > .kiri/upstream.key
+kiri key create    # → kr-AbCdEfGhIjKlMnOpQrSt12
+kiri serve
 ```
 
-**4. Point your AI tool at the gateway** (in the second terminal)
+Point your tool at the gateway:
 
 ```bash
-# macOS / Linux
 export ANTHROPIC_BASE_URL=http://localhost:8765
 export ANTHROPIC_API_KEY=kr-AbCdEfGhIjKlMnOpQrSt12
-
-# Windows (PowerShell)
-$env:ANTHROPIC_BASE_URL = "http://localhost:8765"
-$env:ANTHROPIC_API_KEY  = "kr-AbCdEfGhIjKlMnOpQrSt12"
 ```
 
 For the full walkthrough — Docker deployment, key management, IDE integration — see **[docs/guides/quickstart.md](docs/guides/quickstart.md)**.
@@ -214,6 +196,8 @@ Every outgoing LLM call passes through three filter levels:
 |-----------|----------|
 | [`kiri/`](kiri/) | Production implementation — FastAPI proxy, filter pipeline, CLI, tests |
 | [`kiri/tests/fixtures/`](kiri/tests/fixtures/) | Test corpus — synthetic codebases used by security and integration tests |
+| [`install/windows/`](install/windows/) | Windows installer (`install.ps1`, `connect.ps1`, `uninstall.ps1`, `disconnect.ps1`) |
+| [`install/macos/`](install/macos/) | macOS installer (`install.sh`, `connect.sh`, `uninstall.sh`, `disconnect.sh`) |
 | [`docs/`](docs/) | All documentation: requirements (EARS), user stories, ADRs, SDD, diagrams |
 | [`benchmarks/`](benchmarks/) | Evaluation datasets and benchmark runners |
 
