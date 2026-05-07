@@ -21,6 +21,17 @@ Run: `kiri add <path>`
 When the user refers to "this file" or "the current file", use the path of the
 file currently open or most recently mentioned in the conversation.
 
+**"protect this directory"** / **"protect all files in src/engine/"**
+
+Run: `kiri add src/engine/`
+
+A trailing slash stores a `@glob` rule; all files inside are indexed automatically.
+New files added to the directory are picked up within 60 seconds.
+
+**"protect all Python files in src/"** / **"protect src/**/*.py"**
+
+Run: `kiri add "src/**/*.py"`
+
 **"protect the symbol @Foo"**
 
 Run: `kiri add @Foo`
@@ -30,6 +41,13 @@ Run: `kiri add @Foo`
 **"remove protection from this file"** / **"unprotect"**
 
 Run: `kiri rm <path>`
+
+**"remove protection from this directory"** / **"unprotect src/engine/"**
+
+Run: `kiri rm src/engine/`
+
+Removes the `@glob` rule and purges all indexed vectors for files from that rule
+(except files also individually listed in secrets).
 
 **"remove symbol @Foo"**
 
@@ -41,8 +59,8 @@ Run: `kiri rm @Foo`
 
 Run: `kiri status`
 
-Output shows: protected files, explicit symbols, number of indexed chunks and
-known symbols.
+Output shows: protected directories/globs (with file count), individually protected
+files, explicit symbols, number of indexed chunks and known symbols.
 
 ### Inspecting a prompt
 
@@ -176,6 +194,10 @@ embedding index immediately without waiting for the watcher.
 # paths relative to workspace root (one per line)
 src/engine/risk_scorer.py
 src/engine/token_bucket.py
+
+# directory and glob rules (auto-expanded, 60 s rescan for new files)
+@glob src/engine/
+@glob src/**/*.pricing.*
 
 # explicit symbols (immediate L2 protection, no indexing required)
 @symbol RiskScorer

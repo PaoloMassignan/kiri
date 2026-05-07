@@ -14,14 +14,14 @@ AI-Layer/   ← Kiri repository
 ├── kiri/            ← production implementation (FastAPI proxy + filter pipeline)
 │   ├── CLAUDE.md      ← gateway management commands (kiri add/rm/status/inspect)
 │   ├── src/           ← source code
-│   └── tests/         ← 524 passing tests
+│   └── tests/         ← 581 passing tests
 │
 ├── docs/
 │   ├── requirements/  ← EARS-formatted requirements (REQ-F, REQ-S, REQ-NF)
 │   ├── adr/           ← Architecture Decision Records (why, not what)
 │   ├── sdd/           ← Software Design Document (01-overview through 06-security)
 │   ├── diagrams/      ← sequence and integration diagrams
-│   ├── user-stories/  ← US-01 through US-12
+│   ├── user-stories/  ← US-01 through US-14
 │   └── guides/        ← coding rules, technology stack, project structure
 │
 └── benchmarks/        ← evaluation datasets and runners
