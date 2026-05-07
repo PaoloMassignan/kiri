@@ -177,4 +177,6 @@ kiri explain --show-redacted              # full forwarded prompt with stubs
 | [`docs/`](docs/) | Requirements (EARS), user stories, ADRs, SDD, diagrams |
 | [`benchmarks/`](benchmarks/) | Evaluation datasets and benchmark runners |
 
-For CLI reference, key management, and advanced configuration see [`kiri/CLAUDE.md`](kiri/CLAUDE.md).
+For CLI reference, key management, and advanced configuration:
+- **Claude Code** → [`kiri/CLAUDE.md`](kiri/CLAUDE.md)
+- **OpenCode** → [`kiri/AGENTS.md`](kiri/AGENTS.md)

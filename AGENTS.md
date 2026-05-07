@@ -1,101 +1,51 @@
-# Kiri — Automated Agents
+# Kiri — Project Context (OpenCode / AGENTS.md)
 
-This document describes the automated agents that run on every pull request and issue in this repository.
-All agents run on GitHub-hosted infrastructure (not locally) and use the Anthropic API.
+**Kiri** is an open-source on-premises proxy that intercepts LLM calls (Claude Code,
+OpenCode, Cursor, Copilot) and prevents proprietary source code from leaving the network.
 
----
-
-## PR Review Agent
-
-**Workflow**: [`.github/workflows/pr-review.yml`](.github/workflows/pr-review.yml)
-**Script**: [`.github/scripts/pr_review.py`](.github/scripts/pr_review.py)
-**Trigger**: Every PR opened, updated (new push), or reopened
-
-### What it does
-1. Fetches the full PR diff.
-2. Reads `CLAUDE.md` and `DECISIONS.md` for project context.
-3. Calls `claude-sonnet-4-6` with the diff and a system prompt that knows Kiri's architecture.
-4. Posts (or updates) a structured review comment on the PR with one of three verdicts:
-
-| Verdict | Meaning |
-|---------|---------|
-| **PASS** | No issues found. Ready for owner review. |
-| **NEEDS WORK** | Minor issues — tests missing, naming convention, etc. |
-| **BLOCK** | Critical invariant violated. Merge should not proceed. |
-
-5. If the verdict is **BLOCK**, the workflow step exits with a non-zero code, marking the check as failed.
-
-### What it checks
-- All four [critical invariants](CLAUDE.md) (fail-open, L2 always active, bind to 127.0.0.1, vectors only)
-- Test coverage for new/changed code
-- Branch naming convention (`feat/`, `fix/`, `sec/`, `docs/`)
-- ADR referenced if architecture changed
-- Common security issues (injection, path traversal, credential logging)
-
-### Limitations
-- Diffs larger than 80 000 characters are truncated; the agent will note this.
-- The agent does not run the test suite — that is CI's job (`ci.yml`).
-- The agent's verdict is advisory for **PASS** and **NEEDS WORK**; only **BLOCK** fails the check.
-  The owner ([@PaoloMassignan](https://github.com/PaoloMassignan)) must still approve before merge.
-
----
-
-## Issue Triage Agent
-
-**Workflow**: [`.github/workflows/issue-triage.yml`](.github/workflows/issue-triage.yml)
-**Script**: [`.github/scripts/issue_triage.py`](.github/scripts/issue_triage.py)
-**Trigger**: Every new issue opened
-
-### What it does
-1. Reads the issue title and body.
-2. Calls `claude-sonnet-4-6` with the issue content and knowledge of Kiri's components and requirements.
-3. Posts a triage comment that:
-   - Acknowledges the report
-   - Summarises the agent's reading of the issue
-   - Links to relevant requirements (REQ-F-NNN) or ADRs if applicable
-   - States next steps or asks for missing information
-4. Applies labels from the allowed set: `bug`, `enhancement`, `question`, `security`, `priority:high`, `priority:medium`, `priority:low`, `needs-info`
-
-### Security issues
-Security vulnerabilities should be reported via [GitHub's private Security Advisory](../../security/advisories/new), not as public issues.
-The issue templates enforce this with a banner and a redirect link.
-
----
-
-## Merge policy
+## Repository Layout
 
 ```
-contributor opens PR
-        ↓
-CI (lint + type check + pytest)   ← must be green
-        ↓
-PR Review Agent posts verdict     ← BLOCK fails the check
-        ↓
-Owner (@PaoloMassignan) reviews   ← required approval (CODEOWNERS)
-        ↓
-merge into main
+AI-Layer/   ← Kiri repository
+├── AGENTS.md          ← you are here — project-level AI context (OpenCode)
+├── CLAUDE.md          ← same content for Claude Code
+├── DECISIONS.md       ← key design decisions at a glance (read this first)
+├── README.md          ← navigation for humans
+│
+├── kiri/            ← production implementation (FastAPI proxy + filter pipeline)
+│   ├── AGENTS.md      ← gateway management commands for OpenCode
+│   ├── CLAUDE.md      ← same commands for Claude Code
+│   ├── src/           ← source code
+│   └── tests/         ← 600+ passing tests
+│
+├── docs/
+│   ├── requirements/  ← EARS-formatted requirements (REQ-F, REQ-S, REQ-NF)
+│   ├── adr/           ← Architecture Decision Records (why, not what)
+│   ├── sdd/           ← Software Design Document (01-overview through 06-security)
+│   ├── diagrams/      ← sequence and integration diagrams
+│   ├── user-stories/  ← US-01 through US-16
+│   └── guides/        ← coding rules, technology stack, project structure
+│
+└── benchmarks/        ← evaluation datasets and runners
 ```
 
-**No direct pushes to `main`.** Branch protection rules enforce this in GitHub Settings.
+## How to Navigate This Project
 
----
+1. **New to the project?** Read `DECISIONS.md` (2 min) then `docs/sdd/01-overview.md`
+2. **Working on the filter pipeline?** Read `docs/adr/ADR-001` + `docs/sdd/03-filter-pipeline.md`
+3. **Working on security?** Read `docs/sdd/06-security.md` (threat model and audit log of known findings)
+4. **Managing the gateway?** See `kiri/AGENTS.md` for CLI commands
 
-## Branch naming convention
+## Critical Invariants — Do Not Change Without Reading the ADR
 
-| Prefix | Use for |
-|--------|---------|
-| `feat/US-XX-*` | New feature linked to a user story |
-| `fix/REQ-*` or `fix/issue-NNN` | Bug fix |
-| `sec/CVE-*` or `sec/advisory-*` | Security fix |
-| `docs/*` | Documentation only |
-| `chore/*` | Tooling, CI, dependencies |
+- **Fail-open on L1/L3 errors** (ADR-004): errors → PASS, not BLOCK. By design.
+- **L2 always active**: symbol matching never fails silently — it is the safety net when L1/L3 are degraded.
+- **Bind to 127.0.0.1**: `kiri serve` must never bind to 0.0.0.0 (REQ-S-005).
+- **No code in cloud**: the indexer stores float vectors only, never source text (REQ-NF-005).
 
----
+## Working in This Repo
 
-## Secrets required
-
-| Secret | Where to add | Purpose |
-|--------|-------------|---------|
-| `ANTHROPIC_API_KEY` | GitHub → Settings → Secrets → Actions | Anthropic API for all agents |
-
-`GITHUB_TOKEN` is provided automatically by GitHub Actions.
+- All code is in `kiri/` — run tests with `cd kiri && python -m pytest tests/unit/ -q`
+- `kiri/example_projects/` is **not in git** — security/integration tests skip gracefully if missing (3 skipped is normal). See `kiri/example_projects/README.md` to populate.
+- Requirements are in `docs/requirements/` in EARS format — each has an ID (REQ-F-NNN)
+- Every non-obvious decision has an ADR in `docs/adr/` — read it before "fixing" something

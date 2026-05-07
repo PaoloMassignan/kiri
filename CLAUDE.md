@@ -7,12 +7,14 @@ Cursor, Copilot) and prevents proprietary source code from leaving the network.
 
 ```
 AI-Layer/   ← Kiri repository
-├── CLAUDE.md          ← you are here — project-level AI context
+├── CLAUDE.md          ← you are here — project-level AI context (Claude Code)
+├── AGENTS.md          ← same content for OpenCode
 ├── DECISIONS.md       ← key design decisions at a glance (read this first)
 ├── README.md          ← navigation for humans
 │
 ├── kiri/            ← production implementation (FastAPI proxy + filter pipeline)
-│   ├── CLAUDE.md      ← gateway management commands (kiri add/rm/status/inspect)
+│   ├── CLAUDE.md      ← gateway management commands for Claude Code
+│   ├── AGENTS.md      ← same commands for OpenCode
 │   ├── src/           ← source code
 │   └── tests/         ← 593 passing tests
 │
@@ -32,7 +34,7 @@ AI-Layer/   ← Kiri repository
 1. **New to the project?** Read `DECISIONS.md` (2 min) then `docs/sdd/01-overview.md`
 2. **Working on the filter pipeline?** Read `docs/adr/ADR-001` + `docs/sdd/03-filter-pipeline.md`
 3. **Working on security?** Read `docs/sdd/06-security.md` (includes threat model and audit log of known findings)
-4. **Managing the gateway?** See `kiri/CLAUDE.md` for CLI commands
+4. **Managing the gateway?** See `kiri/CLAUDE.md` (Claude Code) or `kiri/AGENTS.md` (OpenCode) for CLI commands
 
 ## Critical invariants — do not change without reading the ADR
 
