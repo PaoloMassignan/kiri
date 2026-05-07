@@ -101,25 +101,33 @@ The gateway CLI is invoked with `kiri <command>`.
 
 ### `kiri add <target>`
 
-Adds a file path or a symbol to the protected files.
+Adds a file path, directory rule, glob pattern, or symbol to the protected set.
 
 ```bash
-kiri add src/engine/risk_scorer.py   # path
-kiri add @RiskScorer                 # symbol
+kiri add src/engine/risk_scorer.py   # single file
+kiri add src/engine/                 # all files in directory, recursively
+kiri add "src/**/*.py"               # glob pattern
+kiri add @RiskScorer                 # explicit symbol (L2, no reindex needed)
 ```
 
-**Exit code:** 0 OK, 1 error (file not found, path traversal).
+Directory and glob rules are stored as `@glob <pattern>` entries in `.kiri/secrets`. The watcher expands them on startup and re-expands every 60 seconds to pick up new files automatically.
+
+**Exit code:** 0 OK, 1 error (path not found, path traversal).
 
 ---
 
 ### `kiri rm <target>`
 
-Removes a file path or a symbol.
+Removes a file path, directory rule, glob pattern, or symbol.
 
 ```bash
-kiri rm src/engine/risk_scorer.py
-kiri rm @RiskScorer
+kiri rm src/engine/risk_scorer.py    # single file
+kiri rm src/engine/                  # removes @glob rule, purges indexed vectors
+kiri rm "src/**/*.py"                # removes @glob rule
+kiri rm @RiskScorer                  # symbol
 ```
+
+On glob removal, all files previously indexed from that rule are purged from the vector and symbol stores, unless the same file is also individually listed in secrets.
 
 **Exit code:** 0 OK (even if it did not exist), 1 error.
 
@@ -131,16 +139,20 @@ Shows the protection status.
 
 ```
 === Gateway Protection Status ===
-Protected paths (2):
-  src/engine/risk_scorer.py
-  src/billing/
 
-Protected symbols (3):
+Protected directories/globs (1):
+  @glob src/engine/  (8 file(s))
+
+Protected files (1):
+  src/billing/token_bucket.py
+
+Explicit symbols (3):
   @RiskScorer
   @sliding_window_dedup
   @DataFlowEngine
 
-Index: 47 chunks | 3 symbols
+Indexed chunks : 47
+Known symbols  : 12
 ```
 
 ---

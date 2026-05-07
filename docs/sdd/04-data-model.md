@@ -4,15 +4,20 @@
 
 ### `.kiri/secrets` (text, committed to git)
 
-List of protected paths and symbols. One entry per line.
+List of protected paths, glob rules, and symbols. One entry per line.
 
 ```
 # Comments are ignored
 # Empty lines are ignored
 
-# Paths relative to the workspace root
+# Single file paths (relative to workspace root)
 src/engine/risk_scorer.py
-src/billing/
+src/billing/token_bucket.py
+
+# Directory and glob rules — stored as @glob entries (US-14)
+# Trailing slash = all files recursively; * wildcards follow pathlib.Path.glob()
+@glob src/engine/
+@glob src/**/*.pricing.*
 
 # Explicit symbols (immediate L2 protection, no reindex required)
 @symbol RiskScorer
@@ -20,8 +25,17 @@ src/billing/
 @symbol DataFlowEngine
 ```
 
-**Parser:** `SecretsStore` in `src/store/secrets_store.py`
-**Invariant:** idempotent — adding the same entry twice does not create duplicates.
+**Entry types:**
+
+| Prefix | Type | Example |
+|--------|------|---------|
+| *(none)* | Single file path | `src/engine/risk_scorer.py` |
+| `@glob` | Directory or glob rule | `@glob src/engine/` |
+| `@symbol` | Explicit symbol for L2 | `@symbol RiskScorer` |
+| `@inline` | Inline code block | `@inline MyAlgorithm … @end` |
+
+**Parser:** `SecretsStore` in `src/store/secrets_store.py`  
+**Invariant:** idempotent — adding the same entry twice does not create duplicates.  
 **Atomic write:** `mkstemp()` + `replace()` + `chmod(0o600)`.
 
 ---

@@ -248,6 +248,7 @@ Store (vectors + symbols only, never source code)
 
 The **File Watcher** continuously monitors `.kiri/secrets`:
 - If the file changes (git pull, kiri add/rm) → triggers automatic reindex
+- For `@glob` rules, a background rescan thread (60 s interval) re-expands each pattern and indexes new files / purges disappeared files without requiring a secrets change
 - No manual intervention, no git hooks to configure
 
 ---

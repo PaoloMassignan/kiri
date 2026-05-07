@@ -129,8 +129,13 @@ the gateway SHALL return HTTP 413 before processing authentication or filtering.
 WHEN a developer runs "kiri add <path>",
 IF the resolved absolute path is outside the workspace root,
 THEN the gateway SHALL reject the command with an error.
+
+WHEN a developer runs "kiri add <glob>",
+IF the glob pattern expands to any path outside the workspace root,
+THEN those paths SHALL be silently excluded from the result.
 ```
 
 **Rationale:** prevents protecting files outside the project to avoid information leakage
-about the surrounding filesystem.
+about the surrounding filesystem. Glob expansion goes through `SecretsStore._validate_path`
+which calls `path.is_relative_to(workspace)`.
 **Tests:** `tests/security/test_path_traversal.py`

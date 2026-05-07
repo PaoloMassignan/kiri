@@ -39,9 +39,17 @@ the gateway SHALL perform no write and return a confirmation message.
 WHEN a developer runs "kiri add @Symbol",
 the gateway SHALL add the symbol to .kiri/secrets as an @symbol entry
 and make the symbol immediately active for L2 filtering without requiring re-indexing.
+
+WHEN a developer runs "kiri add <directory>/" or "kiri add <glob>",
+the gateway SHALL store a single @glob rule in .kiri/secrets
+and index all files currently matching the pattern.
+
+WHEN new files appear in a directory protected by a @glob rule,
+the gateway SHALL index them automatically within 60 seconds
+without requiring any manual command.
 ```
 
-**User story:** US-02
+**User story:** US-02, US-14
 **Tests:** `tests/unit/test_cli_add.py`, `tests/unit/test_secrets_store.py`
 
 ---
@@ -52,6 +60,11 @@ and make the symbol immediately active for L2 filtering without requiring re-ind
 WHEN a developer runs "kiri rm <path>",
 the gateway SHALL remove the path from .kiri/secrets
 and purge the corresponding vectors from the index.
+
+WHEN a developer runs "kiri rm <directory>/" or "kiri rm <glob>",
+the gateway SHALL remove the @glob rule from .kiri/secrets
+and purge vectors and symbols for all files that were indexed from that rule,
+except files that are also individually listed in secrets.
 
 WHEN a developer runs "kiri rm @Symbol",
 the gateway SHALL remove the symbol from .kiri/secrets.
@@ -69,11 +82,12 @@ the gateway SHALL return without error.
 
 ```
 WHEN a developer runs "kiri status",
-the gateway SHALL display: the list of protected paths, the list of protected symbols,
+the gateway SHALL display: the list of @glob rules (with file count each),
+the list of individually protected paths, the list of protected symbols,
 the total number of indexed chunks, and the total number of known symbols.
 ```
 
-**User story:** US-04
+**User story:** US-04, US-14
 **Tests:** `tests/unit/test_cli_status.py`
 
 ---
@@ -106,11 +120,15 @@ the gateway SHALL re-index the affected files in the background
 without requiring a restart.
 
 WHEN the gateway starts,
-the gateway SHALL index all files listed in .kiri/secrets
-that have not yet been indexed or whose content hash has changed.
+the gateway SHALL index all files listed in .kiri/secrets (individual paths and
+@glob expansions) that have not yet been indexed.
+
+WHILE the gateway is running and @glob rules are active,
+the gateway SHALL re-expand each rule every 60 seconds and index any new files
+that have appeared since the last scan.
 ```
 
-**User story:** US-06, US-10
+**User story:** US-06, US-10, US-14
 **Tests:** `tests/unit/test_watcher.py`, `tests/unit/test_initial_index.py`
 
 ---
