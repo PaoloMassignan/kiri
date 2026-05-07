@@ -77,19 +77,23 @@ if (Get-ScheduledTask -TaskName "KiriGateway" -ErrorAction SilentlyContinue) {
     Write-Info "Task not found -- skipping"
 }
 
-# -- Environment variable -----------------------------------------------------
+# -- Environment variables ----------------------------------------------------
 
-Write-Step "Removing ANTHROPIC_BASE_URL from user environment..."
+Write-Step "Removing Kiri environment variables..."
 
-$current = [System.Environment]::GetEnvironmentVariable("ANTHROPIC_BASE_URL", "User")
-if ($current -eq "http://localhost:8765") {
-    [System.Environment]::SetEnvironmentVariable("ANTHROPIC_BASE_URL", $null, "User")
-    Remove-Item Env:\ANTHROPIC_BASE_URL -ErrorAction SilentlyContinue
-    Write-Ok "ANTHROPIC_BASE_URL removed"
-} elseif ($current) {
-    Write-Warn "ANTHROPIC_BASE_URL is '$current' (not the Kiri default) -- leaving unchanged"
-} else {
-    Write-Info "Not set -- skipping"
+$kirigDefault = "http://localhost:8765"
+
+foreach ($varName in @("ANTHROPIC_BASE_URL", "OPENAI_BASE_URL", "OPENAI_API_BASE")) {
+    $current = [System.Environment]::GetEnvironmentVariable($varName, "User")
+    if ($current -eq $kirigDefault) {
+        [System.Environment]::SetEnvironmentVariable($varName, $null, "User")
+        Remove-Item "Env:\$varName" -ErrorAction SilentlyContinue
+        Write-Ok "$varName removed"
+    } elseif ($current) {
+        Write-Warn "$varName is '$current' (not the Kiri default) -- leaving unchanged"
+    } else {
+        Write-Info "$varName not set -- skipping"
+    }
 }
 
 # -- CLI wrapper --------------------------------------------------------------

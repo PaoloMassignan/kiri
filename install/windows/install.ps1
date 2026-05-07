@@ -8,38 +8,39 @@
 
     What this script does:
       1. Verifies Docker Desktop is installed and running
-      2. Stores your Anthropic API key as a Docker secret (never in git, never in logs)
+      2. Stores your LLM provider key(s) as Docker secrets (never in git or logs)
       3. Builds the Docker image and starts the full stack (Kiri + Ollama)
-         Note: first run downloads the Ollama model (~2 GB) -- allow 5-30 min
-      4. Sets ANTHROPIC_BASE_URL=http://localhost:8765 in your user environment
+      4. Asks which tools you use (Claude Code, Cursor, both) and sets the
+         right environment variables in your user registry
       5. Creates a Scheduled Task so the stack restarts automatically at login
-      6. Installs a kiri.ps1 wrapper on your PATH so you can run kiri commands
-         from any terminal without Python or extra tools on the host
+      6. Installs a kiri.ps1 wrapper on your PATH
 
-    After installation Claude Code, Cursor, and Copilot route automatically
-    through the gateway. You will not notice any difference unless a protected
-    symbol is detected.
+    After installation your chosen tools route automatically through the gateway.
 
 .PARAMETER AnthropicKey
-    Your Anthropic API key (sk-ant-...). If omitted you will be prompted.
-    The key is written only to .kiri\upstream.key inside the repo and mounted
-    into the Docker container as a secret -- never exposed in logs or env output.
+    Anthropic API key (sk-ant-...). Prompted if omitted.
+
+.PARAMETER OpenAIKey
+    OpenAI API key (sk-...). Only prompted when you select Cursor/OpenAI tools.
+    Skip with Enter if you only use Claude models via Cursor.
 
 .PARAMETER SkipBuild
-    Skip docker compose build (use when the image is already built).
+    Skip docker compose build (image already built).
 
 .EXAMPLE
     .\install.ps1
-    .\install.ps1 -AnthropicKey sk-ant-xxxxxxx
+    .\install.ps1 -AnthropicKey sk-ant-xxx
+    .\install.ps1 -AnthropicKey sk-ant-xxx -OpenAIKey sk-xxx
     .\install.ps1 -SkipBuild
 
 .NOTES
-    Run from PowerShell. Docker Desktop must be installed first:
-    https://www.docker.com/products/docker-desktop/
+    No elevated prompt required.
+    Docker Desktop must be installed: https://www.docker.com/products/docker-desktop/
 #>
 
 param(
     [string]$AnthropicKey = "",
+    [string]$OpenAIKey    = "",
     [switch]$SkipBuild
 )
 
@@ -96,6 +97,16 @@ function Test-DockerRunning {
     }
 }
 
+function Set-UserEnv([string]$Name, [string]$Value) {
+    [System.Environment]::SetEnvironmentVariable($Name, $Value, "User")
+    [System.Environment]::SetEnvironmentVariable($Name, $Value, "Process")
+}
+
+function Remove-UserEnv([string]$Name) {
+    [System.Environment]::SetEnvironmentVariable($Name, $null, "User")
+    [System.Environment]::SetEnvironmentVariable($Name, $null, "Process")
+}
+
 function Wait-ForGateway([int]$TimeoutSeconds = 600) {
     $deadline = (Get-Date).AddSeconds($TimeoutSeconds)
     $attempt  = 0
@@ -108,7 +119,7 @@ function Wait-ForGateway([int]$TimeoutSeconds = 600) {
         } catch { }
         if ($attempt % 5 -eq 0) {
             $elapsed = [int]((Get-Date) - ($deadline.AddSeconds(-$TimeoutSeconds))).TotalSeconds
-            Write-Info "still waiting... ${elapsed}s elapsed (model download can take 5-30 min on first run)"
+            Write-Info "still waiting... ${elapsed}s (model download can take 5-30 min on first run)"
         }
         Start-Sleep -Seconds 3
     }
@@ -126,7 +137,7 @@ Write-Banner
 Write-Step "Checking Docker Desktop..."
 
 if (-not (Get-Command docker -ErrorAction SilentlyContinue)) {
-    Fail "Docker not found. Install Docker Desktop from https://www.docker.com/products/docker-desktop/ then re-run."
+    Fail "Docker not found. Install Docker Desktop: https://www.docker.com/products/docker-desktop/"
 }
 Write-Ok "docker CLI found"
 
@@ -135,34 +146,97 @@ if (-not (Test-DockerRunning)) {
 }
 Write-Ok "Docker daemon is running"
 
-# -- Step 2: Anthropic key ----------------------------------------------------
+# -- Step 2: Tool selection ---------------------------------------------------
 
-Write-Step "Storing Anthropic API key..."
+Write-Step "Which tools do you want to route through Kiri?"
+Write-Host ""
+Write-Host "  [1] Claude Code                       (sets ANTHROPIC_BASE_URL)" -ForegroundColor White
+Write-Host "  [2] Cursor / Windsurf / OpenAI tools  (sets OPENAI_BASE_URL)" -ForegroundColor White
+Write-Host "  [3] Both" -ForegroundColor White
+Write-Host "  [4] None -- I will configure my tools manually" -ForegroundColor DarkGray
+Write-Host ""
+$toolChoice = Read-Host "  Choice [1-4, default: 1]"
+if ($toolChoice -eq "" -or $toolChoice -notmatch "^[1-4]$") { $toolChoice = "1" }
 
-$UpstreamKeyFile = Join-Path $KiriData "upstream.key"
+$configureClaude = $toolChoice -in "1","3"
+$configureOpenAI = $toolChoice -in "2","3"
+
+Write-Host ""
+switch ($toolChoice) {
+    "1" { Write-Ok "Claude Code selected" }
+    "2" { Write-Ok "Cursor / OpenAI-compatible tools selected" }
+    "3" { Write-Ok "Claude Code + Cursor / OpenAI-compatible tools selected" }
+    "4" { Write-Ok "Manual configuration -- env vars will not be set" }
+}
+
+# -- Step 3: Upstream keys ----------------------------------------------------
+
+Write-Step "Storing upstream API key(s)..."
+
 New-Item -ItemType Directory -Path $KiriData -Force | Out-Null
 
-if (Test-Path $UpstreamKeyFile) {
-    Write-Ok "Key file already present -- skipping (delete $UpstreamKeyFile to replace)"
-} else {
+# Anthropic key -- required when using Claude Code or when skipping manual setup
+$AnthropicKeyFile = Join-Path $KiriData "upstream.key"
+if (Test-Path $AnthropicKeyFile) {
+    Write-Ok "Anthropic key already stored -- skipping (delete $AnthropicKeyFile to replace)"
+} elseif ($configureClaude -or $toolChoice -eq "4") {
+    # Always ask for Anthropic key unless user chose OpenAI-only
     if ($AnthropicKey -eq "") {
         Write-Host ""
-        Write-Host "      Your Anthropic key is stored only inside the Docker container" -ForegroundColor Yellow
-        Write-Host "      as a secret. It never appears in logs, env dumps, or" -ForegroundColor Yellow
-        Write-Host "      docker inspect output." -ForegroundColor Yellow
+        Write-Host "      Your key is stored only inside the Docker container as a secret." -ForegroundColor Yellow
+        Write-Host "      It never appears in logs, env dumps, or docker inspect output." -ForegroundColor Yellow
         Write-Host ""
         $AnthropicKey = Read-Host "      Anthropic API key (sk-ant-...)"
         Write-Host ""
     }
     if (-not $AnthropicKey.StartsWith("sk-ant-")) {
-        Fail "Key does not look like an Anthropic key (expected sk-ant-...). Re-run with the correct key."
+        Fail "Expected an Anthropic key (sk-ant-...). Re-run with the correct key."
     }
-    # Write without trailing newline -- Docker secrets are strict about trailing whitespace
-    [System.IO.File]::WriteAllText($UpstreamKeyFile, $AnthropicKey)
-    Write-Ok "Key stored at $UpstreamKeyFile"
+    [System.IO.File]::WriteAllText($AnthropicKeyFile, $AnthropicKey)
+    Write-Ok "Anthropic key stored at $AnthropicKeyFile"
 }
 
-# -- Step 3: Build ------------------------------------------------------------
+# OpenAI key -- optional, only for OpenAI-compatible upstream calls
+$OpenAIKeyFile = Join-Path $KiriData "openai.key"
+if ($configureOpenAI) {
+    if (Test-Path $OpenAIKeyFile) {
+        Write-Ok "OpenAI key already stored -- skipping (delete $OpenAIKeyFile to replace)"
+    } else {
+        if ($OpenAIKey -eq "") {
+            Write-Host ""
+            Write-Host "      OpenAI upstream key -- needed only if you use GPT models via Cursor." -ForegroundColor Yellow
+            Write-Host "      Press Enter to skip if you only use Claude models." -ForegroundColor Yellow
+            Write-Host ""
+            $OpenAIKey = Read-Host "      OpenAI API key (sk-..., or Enter to skip)"
+            Write-Host ""
+        }
+        if ($OpenAIKey -ne "") {
+            [System.IO.File]::WriteAllText($OpenAIKeyFile, $OpenAIKey)
+            Write-Ok "OpenAI key stored at $OpenAIKeyFile"
+        } else {
+            Write-Info "No OpenAI key stored -- GPT model calls via Cursor will use the Anthropic key fallback"
+        }
+    }
+}
+
+# -- Step 4: Update docker-compose for openai_key secret if needed -----------
+
+if ($configureOpenAI -and (Test-Path $OpenAIKeyFile)) {
+    # Patch docker-compose.yml to add openai_key secret if not already present
+    $composePath = Join-Path $KiriDir "docker-compose.yml"
+    $composeText = Get-Content $composePath -Raw
+    if ($composeText -notmatch "openai_key") {
+        $patchedText = $composeText -replace `
+            "(secrets:\s*\n  anthropic_key:\s*\n    file: \.kiri/upstream\.key)", `
+            "`$1`n  openai_key:`n    file: .kiri/openai.key"
+        Set-Content -Path $composePath -Value $patchedText -Encoding UTF8
+        Write-Ok "docker-compose.yml updated with openai_key secret"
+    } else {
+        Write-Ok "docker-compose.yml already has openai_key secret"
+    }
+}
+
+# -- Step 5: Build ------------------------------------------------------------
 
 if (-not $SkipBuild) {
     Write-Step "Building Docker image (first run: ~3-5 min)..."
@@ -179,7 +253,7 @@ if (-not $SkipBuild) {
     Write-Ok "Using existing image"
 }
 
-# -- Step 4: Start stack ------------------------------------------------------
+# -- Step 6: Start stack ------------------------------------------------------
 
 Write-Step "Starting Kiri stack..."
 Write-Info "First run downloads the Ollama model (~2 GB) -- this can take 5-30 minutes."
@@ -193,13 +267,13 @@ try {
 }
 Write-Ok "Stack started"
 
-# -- Step 5: Health check -----------------------------------------------------
+# -- Step 7: Health check -----------------------------------------------------
 
 Write-Step "Waiting for gateway health (up to 10 min for model download)..."
 
 if (-not (Wait-ForGateway -TimeoutSeconds 600)) {
     Write-Warn "Gateway did not become healthy within 10 minutes."
-    Write-Warn "The model may still be downloading. Check progress with:"
+    Write-Warn "The model may still be downloading. Check:"
     Write-Host ""
     Write-Host "      docker compose --project-directory `"$KiriDir`" logs ollama-pull -f" -ForegroundColor DarkGray
     Write-Host ""
@@ -208,7 +282,7 @@ if (-not (Wait-ForGateway -TimeoutSeconds 600)) {
 }
 Write-Ok "Gateway healthy at http://localhost:8765"
 
-# -- Step 6: Developer key ----------------------------------------------------
+# -- Step 8: Developer key ----------------------------------------------------
 
 Write-Step "Generating your Kiri developer key..."
 
@@ -223,20 +297,31 @@ try {
 if (-not $KiriKey.StartsWith("kr-")) {
     Fail "Key creation failed. Output: $rawOutput"
 }
-Write-Ok "Key created: $KiriKey"
+Write-Ok "Key: $KiriKey"
 
-# -- Step 7: Environment variable ---------------------------------------------
+# -- Step 9: Environment variables --------------------------------------------
 
-Write-Step "Setting ANTHROPIC_BASE_URL in user environment..."
+Write-Step "Setting environment variables..."
 
-[System.Environment]::SetEnvironmentVariable(
-    "ANTHROPIC_BASE_URL", "http://localhost:8765", "User"
-)
-$env:ANTHROPIC_BASE_URL = "http://localhost:8765"
-Write-Ok "ANTHROPIC_BASE_URL=http://localhost:8765 written to user registry"
-Write-Info "New processes will pick this up automatically. Restart open terminals."
+if ($configureClaude) {
+    Set-UserEnv "ANTHROPIC_BASE_URL" "http://localhost:8765"
+    Write-Ok "ANTHROPIC_BASE_URL=http://localhost:8765"
+}
 
-# -- Step 8: Scheduled Task ---------------------------------------------------
+if ($configureOpenAI) {
+    Set-UserEnv "OPENAI_BASE_URL"  "http://localhost:8765"
+    Set-UserEnv "OPENAI_API_BASE"  "http://localhost:8765"   # older SDK / LangChain
+    Write-Ok "OPENAI_BASE_URL=http://localhost:8765"
+    Write-Ok "OPENAI_API_BASE=http://localhost:8765 (older SDK / LangChain compat)"
+}
+
+if (-not $configureClaude -and -not $configureOpenAI) {
+    Write-Info "No env vars set (manual configuration chosen)"
+}
+
+Write-Info "New processes pick these up automatically. Restart open terminals."
+
+# -- Step 10: Scheduled Task --------------------------------------------------
 
 Write-Step "Configuring autostart at login (Scheduled Task)..."
 
@@ -251,13 +336,11 @@ $action = New-ScheduledTaskAction `
     -Argument         "compose --project-directory `"$KiriDir`" up -d" `
     -WorkingDirectory $KiriDir
 
-$trigger = New-ScheduledTaskTrigger -AtLogon -User $env:USERNAME
-
+$trigger  = New-ScheduledTaskTrigger -AtLogon -User $env:USERNAME
 $settings = New-ScheduledTaskSettingsSet `
     -StartWhenAvailable `
     -ExecutionTimeLimit (New-TimeSpan -Minutes 10) `
     -MultipleInstances IgnoreNew
-
 $principal = New-ScheduledTaskPrincipal `
     -UserId    $env:USERNAME `
     -LogonType Interactive `
@@ -274,19 +357,15 @@ Register-ScheduledTask `
 
 Write-Ok "Scheduled Task '$TaskName' created -- auto-starts at next login"
 
-# -- Step 9: CLI wrapper ------------------------------------------------------
+# -- Step 11: CLI wrapper -----------------------------------------------------
 
 Write-Step "Installing kiri CLI wrapper..."
 
 New-Item -ItemType Directory -Path $WrapperDir -Force | Out-Null
 
-# The wrapper delegates all kiri commands into the running container.
-# Variables prefixed with backtick-dollar are literal in the output file;
-# $KiriDir is expanded now (installer bakes the repo path in).
 $wrapperContent = @"
-# kiri.ps1 -- generated by the Kiri installer. Do not edit manually.
+# kiri.ps1 -- generated by Kiri installer. Do not edit manually.
 `$kiriDir = "$KiriDir"
-`$compose = "compose --project-directory ``"``$kiriDir``""
 `$running = docker compose --project-directory "``$kiriDir" ps --services --filter status=running 2>`$null |
     Select-String "^kiri`$"
 if (-not `$running) {
@@ -298,12 +377,10 @@ docker compose --project-directory "``$kiriDir" exec kiri kiri @args
 
 Set-Content -Path $WrapperPath -Value $wrapperContent -Encoding UTF8
 
-# Add wrapper dir to user PATH if missing
 $userPath = [System.Environment]::GetEnvironmentVariable("PATH", "User")
 if ($userPath -notlike "*$WrapperDir*") {
-    [System.Environment]::SetEnvironmentVariable("PATH", "$WrapperDir;$userPath", "User")
-    $env:PATH = "$WrapperDir;$env:PATH"
-    Write-Ok "Added $WrapperDir to user PATH"
+    Set-UserEnv "PATH" "$WrapperDir;$userPath"
+    Write-Ok "Added $WrapperDir to PATH"
 } else {
     Write-Ok "PATH already contains $WrapperDir"
 }
@@ -321,20 +398,43 @@ Write-Host ""
 Write-Host "  Gateway :  http://localhost:8765" -ForegroundColor White
 Write-Host "  Your key:  $KiriKey"             -ForegroundColor White
 Write-Host ""
+
+# Tool-specific next steps
 Write-Host "  Next steps:" -ForegroundColor Yellow
 Write-Host ""
-Write-Host "  1. Set ANTHROPIC_API_KEY to your Kiri key (not the Anthropic key):" -ForegroundColor Yellow
-Write-Host "     Open a new terminal and run:" -ForegroundColor DarkGray
-Write-Host "     [Environment]::SetEnvironmentVariable('ANTHROPIC_API_KEY','$KiriKey','User')" -ForegroundColor DarkGray
+
+if ($configureClaude) {
+    Write-Host "  Claude Code" -ForegroundColor Cyan
+    Write-Host "  -----------" -ForegroundColor DarkGray
+    Write-Host "  Set ANTHROPIC_API_KEY to your Kiri key (not the Anthropic key):" -ForegroundColor White
+    Write-Host "  [Environment]::SetEnvironmentVariable('ANTHROPIC_API_KEY','$KiriKey','User')" -ForegroundColor DarkGray
+    Write-Host ""
+}
+
+if ($configureOpenAI) {
+    Write-Host "  Cursor / Windsurf" -ForegroundColor Cyan
+    Write-Host "  -----------------" -ForegroundColor DarkGray
+    Write-Host "  1. Open Settings" -ForegroundColor White
+    Write-Host "  2. Search for 'OpenAI API Key' or 'Model provider'" -ForegroundColor White
+    Write-Host "  3. Set API Key to: $KiriKey" -ForegroundColor White
+    Write-Host "  4. Set Base URL to: http://localhost:8765" -ForegroundColor White
+    Write-Host ""
+    Write-Host "  OPENAI_BASE_URL and OPENAI_API_BASE are already set in your registry." -ForegroundColor DarkGray
+    Write-Host "  Restart Cursor / Windsurf to pick them up." -ForegroundColor DarkGray
+    Write-Host ""
+}
+
+if (-not $configureClaude -and -not $configureOpenAI) {
+    Write-Host "  You chose manual configuration. Point your tool at:" -ForegroundColor White
+    Write-Host "  Base URL : http://localhost:8765" -ForegroundColor DarkGray
+    Write-Host "  API key  : $KiriKey" -ForegroundColor DarkGray
+    Write-Host ""
+}
+
+Write-Host "  Common commands:" -ForegroundColor DarkGray
+Write-Host "     kiri add @MyClass       -- protect a symbol" -ForegroundColor DarkGray
+Write-Host "     kiri status             -- show what is protected" -ForegroundColor DarkGray
+Write-Host "     kiri log --tail 20      -- recent decisions" -ForegroundColor DarkGray
 Write-Host ""
-Write-Host "  2. Restart open terminals to pick up ANTHROPIC_BASE_URL." -ForegroundColor Yellow
-Write-Host ""
-Write-Host "  3. Add your first protection:" -ForegroundColor Yellow
-Write-Host "     kiri add @MyClass" -ForegroundColor DarkGray
-Write-Host "     kiri add src\engine\core.py" -ForegroundColor DarkGray
-Write-Host ""
-Write-Host "  Useful commands:" -ForegroundColor DarkGray
-Write-Host "     kiri status                    -- what is protected" -ForegroundColor DarkGray
-Write-Host "     kiri inspect ""explain MyClass"" -- test a prompt" -ForegroundColor DarkGray
-Write-Host "     kiri log --tail 20             -- recent decisions" -ForegroundColor DarkGray
+Write-Host "  To uninstall: .\install\windows\uninstall.ps1" -ForegroundColor DarkGray
 Write-Host ""
