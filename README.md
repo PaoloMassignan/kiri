@@ -1,4 +1,4 @@
-﻿# Kiri
+# Kiri
 
 **Use AI coding tools at full power — without sending your code to the cloud.**
 
@@ -6,8 +6,8 @@ Kiri is an on-premises proxy that sits between your AI coding tools and the clou
 
 Works for a single developer or an entire team:
 
-- **Single developer** — install the CLI, run `kiri serve` from your project directory, done. The quick start below covers this path end-to-end in under 15 minutes.
-- **Team deployment** — run Kiri as a shared Docker service; each developer points their tools at the gateway and gets a personal `kr-` key. See [docs/guides/quickstart.md](docs/guides/quickstart.md) for the full team setup.
+- **Single developer** — run the one-line installer, done in under 10 minutes.
+- **Team** — deploy Kiri as a shared Docker service; each developer gets a personal `kr-` key and connects with a single command. No changes to their existing tools.
 
 > Built with Claude for Claude. Kiri was developed using Claude Code — a deliberate choice: we used the tool we're protecting against to build the protection itself.
 
@@ -18,181 +18,63 @@ Works for a single developer or an entire team:
   - Anthropic (`sk-ant-...`) from [console.anthropic.com](https://console.anthropic.com)
   - OpenAI (`sk-...`) from [platform.openai.com](https://platform.openai.com) — only if you use GPT models via Cursor or similar tools
 
-
 ## Installation
-
-Clone the repository, then run the one-line installer for your OS.
-The installer handles Docker, keys, autostart, and tool configuration automatically.
 
 ### macOS
 
 ```bash
-git clone https://github.com/PaoloMassignan/AI-Layer
-cd AI-Layer
+git clone https://github.com/PaoloMassignan/kiri
+cd kiri
 ./install/macos/install.sh
 ```
 
 ### Windows (PowerShell)
 
 ```powershell
-git clone https://github.com/PaoloMassignan/AI-Layer
-cd AI-Layer
+git clone https://github.com/PaoloMassignan/kiri
+cd kiri
 .\install\windows\install.ps1
 ```
 
-The installer will ask for your Anthropic key, which tool you use (Claude Code, Cursor, or both), then set everything up — Docker stack, autostart, environment variables, and a `kiri` CLI wrapper.
+The installer asks for your API key and which tool you use (Claude Code, Cursor, or both), then handles everything: Docker stack, autostart at login, environment variables, and a `kiri` CLI wrapper.
 
-### Joining a team gateway
-
-If your admin has already deployed a shared Kiri gateway, you only need to configure your machine to point at it — no Docker required:
-
-```bash
-# macOS
-./install/macos/connect.sh
-
-# Windows
-.\install\windows\connect.ps1
-```
-
-The script asks for the gateway URL and your personal `kr-` key (issued by your admin), then sets the right environment variables.
-
-### To uninstall
-
-```bash
-# macOS
-./install/macos/uninstall.sh           # keeps .kiri/ data
-./install/macos/uninstall.sh --purge-data
-
-# Windows
-.\install\windows\uninstall.ps1        # keeps .kiri\ data
-.\install\windows\uninstall.ps1 -PurgeData
-```
-
----
-
-## Quick start (manual / Linux)
-
-If you prefer a manual setup or are on Linux:
+### Linux
 
 ```bash
 pip install --user pipx && python3 -m pipx ensurepath
 # reopen terminal, then:
 pipx install --editable ./kiri
-```
 
-Store your upstream key and start the gateway:
-
-```bash
 mkdir -p .kiri
 echo "sk-ant-YOUR-KEY" > .kiri/upstream.key
 kiri key create    # → kr-AbCdEfGhIjKlMnOpQrSt12
 kiri serve
 ```
 
-Point your tool at the gateway:
+A dedicated Linux installer is on the roadmap. For Docker deployment on Linux see [docs/guides/quickstart.md](docs/guides/quickstart.md).
+
+### Joining a team gateway
+
+If your admin has already deployed a shared Kiri gateway:
 
 ```bash
-export ANTHROPIC_BASE_URL=http://localhost:8765
-export ANTHROPIC_API_KEY=kr-AbCdEfGhIjKlMnOpQrSt12
+./install/macos/connect.sh    # macOS
+.\install\windows\connect.ps1 # Windows
 ```
 
-For the full walkthrough — Docker deployment, key management, IDE integration — see **[docs/guides/quickstart.md](docs/guides/quickstart.md)**.
+The script asks for the gateway URL and your personal `kr-` key, then sets the right environment variables. No Docker required.
 
-## Connect your AI coding tools
-
-Point your tool at the gateway by changing one or two environment variables. The real key stays on your machine.
-
-### Claude Code
+### Uninstall
 
 ```bash
-export ANTHROPIC_BASE_URL=http://localhost:8765
-export ANTHROPIC_API_KEY=kr-your-key-here
+./install/macos/uninstall.sh           # macOS — keeps .kiri/ data
+./install/macos/uninstall.sh --purge-data
+
+.\install\windows\uninstall.ps1        # Windows — keeps .kiri\ data
+.\install\windows\uninstall.ps1 -PurgeData
 ```
 
-### Cursor / VS Code (.env)
-
-```
-ANTHROPIC_BASE_URL=http://localhost:8765
-ANTHROPIC_API_KEY=kr-your-key-here
-```
-
-### OpenCode
-
-Install OpenCode if you haven't already:
-
-```bash
-npm install -g opencode-ai
-```
-
-Create `opencode.json` in your **project root** (not inside the `kiri/` repo):
-
-```json
-{
-  "model": "kiri/claude-sonnet-4-6",
-  "provider": {
-    "kiri": {
-      "name": "Kiri Gateway",
-      "npm": "@ai-sdk/anthropic",
-      "options": {
-        "baseURL": "http://localhost:8765",
-        "apiKey": "kr-your-key-here"
-      },
-      "models": { "claude-sonnet-4-6": { "context": 200000 } }
-    }
-  }
-}
-```
-
-Then run `opencode` from that directory. If `opencode` is not found after install, run `npx opencode@latest` instead.
-
-### Codex CLI (OpenAI endpoint)
-
-```bash
-export OPENAI_BASE_URL=http://localhost:8765/v1
-export OPENAI_API_KEY=kr-your-key-here
-```
-
-The gateway routes `/v1/messages` → Anthropic and `/v1/chat/completions` → OpenAI automatically. You only need the upstream key for the provider you use.
-
-See **[§7 of the quickstart](docs/guides/quickstart.md#7-connect-your-ai-coding-tools)** for Cline, Continue.dev, and Windows PowerShell instructions.
-
-## Tool compatibility
-
-Kiri works with any tool that lets you set a custom base URL and accepts a standard API key. Tools with hardcoded endpoints or OAuth-based authentication cannot be redirected through the gateway.
-
-| Tool | Status | Notes |
-|------|--------|-------|
-| Claude Code (API key) | ✅ Supported | Set `ANTHROPIC_BASE_URL` + `ANTHROPIC_API_KEY=kr-...` |
-| Cursor | ✅ Supported | Set base URL and API key in Settings |
-| Windsurf | ✅ Supported | Set base URL and API key in Settings |
-| Cline | ✅ Supported | Configure provider URL in extension settings |
-| Continue.dev | ✅ Supported | Configure provider URL in config.json |
-| OpenCode | ✅ Supported | See configuration above |
-| Codex CLI | ✅ Supported | Set `OPENAI_BASE_URL` |
-| Claude Pro / Max | ❌ Not supported | Uses OAuth session tokens instead of API keys. Roadmap. |
-| GitHub Copilot | ❌ Not supported | Endpoint is hardcoded — cannot be redirected to a custom gateway. |
-| AWS Bedrock | ❌ Not supported | Uses IAM credentials, not API keys. |
-| Azure OpenAI | ⚠️ Untested | Custom endpoints are configurable in principle but not validated. |
-
-The general rule: if the tool has a "base URL" or "API endpoint" setting and accepts a Bearer token, it will work with Kiri.
-
-## Audit log
-
-After traffic flows through the gateway you can inspect what was filtered:
-
-```bash
-# Show the last 10 decisions
-kiri log --tail 10
-
-# Show only REDACT entries
-kiri log --decision REDACT --since today
-
-# Explain why the last request was filtered
-kiri explain
-
-# Show the full prompt as forwarded to the LLM (with stubs replacing protected code)
-kiri explain --show-redacted
-```
+---
 
 ## How it works
 
@@ -200,21 +82,81 @@ Every outgoing LLM call passes through three filter levels:
 
 | Level | Check | Action |
 |-------|-------|--------|
+| L2 | Whole-word symbol match (always active) | REDACT |
 | L1 | Vector similarity (ChromaDB cosine ≥ 0.90) | REDACT |
-| L2 | Whole-word symbol match | REDACT |
-| L3 | Ollama classifier (`qwen2.5:3b`), grace zone only | BLOCK if extraction intent, else REDACT |
+| L3 | Ollama classifier (`qwen2.5:3b`), grace zone 0.75–0.90 | BLOCK if extraction intent, else REDACT |
 
-`REDACT` strips protected function bodies and replaces them with a stub comment before forwarding — the developer still gets a useful response. `BLOCK` (HTTP 403) is reserved for when L3 detects explicit intent to extract IP.
+`REDACT` strips protected function bodies and replaces them with a stub comment before forwarding — the developer still gets a useful response. `BLOCK` (HTTP 403) is reserved for when L3 detects explicit intent to extract IP. L2 is always active regardless of L1/L3 availability.
+
+## Connect your AI coding tools
+
+Point your tool at the gateway with two environment variables. The real upstream key stays inside the Docker container and is never exposed.
+
+**Claude Code**
+```bash
+export ANTHROPIC_BASE_URL=http://localhost:8765
+export ANTHROPIC_API_KEY=kr-your-key-here
+```
+
+**Cursor / Windsurf / Cline / Continue.dev** — set base URL and API key in each tool's settings panel.
+
+**OpenCode** — create `opencode.json` in your project root:
+```json
+{
+  "model": "kiri/claude-sonnet-4-6",
+  "provider": {
+    "kiri": {
+      "npm": "@ai-sdk/anthropic",
+      "options": { "baseURL": "http://localhost:8765", "apiKey": "kr-your-key-here" },
+      "models": { "claude-sonnet-4-6": { "context": 200000 } }
+    }
+  }
+}
+```
+
+**Codex CLI / OpenAI-compatible tools**
+```bash
+export OPENAI_BASE_URL=http://localhost:8765/v1
+export OPENAI_API_KEY=kr-your-key-here
+```
+
+The gateway routes `/v1/messages` → Anthropic and `/v1/chat/completions` → OpenAI automatically.
+
+## Tool compatibility
+
+| Tool | Status | Notes |
+|------|--------|-------|
+| Claude Code (API key) | ✅ Supported | |
+| Cursor | ✅ Supported | |
+| Windsurf | ✅ Supported | |
+| Cline | ✅ Supported | |
+| Continue.dev | ✅ Supported | |
+| OpenCode | ✅ Supported | |
+| Codex CLI | ✅ Supported | |
+| Claude Pro / Max | ❌ Not supported | OAuth session tokens — roadmap |
+| GitHub Copilot | ❌ Not supported | Hardcoded endpoint, cannot be redirected |
+| AWS Bedrock | ❌ Not supported | IAM credentials, not API keys |
+| Azure OpenAI | ⚠️ Untested | Configurable in principle, not validated |
+
+The general rule: if the tool has a "base URL" setting and accepts a Bearer token, it works with Kiri.
+
+## Audit log
+
+```bash
+kiri log --tail 10                        # last 10 decisions
+kiri log --decision REDACT --since today  # today's redactions
+kiri explain                              # why the last request was filtered
+kiri explain --show-redacted              # full forwarded prompt with stubs
+```
 
 ## Repository layout
 
 | Directory | Contents |
 |-----------|----------|
 | [`kiri/`](kiri/) | Production implementation — FastAPI proxy, filter pipeline, CLI, tests |
-| [`kiri/tests/fixtures/`](kiri/tests/fixtures/) | Test corpus — synthetic codebases used by security and integration tests |
 | [`install/windows/`](install/windows/) | Windows installer (`install.ps1`, `connect.ps1`, `uninstall.ps1`, `disconnect.ps1`) |
 | [`install/macos/`](install/macos/) | macOS installer (`install.sh`, `connect.sh`, `uninstall.sh`, `disconnect.sh`) |
-| [`docs/`](docs/) | All documentation: requirements (EARS), user stories, ADRs, SDD, diagrams |
+| [`docs/`](docs/) | Requirements (EARS), user stories, ADRs, SDD, diagrams |
 | [`benchmarks/`](benchmarks/) | Evaluation datasets and benchmark runners |
 
-For CLI reference, audit log, key management, and advanced configuration see [`kiri/CLAUDE.md`](kiri/CLAUDE.md).
+For CLI reference, key management, and advanced configuration see [`kiri/CLAUDE.md`](kiri/CLAUDE.md).
