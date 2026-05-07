@@ -87,11 +87,11 @@ Every outgoing LLM call passes through three filter levels:
 
 | Level | Check | Action |
 |-------|-------|--------|
-| L2 | Whole-word symbol match (always active) | REDACT |
 | L1 | Vector similarity (ChromaDB cosine ≥ 0.90) | REDACT |
+| L2 | Whole-word symbol match (always active — even when L1/L3 unavailable) | REDACT |
 | L3 | Ollama classifier (`qwen2.5:3b`), grace zone 0.75–0.90 | BLOCK if extraction intent, else REDACT |
 
-`REDACT` strips protected function bodies and replaces them with a stub comment before forwarding — the developer still gets a useful response. `BLOCK` (HTTP 403) is reserved for when L3 detects explicit intent to extract IP. L2 is always active regardless of L1/L3 availability.
+`REDACT` strips protected function bodies and replaces them with a stub comment before forwarding — the developer still gets a useful response. `BLOCK` (HTTP 403) is reserved for when L3 detects explicit intent to extract IP.
 
 ## Connect your AI coding tools
 

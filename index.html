@@ -386,8 +386,8 @@
         <div class="arch-proxy">
           <div class="arch-proxy-title">Kiri Proxy <span class="arch-port">:8765</span></div>
           <div class="arch-filters">
-            <div class="arch-filter arch-l2">L2 — symbol match</div>
             <div class="arch-filter arch-l1">L1 — vector similarity</div>
+            <div class="arch-filter arch-l2">L2 — symbol match</div>
             <div class="arch-filter arch-l3">L3 — intent classifier</div>
           </div>
           <div class="arch-models">
@@ -423,15 +423,15 @@
     <p class="lead">Every outgoing LLM call passes through three independent checks, each catching a different class of leak — from exact symbol names to semantic code similarity to explicit extraction intent.</p>
     <div class="pipeline">
       <div class="pipe-card">
-        <div class="pipe-level">L2 — always active</div>
-        <h3>Symbol matching</h3>
-        <p>Word-boundary regex against your protected symbol list. Catches any prompt that names a protected class or function verbatim. Never fails silently — active even when L1 and L3 are unavailable.</p>
-        <span class="badge badge-redact">REDACT</span>
-      </div>
-      <div class="pipe-card">
         <div class="pipe-level">L1 — semantic</div>
         <h3>Vector similarity</h3>
         <p>Your source is indexed with <code>all-MiniLM-L6-v2</code> and stored in a local ChromaDB. Cosine similarity ≥ 0.90 triggers redaction even when class names are renamed or code is partially pasted.</p>
+        <span class="badge badge-redact">REDACT</span>
+      </div>
+      <div class="pipe-card">
+        <div class="pipe-level">L2 — always active</div>
+        <h3>Symbol matching</h3>
+        <p>Word-boundary regex against your protected symbol list. Catches any prompt that names a protected class or function verbatim. Never fails silently — active even when L1 and L3 are unavailable.</p>
         <span class="badge badge-redact">REDACT</span>
       </div>
       <div class="pipe-card">

@@ -214,9 +214,9 @@ Every outgoing LLM call passes through three levels:
 
 | Level | Check | Action |
 |-------|-------|--------|
-| L2 | Whole-word symbol match (always) | REDACT |
 | L1 | Vector similarity ≥ 0.90 | REDACT |
 | L1 | Vector similarity < 0.75 | PASS |
+| L2 | Whole-word symbol match (always — even when L1/L3 unavailable) | REDACT |
 | L3 | Ollama classifier, grace zone 0.75–0.90 | BLOCK if `extract_ip`, else REDACT |
 
 A `REDACT` decision replaces protected function bodies with a stub comment before
