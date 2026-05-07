@@ -31,6 +31,10 @@ class Settings(BaseModel):
     audit_backup_count: int = 5               # keep up to 5 rotated files
     rate_limit_rpm: int = 0                   # requests/minute per key; 0 = disabled
     ollama_timeout_seconds: float = 10.0      # L3 classifier request timeout
+    # When True, requests carrying an Anthropic sk-ant- token are accepted and
+    # forwarded with the original token. Bypass-prevention does not apply.
+    # See REQ-S-010 and US-16.
+    oauth_passthrough: bool = False
 
     @field_validator("similarity_threshold", "hard_block_threshold")
     @classmethod

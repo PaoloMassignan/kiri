@@ -85,6 +85,10 @@ class KeyManager:
             return True
         return datetime.fromisoformat(expires_at) > datetime.now(tz=UTC)
 
+    def is_oauth_token(self, key: str) -> bool:
+        """Return True if key is an Anthropic token (sk-ant- prefix), not a kr- key."""
+        return key.startswith("sk-ant-")
+
     def get_upstream_key(self, protocol: str = "anthropic") -> str:
         # Prefer Docker secret (not visible via `docker inspect`)
         secret_name = _PROTOCOL_SECRET.get(protocol, "anthropic_key")

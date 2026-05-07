@@ -14,11 +14,40 @@ WHEN the gateway receives a request,
 the gateway SHALL reject the request with HTTP 401
 if the Authorization header does not contain a valid, non-expired kr- key.
 
-The gateway SHALL NOT accept Anthropic sk-ant- keys directly from clients.
+The gateway SHALL NOT accept Anthropic sk-ant- keys directly from clients
+UNLESS oauth_passthrough is set to true in config.yaml (see REQ-S-010).
 ```
 
 **ADR:** [ADR-005](../adr/ADR-005-gateway-key-model.md)
 **Tests:** `tests/unit/test_key_manager.py`, `tests/unit/test_server.py`
+
+---
+
+## REQ-S-010: OAuth passthrough mode
+
+```
+WHEN oauth_passthrough is false (default),
+the gateway SHALL reject requests carrying an Anthropic sk-ant- token with HTTP 401.
+
+WHEN oauth_passthrough is true,
+the gateway SHALL accept requests carrying an Anthropic sk-ant- token,
+apply the full filter pipeline (L1/L2/L3),
+and forward the request to upstream using the original token unchanged.
+
+WHEN oauth_passthrough is true and the filter pipeline returns BLOCK,
+the gateway SHALL return the standard block response (HTTP 200 with permission_error body).
+
+WHEN oauth_passthrough is true,
+the gateway SHALL record key_id = "oauth-passthrough" in the audit log.
+
+The gateway SHALL continue to validate kr- keys normally regardless of oauth_passthrough.
+```
+
+**Rationale:** enables developers using Claude Pro/Max (OAuth, no static API key) to
+benefit from Kiri's filter pipeline. Bypass-prevention (dual-key model) does not apply
+in this mode — the developer holds the real upstream credential.
+**User story:** US-16
+**Tests:** `tests/unit/test_server.py`, `tests/unit/test_key_manager.py`
 
 ---
 

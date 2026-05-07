@@ -19,8 +19,9 @@ Each file describes one user story: actor, goal, acceptance criteria, and notes.
 | [US-11](US-11-openai-protocol.md) | OpenAI protocol (Cursor) | Implemented |
 | [US-12](US-12-rate-limiting.md) | Per-key rate limiting | Implemented |
 | [US-13](US-13-summary-management.md) | View and edit protection summaries | Implemented |
-| [US-14](US-14-directory-protection.md) | Protect a directory or glob pattern | Backlog |
-| [US-15](US-15-landing-page.md) | Public landing page | Backlog |
+| [US-14](US-14-directory-protection.md) | Protect a directory or glob pattern | Done |
+| [US-15](US-15-landing-page.md) | Public landing page | Done |
+| [US-16](US-16-oauth-support.md) | Claude Code OAuth passthrough (Pro/Max) | Done |
 
 ## Format
 

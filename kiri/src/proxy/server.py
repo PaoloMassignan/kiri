@@ -36,6 +36,7 @@ def create_app(
     audit_log: AuditLog | None = None,
     rate_limiter: RateLimiter | None = None,
     action: str = "sanitize",
+    oauth_passthrough: bool = False,
 ) -> FastAPI:
     app = FastAPI()
 
@@ -63,11 +64,24 @@ def create_app(
             if not auth.startswith("Bearer "):
                 return JSONResponse({"error": "unauthorized"}, status_code=401)
             key = auth.removeprefix("Bearer ")
-        if not key_manager.is_valid(key):
+
+        # Determine if this is an OAuth/Anthropic token in passthrough mode.
+        # In passthrough mode the original token is forwarded unchanged and
+        # the dual-key bypass-prevention guarantee does not apply (REQ-S-010).
+        is_passthrough = oauth_passthrough and key_manager.is_oauth_token(key)
+
+        if is_passthrough:
+            audit_key = "oauth-passthrough"
+        elif key_manager.is_oauth_token(key):
+            # OAuth token received but passthrough is disabled — reject as unauthorized
+            return JSONResponse({"error": "unauthorized"}, status_code=401)
+        elif not key_manager.is_valid(key):
             return JSONResponse({"error": "unauthorized"}, status_code=403)
+        else:
+            audit_key = key
 
         # 2. rate limiting (per key, after auth so we have a valid key)
-        if rate_limiter is not None:
+        if rate_limiter is not None and not is_passthrough:
             try:
                 rate_limiter.check(key)
             except RateLimitExceeded as exc:
@@ -113,7 +127,7 @@ def create_app(
                     redacted_prompt = redaction.redacted_prompt
 
             if audit_log is not None:
-                audit_log.record(result, prompt, key=key, redacted_prompt=redacted_prompt)
+                audit_log.record(result, prompt, key=audit_key, redacted_prompt=redacted_prompt)
 
             if result.decision == Decision.BLOCK:
                 return JSONResponse(
@@ -122,12 +136,16 @@ def create_app(
                 )
 
         # 4. get upstream key and forward
-        try:
-            upstream_key = key_manager.get_upstream_key(protocol=protocol)
-        except MissingUpstreamKeyError:
-            env_var = "OPENAI_API_KEY" if protocol == "openai" else "ANTHROPIC_API_KEY"
-            logger.error("proxy: %s not configured", env_var)
-            return JSONResponse({"error": "upstream key not configured"}, status_code=503)
+        # In passthrough mode the original token is the upstream credential.
+        if is_passthrough:
+            upstream_key = key
+        else:
+            try:
+                upstream_key = key_manager.get_upstream_key(protocol=protocol)
+            except MissingUpstreamKeyError:
+                env_var = "OPENAI_API_KEY" if protocol == "openai" else "ANTHROPIC_API_KEY"
+                logger.error("proxy: %s not configured", env_var)
+                return JSONResponse({"error": "upstream key not configured"}, status_code=503)
 
         try:
             return await forwarder.forward(

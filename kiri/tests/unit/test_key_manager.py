@@ -446,3 +446,54 @@ def test_zero_expires_in_days_creates_non_expiring_key(tmp_path: Path) -> None:
     assert km.is_valid(key) is True
     infos = km.list_key_infos()
     assert infos[0].expires_at is None
+
+
+# --- is_oauth_token -----------------------------------------------------------
+
+
+def test_is_oauth_token_true_for_oat01_prefix(tmp_path: Path) -> None:
+    from src.keys.manager import KeyManager
+
+    km = KeyManager(keys_dir=tmp_path)
+
+    assert km.is_oauth_token("sk-ant-oat01-abc123") is True
+
+
+def test_is_oauth_token_true_for_api03_prefix(tmp_path: Path) -> None:
+    from src.keys.manager import KeyManager
+
+    km = KeyManager(keys_dir=tmp_path)
+
+    assert km.is_oauth_token("sk-ant-api03-abc123") is True
+
+
+def test_is_oauth_token_true_for_any_sk_ant_prefix(tmp_path: Path) -> None:
+    from src.keys.manager import KeyManager
+
+    km = KeyManager(keys_dir=tmp_path)
+
+    assert km.is_oauth_token("sk-ant-anything") is True
+
+
+def test_is_oauth_token_false_for_kr_key(tmp_path: Path) -> None:
+    from src.keys.manager import KeyManager
+
+    km = KeyManager(keys_dir=tmp_path)
+
+    assert km.is_oauth_token("kr-abc123") is False
+
+
+def test_is_oauth_token_false_for_random_string(tmp_path: Path) -> None:
+    from src.keys.manager import KeyManager
+
+    km = KeyManager(keys_dir=tmp_path)
+
+    assert km.is_oauth_token("not-a-key") is False
+
+
+def test_is_oauth_token_false_for_empty_string(tmp_path: Path) -> None:
+    from src.keys.manager import KeyManager
+
+    km = KeyManager(keys_dir=tmp_path)
+
+    assert km.is_oauth_token("") is False

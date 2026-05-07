@@ -18,6 +18,9 @@ class FakeKeyManager:
     def is_valid(self, key: str) -> bool:
         return key in self._valid
 
+    def is_oauth_token(self, key: str) -> bool:
+        return key.startswith("sk-ant-")
+
     def get_upstream_key(self, protocol: str = "anthropic") -> str:
         if not self._upstream:
             raise MissingUpstreamKeyError("no key")
@@ -56,6 +59,7 @@ def make_client(
     reason: str = "below threshold",
     upstream: str = "sk-ant-real",
     forwarder: FakeForwarder | None = None,
+    oauth_passthrough: bool = False,
 ) -> httpx.AsyncClient:
     from src.proxy.server import create_app
 
@@ -66,6 +70,7 @@ def make_client(
         key_manager=km,  # type: ignore[arg-type]
         pipeline=pipeline,  # type: ignore[arg-type]
         forwarder=fwd,  # type: ignore[arg-type]
+        oauth_passthrough=oauth_passthrough,
     )
     transport = httpx.ASGITransport(app=app)  # type: ignore[arg-type]
     return httpx.AsyncClient(transport=transport, base_url="http://testserver")
@@ -313,3 +318,92 @@ async def test_size_limit_checked_before_auth() -> None:
         )
 
     assert response.status_code == 413
+
+
+# --- OAuth passthrough --------------------------------------------------------
+
+
+@pytest.mark.asyncio
+async def test_oauth_token_rejected_when_passthrough_disabled() -> None:
+    """sk-ant- tokens must be rejected with 401 when oauth_passthrough is off."""
+    async with make_client(oauth_passthrough=False) as client:
+        response = await client.post(
+            "/v1/messages",
+            content=_VALID_BODY,
+            headers={"Authorization": "Bearer sk-ant-oat01-token"},
+        )
+
+    assert response.status_code == 401
+
+
+@pytest.mark.asyncio
+async def test_oauth_oat01_token_accepted_when_passthrough_enabled() -> None:
+    """sk-ant-oat01- token must pass through and reach the forwarder."""
+    fwd = FakeForwarder()
+    async with make_client(oauth_passthrough=True, forwarder=fwd) as client:
+        response = await client.post(
+            "/v1/messages",
+            content=_VALID_BODY,
+            headers={"Authorization": "Bearer sk-ant-oat01-mytoken"},
+        )
+
+    assert response.status_code == 200
+
+
+@pytest.mark.asyncio
+async def test_oauth_api03_token_accepted_when_passthrough_enabled() -> None:
+    """sk-ant-api03- token must also pass through (API key used directly)."""
+    fwd = FakeForwarder()
+    async with make_client(oauth_passthrough=True, forwarder=fwd) as client:
+        response = await client.post(
+            "/v1/messages",
+            content=_VALID_BODY,
+            headers={"Authorization": "Bearer sk-ant-api03-mytoken"},
+        )
+
+    assert response.status_code == 200
+
+
+@pytest.mark.asyncio
+async def test_oauth_passthrough_forwards_original_token() -> None:
+    """Forwarder must receive the original OAuth token, not the upstream key."""
+    fwd = FakeForwarder()
+    async with make_client(oauth_passthrough=True, forwarder=fwd) as client:
+        await client.post(
+            "/v1/messages",
+            content=_VALID_BODY,
+            headers={"Authorization": "Bearer sk-ant-oat01-mytoken"},
+        )
+
+    assert fwd.forwarded_key == "sk-ant-oat01-mytoken"
+
+
+@pytest.mark.asyncio
+async def test_oauth_passthrough_runs_filter_pipeline_and_blocks() -> None:
+    """Filter pipeline must run on OAuth passthrough requests; BLOCK is enforced."""
+    fwd = FakeForwarder()
+    async with make_client(
+        oauth_passthrough=True, decision=Decision.BLOCK, reason="symbol match: Foo", forwarder=fwd
+    ) as client:
+        response = await client.post(
+            "/v1/messages",
+            content=_VALID_BODY,
+            headers={"Authorization": "Bearer sk-ant-oat01-mytoken"},
+        )
+
+    assert response.status_code == 403
+    assert "Foo" in response.json()["reason"]
+
+
+@pytest.mark.asyncio
+async def test_kr_key_still_valid_when_passthrough_enabled() -> None:
+    """Existing kr- key auth must work normally when oauth_passthrough is enabled."""
+    fwd = FakeForwarder()
+    async with make_client(oauth_passthrough=True, forwarder=fwd) as client:
+        response = await client.post(
+            "/v1/messages",
+            content=_VALID_BODY,
+            headers={"Authorization": "Bearer kr-valid"},
+        )
+
+    assert response.status_code == 200

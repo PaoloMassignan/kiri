@@ -14,7 +14,7 @@ AI-Layer/   ← Kiri repository
 ├── kiri/            ← production implementation (FastAPI proxy + filter pipeline)
 │   ├── CLAUDE.md      ← gateway management commands (kiri add/rm/status/inspect)
 │   ├── src/           ← source code
-│   └── tests/         ← 581 passing tests
+│   └── tests/         ← 593 passing tests
 │
 ├── docs/
 │   ├── requirements/  ← EARS-formatted requirements (REQ-F, REQ-S, REQ-NF)

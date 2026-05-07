@@ -51,7 +51,7 @@ class Forwarder:
             for k, v in request.headers.items()
             if k.lower() not in _HOP_BY_HOP and k.lower() not in _STRIP_AUTH
         }
-        if protocol == "openai":
+        if protocol == "openai" or upstream_key.startswith("sk-ant-oat01-"):
             headers["authorization"] = f"Bearer {upstream_key}"
         else:
             headers["x-api-key"] = upstream_key

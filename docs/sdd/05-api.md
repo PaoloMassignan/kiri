@@ -11,6 +11,17 @@ talking to a proxy.
 All endpoints require an `Authorization: Bearer kr-xxx` header.
 An invalid or expired `kr-` key returns HTTP 401.
 
+**OAuth passthrough mode** (`oauth_passthrough: true` in `.kiri/config.yaml`):
+Requests carrying an Anthropic token (`sk-ant-` prefix) are also accepted. The
+gateway runs the full filter pipeline and forwards the request with the original
+token unchanged. The dual-key bypass-prevention guarantee does not apply in this mode.
+Intended for Claude Code users authenticated via Claude Pro/Max (OAuth).
+
+```yaml
+# .kiri/config.yaml
+oauth_passthrough: true   # default: false
+```
+
 ---
 
 ### POST /v1/messages (Anthropic)
