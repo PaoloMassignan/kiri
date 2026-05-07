@@ -59,6 +59,7 @@ class TestSummaryStoreMetadata:
     def test_old_string_format_migrated_on_load(self, tmp_path):
         """Entries stored as plain strings (pre-v0.2) are auto-migrated."""
         import json
+
         from src.store.summary_store import SummaryStore
         # Write old format directly
         (tmp_path / "summaries.json").write_text(
