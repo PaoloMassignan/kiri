@@ -148,7 +148,7 @@ class KeyManager:
     def _load_raw(self) -> dict[str, dict[str, str | None]]:
         if not self._key_file.exists():
             return {}
-        content = json.loads(self._key_file.read_text(encoding="utf-8"))
+        content = json.loads(self._key_file.read_text(encoding="utf-8-sig"))
         # Migrate from old format (JSON array of strings)
         if isinstance(content, list):
             return {k: {"created_at": "", "expires_at": None} for k in content}
