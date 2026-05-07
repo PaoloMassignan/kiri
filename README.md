@@ -18,6 +18,11 @@ Works for a single developer or an entire team:
 
 For the Docker deployment path: Docker Desktop (see [quickstart](docs/guides/quickstart.md)).
 
+> **Note — Claude Code subscription (Max plan):** Kiri currently requires a standard
+> Anthropic API key (`sk-ant-...`). The OAuth-based session token used by Claude Code
+> Max subscriptions is not yet supported. Subscription support is on the roadmap.
+> For now, a paid API account at [console.anthropic.com](https://console.anthropic.com) is required.
+
 ## Quick start
 
 **1. Install**
@@ -122,6 +127,9 @@ Point your tool at the gateway by changing one or two environment variables. The
 export ANTHROPIC_BASE_URL=http://localhost:8765
 export ANTHROPIC_API_KEY=kr-your-key-here
 ```
+
+> **Requires an Anthropic API key** (`sk-ant-...`). Claude Code Max subscriptions
+> (OAuth-based auth) are not yet supported — see note in Prerequisites above.
 
 ### Cursor / VS Code (.env)
 
