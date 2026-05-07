@@ -163,6 +163,26 @@ The gateway routes `/v1/messages` → Anthropic and `/v1/chat/completions` → O
 
 See **[§7 of the quickstart](docs/guides/quickstart.md#7-connect-your-ai-coding-tools)** for Cline, Continue.dev, and Windows PowerShell instructions.
 
+## Tool compatibility
+
+Kiri works with any tool that lets you set a custom base URL and accepts a standard API key. Tools with hardcoded endpoints or OAuth-based authentication cannot be redirected through the gateway.
+
+| Tool | Status | Notes |
+|------|--------|-------|
+| Claude Code (API key) | ✅ Supported | Set `ANTHROPIC_BASE_URL` + `ANTHROPIC_API_KEY=kr-...` |
+| Cursor | ✅ Supported | Set base URL and API key in Settings |
+| Windsurf | ✅ Supported | Set base URL and API key in Settings |
+| Cline | ✅ Supported | Configure provider URL in extension settings |
+| Continue.dev | ✅ Supported | Configure provider URL in config.json |
+| OpenCode | ✅ Supported | See configuration above |
+| Codex CLI | ✅ Supported | Set `OPENAI_BASE_URL` |
+| Claude Pro / Max | ❌ Not supported | Uses OAuth session tokens instead of API keys. Roadmap. |
+| GitHub Copilot | ❌ Not supported | Endpoint is hardcoded — cannot be redirected to a custom gateway. |
+| AWS Bedrock | ❌ Not supported | Uses IAM credentials, not API keys. |
+| Azure OpenAI | ⚠️ Untested | Custom endpoints are configurable in principle but not validated. |
+
+The general rule: if the tool has a "base URL" or "API endpoint" setting and accepts a Bearer token, it will work with Kiri.
+
 ## Audit log
 
 After traffic flows through the gateway you can inspect what was filtered:
