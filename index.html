@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Kiri — Transparent AI protection. Zero workflow changes.</title>
+  <title>Kiri — Stop AI coding tools from leaking proprietary code.</title>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -294,7 +294,7 @@
 <!-- ── Hero ── -->
 <div class="hero">
   <div class="container">
-    <h1>Transparent AI protection.<br><em>Zero changes to your workflow.</em></h1>
+    <h1>Stop AI coding tools from<br><em>leaking proprietary code.</em></h1>
     <p class="sub">Kiri is an on-premises proxy that intercepts every LLM call and strips proprietary source code before it reaches the cloud. Your code never leaves your machine — your tools work exactly as before.</p>
 
     <div class="tabs">
@@ -303,26 +303,27 @@
       <button class="tab-btn" onclick="showTab('linux')">Linux</button>
     </div>
     <div class="code-block" id="tab-mac">
-      <span class="c"># one-time setup</span><br>
-      git clone https://github.com/PaoloMassignan/kiri<br>
-      cd kiri<br>
-      <span class="hi">./install/macos/install.sh</span>
+      <span class="c">$ </span>git clone https://github.com/PaoloMassignan/kiri<br>
+      <span class="c">$ </span>cd kiri<br>
+      <span class="c">$ </span><span class="hi">./install/macos/install.sh</span><br>
+      <span class="c"># asks for your API key, sets up Docker + autostart</span>
     </div>
     <div class="code-block" id="tab-win" style="display:none">
-      <span class="c"># one-time setup (PowerShell)</span><br>
-      git clone https://github.com/PaoloMassignan/kiri<br>
-      cd kiri<br>
-      <span class="hi">.\install\windows\install.ps1</span>
+      <span class="c">PS&gt; </span>git clone https://github.com/PaoloMassignan/kiri<br>
+      <span class="c">PS&gt; </span>cd kiri<br>
+      <span class="c">PS&gt; </span><span class="hi">.\install\windows\install.ps1</span><br>
+      <span class="c"># asks for your API key, sets up Docker + autostart</span>
     </div>
     <div class="code-block" id="tab-linux" style="display:none">
-      <span class="c"># one-time setup — requires Docker Engine + Compose plugin</span><br>
-      git clone https://github.com/PaoloMassignan/kiri<br>
-      cd kiri<br>
-      <span class="hi">./install/linux/install.sh</span>
+      <span class="c">$ </span>git clone https://github.com/PaoloMassignan/kiri<br>
+      <span class="c">$ </span>cd kiri<br>
+      <span class="c">$ </span><span class="hi">./install/linux/install.sh</span><br>
+      <span class="c"># requires Docker Engine + Compose plugin</span>
     </div>
 
     <div class="hero-cta">
       <a class="btn btn-primary"   href="https://github.com/PaoloMassignan/kiri">Get started on GitHub</a>
+      <a class="btn btn-secondary" href="https://github.com/PaoloMassignan/kiri/blob/main/benchmarks/real-projects/HOW_TO_BENCHMARK.md">Run the benchmark on your own repo</a>
       <a class="btn btn-secondary" href="#how-it-works">How it works</a>
     </div>
   </div>
@@ -365,6 +366,16 @@
   <div class="container">
     <h2>Architecture</h2>
     <p class="section-sub">Kiri sits between your tools and the cloud. Source code is filtered locally — only clean prompts are forwarded.</p>
+
+    <div style="display:flex; align-items:center; justify-content:center; gap:12px; margin:28px 0 32px; font-size:14px; flex-wrap:wrap;">
+      <span style="background:var(--surface); border:1px solid var(--border); border-radius:6px; padding:6px 16px;">Your tool</span>
+      <span style="color:var(--muted)">→</span>
+      <span style="background:var(--surface); border:1px solid #58a6ff44; border-radius:6px; padding:6px 16px; color:#58a6ff; font-weight:600;">Kiri :8765</span>
+      <span style="color:var(--muted)">→</span>
+      <span style="background:var(--surface); border:1px solid var(--border); border-radius:6px; padding:6px 16px; color:var(--teal);">L1 · L2 · L3 filters</span>
+      <span style="color:var(--muted)">→</span>
+      <span style="background:var(--surface); border:1px solid var(--border); border-radius:6px; padding:6px 16px; color:var(--muted);">Cloud API</span>
+    </div>
 
     <div class="arch-diagram">
       <!-- Developer machine boundary -->
@@ -564,6 +575,7 @@
         </div>
       </div>
     </div>
+    <p style="margin-top:20px; font-size:14px; color:var(--muted); font-style:italic;">Kiri is not a DLP system. It protects developer workflows without breaking them.</p>
   </div>
 </section>
 
