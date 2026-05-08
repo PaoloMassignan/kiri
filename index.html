@@ -332,7 +332,7 @@
 <!-- ── Demo ── -->
 <div class="demo">
   <div class="container">
-    <h2>You ask. Kiri filters. Claude answers.</h2>
+    <h2>You ask. Kiri filters. Your AI answers.</h2>
     <p class="lead">The developer experience is unchanged. Protected function bodies are replaced with a stub — Claude still gives a useful response, but never sees your implementation.</p>
     <div class="terminal">
       <div class="term-bar">
@@ -366,16 +366,6 @@
   <div class="container">
     <h2>Architecture</h2>
     <p class="section-sub">Kiri sits between your tools and the cloud. Source code is filtered locally — only clean prompts are forwarded.</p>
-
-    <div style="display:flex; align-items:center; justify-content:center; gap:12px; margin:28px 0 32px; font-size:14px; flex-wrap:wrap;">
-      <span style="background:var(--surface); border:1px solid var(--border); border-radius:6px; padding:6px 16px;">Your tool</span>
-      <span style="color:var(--muted)">→</span>
-      <span style="background:var(--surface); border:1px solid #58a6ff44; border-radius:6px; padding:6px 16px; color:#58a6ff; font-weight:600;">Kiri :8765</span>
-      <span style="color:var(--muted)">→</span>
-      <span style="background:var(--surface); border:1px solid var(--border); border-radius:6px; padding:6px 16px; color:var(--teal);">L1 · L2 · L3 filters</span>
-      <span style="color:var(--muted)">→</span>
-      <span style="background:var(--surface); border:1px solid var(--border); border-radius:6px; padding:6px 16px; color:var(--muted);">Cloud API</span>
-    </div>
 
     <div class="arch-diagram">
       <!-- Developer machine boundary -->
