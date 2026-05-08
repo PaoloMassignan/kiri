@@ -46,7 +46,10 @@ cleanup() {
     fi
     # Stop Docker stack
     docker compose --project-directory "$KIRI_DIR" down --remove-orphans 2>/dev/null || true
-    rm -rf "$E2E_WORKSPACE"
+    # Docker writes files as root; use privileged removal and ignore failures
+    # (the CI runner is ephemeral — any leftover temp dirs are harmless).
+    docker run --rm -v "$E2E_WORKSPACE":/workspace alpine sh -c "rm -rf /workspace" 2>/dev/null || \
+        rm -rf "$E2E_WORKSPACE" 2>/dev/null || true
 }
 
 collect_artifacts() {
