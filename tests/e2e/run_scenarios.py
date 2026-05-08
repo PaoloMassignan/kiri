@@ -179,11 +179,12 @@ def run(
                     print(f"  WARN  {sid}  kiri add @{sym} failed: {exc}")
 
         if kiri_add_ok:
-            # Poll until first protected symbol appears in kiri status (max 15s)
-            first_symbol = protected_symbols[0] if protected_symbols else None
-            if first_symbol:
-                if not _wait_for_symbol(kiri_dir, first_symbol, timeout=15):
-                    print(f"  WARN  {sid}  symbol '{first_symbol}' not yet in kiri status after 15s")
+            # Poll until ALL protected symbols appear in kiri status (max 15s each).
+            # We wait for each symbol individually so that both the first and last
+            # registered symbol are confirmed committed before sending the request.
+            for sym in protected_symbols:
+                if not _wait_for_symbol(kiri_dir, sym, timeout=15):
+                    print(f"  WARN  {sid}  symbol '{sym}' not yet in kiri status after 15s")
 
             # Count payloads before the request
             before = _payload_count(payload_dir)
