@@ -100,7 +100,7 @@ export KIRI_STATE_HOST="$E2E_WORKSPACE/.kiri"
 # ── Installer ────────────────────────────────────────────────────────────────
 
 printf "\n[e2e] Running installer (--ci)...\n"
-"$REPO_ROOT/install/linux/install.sh" --ci --anthropic-key "$FAKE_KEY"
+bash "$REPO_ROOT/install/linux/install.sh" --ci --anthropic-key "$FAKE_KEY"
 
 # ── Kiri key ─────────────────────────────────────────────────────────────────
 
