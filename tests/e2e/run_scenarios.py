@@ -80,16 +80,21 @@ def _post(url: str, body: dict, key: str) -> tuple[int, dict]:
 
 
 def _wait_for_symbol(kiri_dir: str, symbol: str, timeout: int = 30) -> bool:
-    """Poll kiri status until the symbol appears (max timeout seconds)."""
+    """Poll kiri status until the @symbol entry appears (max timeout seconds).
+
+    Note: kiri status lists explicit @symbol entries under "Symbols".
+    File-extracted symbols are NOT listed by name — only @symbol entries are.
+    """
     deadline = time.time() + timeout
     while time.time() < deadline:
         try:
             out = _kiri_exec(kiri_dir, "status")
+            # @symbol entries show up as bare names in the status output
             if symbol in out:
                 return True
         except Exception:
             pass
-        time.sleep(2)
+        time.sleep(1)
     return False
 
 
@@ -142,16 +147,20 @@ def run(
 
         # Write source files to workspace so Kiri can index them
         workspace.mkdir(parents=True, exist_ok=True)
-        first_symbol: str | None = None
+        protected_symbols: list[str] = [
+            s["text"] for s in fixture.get("protected_symbols", [])
+        ]
         written_files: list[str] = []
         for sf in fixture.get("source_files", []):
             dest = workspace / sf["filename"]
             dest.write_text(sf["content"], encoding="utf-8")
             written_files.append(sf["filename"])
-        if fixture.get("protected_symbols"):
-            first_symbol = fixture["protected_symbols"][0]["text"]
 
-        # Register files with kiri
+        # Register files AND explicit symbols with kiri.
+        # `kiri add <file>` queues async indexing (L1 vectors + symbol extraction).
+        # `kiri add @Symbol` registers the symbol immediately in L2 — no embedding needed.
+        # Both are called so the E2E test verifies the kiri add CLI for both paths.
+        kiri_add_ok = True
         for filename in written_files:
             try:
                 _kiri_exec(kiri_dir, "add", filename)
@@ -159,12 +168,22 @@ def run(
                 print(f"  FAIL  {sid}  kiri add {filename} failed: {exc}")
                 failed += 1
                 failures.append(f"{sid}: kiri add failed: {exc}")
+                kiri_add_ok = False
                 break
-        else:
-            # Wait for symbol to appear in kiri status (max 20s)
+
+        if kiri_add_ok:
+            for sym in protected_symbols:
+                try:
+                    _kiri_exec(kiri_dir, "add", f"@{sym}")
+                except Exception as exc:
+                    print(f"  WARN  {sid}  kiri add @{sym} failed: {exc}")
+
+        if kiri_add_ok:
+            # Poll until first protected symbol appears in kiri status (max 15s)
+            first_symbol = protected_symbols[0] if protected_symbols else None
             if first_symbol:
-                if not _wait_for_symbol(kiri_dir, first_symbol, timeout=20):
-                    print(f"  WARN  {sid}  symbol '{first_symbol}' not yet in kiri status, proceeding anyway")
+                if not _wait_for_symbol(kiri_dir, first_symbol, timeout=15):
+                    print(f"  WARN  {sid}  symbol '{first_symbol}' not yet in kiri status after 15s")
 
             # Count payloads before the request
             before = _payload_count(payload_dir)
