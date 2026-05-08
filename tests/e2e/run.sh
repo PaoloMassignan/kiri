@@ -97,6 +97,17 @@ export COMPOSE_FILE="$KIRI_DIR/docker-compose.yml:$SCRIPT_DIR/docker-compose.e2e
 export WORKSPACE_HOST="$E2E_WORKSPACE"
 export KIRI_STATE_HOST="$E2E_WORKSPACE/.kiri"
 
+# ── Build kiri image from source ─────────────────────────────────────────────
+# Build before the installer so that `docker compose up -d` uses the locally
+# built image instead of the one currently published in the registry.  Without
+# this step, the E2E workflow and the "Publish Docker image" workflow run in
+# parallel and E2E always tests the *previous* release rather than the current
+# commit's code.
+
+printf "\n[e2e] Building kiri image from source...\n"
+docker compose --project-directory "$KIRI_DIR" build kiri
+printf "[e2e] Build complete.\n"
+
 # ── Installer ────────────────────────────────────────────────────────────────
 
 printf "\n[e2e] Running installer (--ci)...\n"
