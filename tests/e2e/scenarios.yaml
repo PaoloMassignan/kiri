@@ -1,0 +1,78 @@
+# E2E test scenarios — each entry maps to a case in benchmarks/real-projects/fixtures/.
+#
+# Fields:
+#   id          — unique scenario identifier
+#   fixture     — project name, must match a directory under benchmarks/real-projects/fixtures/
+#   case        — case id from fixture.cases[].id or fixture.hard_cases[].id
+#   suite       — "easy" (L2 only, default) or "full" (L1+L3 required)
+#   description — human-readable description
+#   assertions:
+#     expected_http      — expected HTTP status from Kiri (200 or 403)
+#     must_not_contain   — strings that must NOT appear in the forwarded payload
+#     must_contain_stub  — true: payload must contain "[PROTECTED:", false: must not
+
+scenarios:
+
+  # ── Python ──────────────────────────────────────────────────────────────────
+
+  - id: e2e-flask-redact
+    fixture: flask
+    case: flask-001
+    suite: easy
+    description: "Flask class body redacted — L2 symbol match on Flask/Scaffold"
+    assertions:
+      expected_http: 200
+      must_not_contain:
+        - "self.instance_path = instance_path"
+        - "t.Dict[str, t.Any]"
+      must_contain_stub: true
+
+  - id: e2e-flask-pass
+    fixture: flask
+    case: flask-004
+    suite: easy
+    description: "CLI question with no protected symbols — PASS, body unchanged"
+    assertions:
+      expected_http: 200
+      must_not_contain: []
+      must_contain_stub: false
+
+  - id: e2e-requests-redact
+    fixture: requests
+    case: requests-001
+    suite: easy
+    description: "HTTPAdapter body redacted — L2 symbol match on HTTPAdapter"
+    assertions:
+      expected_http: 200
+      must_not_contain:
+        - "Retry(0, read=False)"
+        - "self.poolmanager = PoolManager"
+      must_contain_stub: true
+
+  # ── JavaScript ───────────────────────────────────────────────────────────────
+
+  - id: e2e-express-redact
+    fixture: express
+    case: express-001
+    suite: easy
+    description: "Express Application.handle body redacted — brace-language redaction"
+    assertions:
+      expected_http: 200
+      must_not_contain:
+        - "finalhandler(req, res"
+        - "const stack = self.stack"
+      must_contain_stub: true
+
+  # ── Go ───────────────────────────────────────────────────────────────────────
+
+  - id: e2e-gin-redact
+    fixture: gin
+    case: gin-001
+    suite: easy
+    description: "Gin Engine struct literal redacted — brace-language redaction"
+    assertions:
+      expected_http: 200
+      must_not_contain:
+        - "RedirectTrailingSlash:"
+        - "HandleMethodNotAllowed:"
+      must_contain_stub: true

@@ -77,7 +77,7 @@ def create_gateway_app(settings: Settings | None = None) -> FastAPI:
         symbol_store=symbol_store,
     )
 
-    forwarder = Forwarder()
+    forwarder = Forwarder(openai_base=settings.openai_upstream_url)
 
     audit_log = AuditLog(
         log_path=settings.workspace / ".kiri" / "audit.log",

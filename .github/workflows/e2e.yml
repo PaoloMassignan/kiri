@@ -1,0 +1,98 @@
+name: E2E
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "kiri/**"
+      - "install/**"
+      - "tests/e2e/**"
+      - "benchmarks/real-projects/fixtures/**"
+      - ".github/workflows/e2e.yml"
+  pull_request:
+    paths:
+      - "kiri/**"
+      - "install/**"
+      - "tests/e2e/**"
+      - "benchmarks/real-projects/fixtures/**"
+      - ".github/workflows/e2e.yml"
+  schedule:
+    - cron: "0 3 * * *"   # nightly at 03:00 UTC
+  workflow_dispatch:
+    inputs:
+      suite:
+        description: "Test suite (easy = L2 only, full = L1+L3)"
+        required: false
+        default: "easy"
+        type: choice
+        options: [easy, full]
+
+jobs:
+
+  # ── PR / push: Linux, L2 suite, fast ───────────────────────────────────────
+  e2e-fast:
+    if: github.event_name != 'schedule'
+    name: E2E (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Run E2E suite
+        run: bash tests/e2e/run.sh --suite easy
+        env:
+          MOCK_PORT: "9999"
+          KIRI_PORT: "8765"
+
+      - name: Upload artifacts on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-artifacts-${{ matrix.os }}-${{ github.run_id }}
+          path: artifacts/
+          retention-days: 7
+
+  # ── Nightly: same test, explicit schedule trigger ──────────────────────────
+  e2e-nightly:
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    name: E2E nightly (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Run E2E suite
+        run: bash tests/e2e/run.sh --suite ${{ inputs.suite || 'easy' }}
+        env:
+          MOCK_PORT: "9999"
+          KIRI_PORT: "8765"
+
+      - name: Upload artifacts on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-nightly-${{ matrix.os }}-${{ github.run_id }}
+          path: artifacts/
+          retention-days: 14

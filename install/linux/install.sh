@@ -24,11 +24,13 @@ SERVICE_FILE="$SYSTEMD_DIR/$SERVICE_NAME.service"
 
 ANTHROPIC_KEY=""
 OPENAI_KEY=""
+CI_MODE=false
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --anthropic-key) ANTHROPIC_KEY="$2"; shift 2 ;;
         --openai-key)    OPENAI_KEY="$2";    shift 2 ;;
+        --ci)            CI_MODE=true; shift ;;
         *) printf "Unknown argument: %s\n" "$1" >&2; exit 1 ;;
     esac
 done
@@ -125,8 +127,12 @@ printf "  ${WHITE}[2] Cursor / Windsurf / OpenAI tools  (sets OPENAI_BASE_URL)${
 printf "  ${WHITE}[3] Both${NC}\n"
 printf "  ${GRAY}[4] None -- I will configure my tools manually${NC}\n"
 printf "\n"
-read -rp "  Choice [1-4, default: 1]: " tool_choice
-[[ -z "$tool_choice" || ! "$tool_choice" =~ ^[1-4]$ ]] && tool_choice="1"
+if [[ "$CI_MODE" == true ]]; then
+    tool_choice="4"
+else
+    read -rp "  Choice [1-4, default: 1]: " tool_choice
+    [[ -z "$tool_choice" || ! "$tool_choice" =~ ^[1-4]$ ]] && tool_choice="1"
+fi
 
 configure_claude=false
 configure_openai=false
@@ -243,8 +249,10 @@ write_ok "Stack started"
 
 write_step "Waiting for gateway health (up to 10 min for model download)..."
 
-if ! wait_for_gateway 600; then
-    write_warn "Gateway did not become healthy within 10 minutes."
+_gw_timeout=600
+[[ "$CI_MODE" == true ]] && _gw_timeout=60
+if ! wait_for_gateway "$_gw_timeout"; then
+    write_warn "Gateway did not become healthy within ${_gw_timeout}s."
     write_warn "The model may still be downloading. Check:"
     printf "\n      docker compose --project-directory \"%s\" logs ollama-pull -f\n\n" "$KIRI_DIR"
     write_warn "Re-run this installer once the model is ready."

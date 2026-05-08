@@ -1,0 +1,44 @@
+# Docker Compose override for E2E tests.
+#
+# Replaces the real Ollama stack with lightweight no-ops so Kiri starts
+# immediately without model downloads.  Injects ANTHROPIC_BASE_URL and
+# OPENAI_UPSTREAM_URL so all upstream traffic is redirected to the mock LLM
+# running on the host at port 9999.
+#
+# Usage (set COMPOSE_FILE before calling the installer or docker compose):
+#   export COMPOSE_FILE="kiri/docker-compose.yml:tests/e2e/docker-compose.e2e.yml"
+
+services:
+
+  kiri:
+    environment:
+      # Redirect all upstream calls to the mock LLM on the host.
+      # ANTHROPIC_BASE_URL is read by src/proxy/forwarder.py.
+      # OPENAI_UPSTREAM_URL is loaded by Settings and passed to Forwarder.
+      - ANTHROPIC_BASE_URL=http://host.docker.internal:9999
+      - OPENAI_UPSTREAM_URL=http://host.docker.internal:9999
+    extra_hosts:
+      # On Linux, host.docker.internal does not resolve by default.
+      # host-gateway is the special Docker alias for the host's bridge IP.
+      - "host.docker.internal:host-gateway"
+
+  # Replace real Ollama with a sleeping alpine so the healthcheck passes
+  # immediately — kiri no longer waits minutes for a model download.
+  ollama:
+    image: alpine:3.19
+    command: ["/bin/sh", "-c", "while true; do sleep 3600; done"]
+    healthcheck:
+      test: ["CMD", "true"]
+      interval: 1s
+      timeout: 1s
+      retries: 1
+      start_period: 0s
+
+  # Replace the pull job with a no-op that exits 0 immediately.
+  ollama-pull:
+    image: alpine:3.19
+    entrypoint: ["/bin/true"]
+    restart: "no"
+    depends_on:
+      ollama:
+        condition: service_healthy
