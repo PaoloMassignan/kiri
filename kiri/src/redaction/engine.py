@@ -261,36 +261,47 @@ class RedactionEngine:
         *start* points to the beginning of the declaration line; *end* is the
         character position after the closing ``}``.  Returns None if no such
         block is found.
+
+        Two-pass search: first prefers matches where ``{`` appears on the same
+        line as the symbol (a declaration pattern like
+        ``Symbol.prototype.x = function(...) {``).  This avoids false matches
+        where the symbol appears only in prose/description text and the nearest
+        ``{`` belongs to a different, unrelated block.  If no same-line match
+        exists the search falls back to the original ≤10-line heuristic.
         """
-        for m in _symbol_re(symbol).finditer(prompt):
-            sym_pos = m.start()
+        matches = list(_symbol_re(symbol).finditer(prompt))
 
-            # The opening brace must appear within 10 lines after the symbol
-            brace_open = prompt.find("{", sym_pos)
-            if brace_open == -1:
-                continue
-            if prompt[sym_pos:brace_open].count("\n") > 10:
-                continue
-
-            # Walk backwards to the start of the declaration line
-            decl_start = prompt.rfind("\n", 0, sym_pos)
-            decl_start = decl_start + 1 if decl_start >= 0 else 0
-
-            # Balance braces to find the closing }
-            depth = 1
-            i = brace_open + 1
-            while i < len(prompt) and depth > 0:
-                c = prompt[i]
-                if c == "{":
-                    depth += 1
-                elif c == "}":
-                    depth -= 1
-                i += 1
-
-            if depth == 0:
-                return (decl_start, i)
+        for max_newlines in (0, 10):
+            for m in matches:
+                span = self._try_brace_span(prompt, m.start(), max_newlines)
+                if span is not None:
+                    return span
 
         return None
+
+    def _try_brace_span(
+        self, prompt: str, sym_pos: int, max_newlines: int
+    ) -> tuple[int, int] | None:
+        brace_open = prompt.find("{", sym_pos)
+        if brace_open == -1:
+            return None
+        if prompt[sym_pos:brace_open].count("\n") > max_newlines:
+            return None
+
+        decl_start = prompt.rfind("\n", 0, sym_pos)
+        decl_start = decl_start + 1 if decl_start >= 0 else 0
+
+        depth = 1
+        i = brace_open + 1
+        while i < len(prompt) and depth > 0:
+            c = prompt[i]
+            if c == "{":
+                depth += 1
+            elif c == "}":
+                depth -= 1
+            i += 1
+
+        return (decl_start, i) if depth == 0 else None
 
     def _brace_stub(self, block: str, symbol: str) -> str:
         """Keep the function header (up to and including ``{``); replace body with stub.
