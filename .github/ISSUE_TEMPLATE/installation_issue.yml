@@ -1,0 +1,76 @@
+name: Installation Issue
+description: Problem installing or starting the Kiri gateway
+labels: ["installation", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this template for problems with the installer, Docker setup, or initial gateway startup.
+        For general questions, open a [Discussion](../discussions) instead.
+  - type: input
+    id: version
+    attributes:
+      label: Kiri version / commit
+      placeholder: "e.g. 0.1.0, or paste the commit hash"
+    validations:
+      required: true
+  - type: dropdown
+    id: os
+    attributes:
+      label: Operating system
+      options:
+        - macOS
+        - Windows
+        - Linux
+    validations:
+      required: true
+  - type: dropdown
+    id: install_method
+    attributes:
+      label: Install method
+      options:
+        - install.sh / install.ps1 (single developer)
+        - connect.sh / connect.ps1 (joining a team gateway)
+        - Manual / git clone
+    validations:
+      required: true
+  - type: dropdown
+    id: ai_tool
+    attributes:
+      label: AI coding tool
+      options:
+        - Claude Code (API key)
+        - Claude Code (Pro/Max — OAuth)
+        - Cursor
+        - Windsurf
+        - Cline / Continue.dev
+        - OpenCode
+        - Codex CLI
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: What went wrong?
+      description: Describe what happened and at which step.
+    validations:
+      required: true
+  - type: textarea
+    id: error_output
+    attributes:
+      label: Error output
+      description: Paste the full error message or terminal output.
+      render: text
+    validations:
+      required: true
+  - type: textarea
+    id: docker_info
+    attributes:
+      label: Docker version
+      placeholder: "Paste output of: docker version"
+      render: text
+  - type: textarea
+    id: workaround
+    attributes:
+      label: Workaround tried (if any)

@@ -1,0 +1,64 @@
+name: False Negative
+description: Kiri allowed a prompt that should have been redacted or blocked
+labels: ["false-negative", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        A false negative means protected code reached the upstream LLM without being filtered.
+        This is the most important class of bug to report. Include as much detail as you safely can.
+        **Do NOT paste actual proprietary code** — describe the structure and the detection failure instead.
+  - type: input
+    id: version
+    attributes:
+      label: Kiri version
+      placeholder: "e.g. 0.1.0, or paste the commit hash"
+    validations:
+      required: true
+  - type: dropdown
+    id: leak_type
+    attributes:
+      label: How was the protected content present in the prompt?
+      options:
+        - Symbol name only (no code body)
+        - Partial code snippet (a few lines)
+        - Full function / method body
+        - Renamed / refactored version of protected code
+        - Prose description of protected logic (no code pasted)
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: What was in the prompt (sanitized)?
+      description: Describe the structure of the prompt without including real proprietary content. E.g. "prompt asked Claude to refactor a function body that was pasted verbatim".
+    validations:
+      required: true
+  - type: textarea
+    id: explain_output
+    attributes:
+      label: Output of `kiri explain` after the missed request
+      render: text
+    validations:
+      required: true
+  - type: textarea
+    id: protected_symbols
+    attributes:
+      label: How was the file / symbol registered?
+      description: "`kiri add <file>`, `@symbol Name` in secrets, or directory glob?"
+    validations:
+      required: true
+  - type: textarea
+    id: similarity_score
+    attributes:
+      label: L1 similarity score (if shown in explain output)
+      placeholder: "e.g. sim=0.71"
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      placeholder: |
+        OS: macOS 14.4
+        Python: 3.11.9
+        Install method: pip / git clone / other

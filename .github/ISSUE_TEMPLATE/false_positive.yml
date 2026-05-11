@@ -1,0 +1,66 @@
+name: False Positive
+description: Kiri redacted or blocked a prompt that should have been allowed
+labels: ["false-positive", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        A false positive means Kiri filtered a prompt that did not contain protected code.
+        These reports directly improve the filter pipeline — please include as much detail as possible.
+  - type: input
+    id: version
+    attributes:
+      label: Kiri version
+      placeholder: "e.g. 0.1.0, or paste the commit hash"
+    validations:
+      required: true
+  - type: dropdown
+    id: decision
+    attributes:
+      label: Decision issued by Kiri
+      options:
+        - REDACT
+        - BLOCK
+    validations:
+      required: true
+  - type: dropdown
+    id: level
+    attributes:
+      label: Filter level that triggered
+      description: Check `kiri explain` to find which level fired.
+      options:
+        - L1 — vector similarity
+        - L2 — symbol matching
+        - L3 — intent classifier
+        - Unknown
+    validations:
+      required: true
+  - type: textarea
+    id: prompt
+    attributes:
+      label: Prompt sent (sanitized)
+      description: Paste the prompt that was incorrectly filtered. Remove any actual proprietary content before posting.
+      render: text
+    validations:
+      required: true
+  - type: textarea
+    id: explain_output
+    attributes:
+      label: Output of `kiri explain`
+      render: text
+    validations:
+      required: true
+  - type: textarea
+    id: protected_symbols
+    attributes:
+      label: Protected symbols / files at the time
+      description: Output of `kiri status` (redact paths if needed).
+      render: text
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      placeholder: |
+        OS: macOS 14.4
+        Python: 3.11.9
+        Install method: pip / git clone / other
