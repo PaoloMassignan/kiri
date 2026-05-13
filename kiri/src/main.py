@@ -95,6 +95,7 @@ def create_gateway_app(settings: Settings | None = None) -> FastAPI:
         audit_log=audit_log,
         rate_limiter=rate_limiter,
         action=settings.action,
+        oauth_passthrough=settings.oauth_passthrough,
     )
 
     @app.on_event("shutdown")
