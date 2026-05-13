@@ -334,29 +334,8 @@
   <div class="container">
     <h2>You ask. Kiri filters. Your AI answers.</h2>
     <p class="lead">The developer experience is unchanged. Protected function bodies are replaced with a stub — Claude still gives a useful response, but never sees your implementation.</p>
-    <div class="terminal">
-      <div class="term-bar">
-        <span class="dot dot-r"></span><span class="dot dot-y"></span><span class="dot dot-g"></span>
-        <span class="term-title">terminal</span>
-      </div>
-      <div class="term-body">
-        <div><span class="prompt">$</span> <span class="cmd">kiri add pricing.py</span></div>
-        <div class="out">  protected: pricing.py (indexed 3 chunks)</div>
-        <br>
-        <div><span class="prompt">$</span> <span class="cmd">claude "explain calculate_final_price and suggest a refactor"</span></div>
-        <br>
-        <div class="out">  kiri  <span class="redact">REDACT</span>  L2  symbol match: <span class="cmd">calculate_final_price</span></div>
-        <div class="out">        forwarding with stub replacement...</div>
-        <br>
-        <div class="out dim">  ── what Claude sees ────────────────────────────────</div>
-        <div class="out">  def calculate_final_price(quantity, is_premium):</div>
-        <div class="out">      <span class="redact"># [protected — implementation redacted by Kiri]</span></div>
-        <div class="out">      <span class="redact"># Calculates final price with quantity discount and premium tier.</span></div>
-        <div class="out dim">  ────────────────────────────────────────────────────</div>
-        <br>
-        <div class="out"><span class="ok">✓</span>  Claude responds with refactoring suggestions.</div>
-        <div class="out"><span class="ok">✓</span>  Your discount rates and tier constants never left your machine.</div>
-      </div>
+    <div style="border-radius:var(--radius); overflow:hidden; border:1px solid var(--border); max-width:720px; margin:0 auto;">
+      <img src="assets/demo.gif" alt="Kiri demo — kiri add, claude prompt intercepted, kiri explain" style="width:100%; display:block;">
     </div>
   </div>
 </div>
@@ -386,16 +365,8 @@
 
         <div class="arch-proxy">
           <div class="arch-proxy-title">Kiri Proxy <span class="arch-port">:8765</span></div>
-          <div class="arch-filters">
-            <div class="arch-filter arch-l1">L1 — vector similarity</div>
-            <div class="arch-filter arch-l2">L2 — symbol match</div>
-            <div class="arch-filter arch-l3">L3 — intent classifier</div>
-          </div>
-          <div class="arch-models">
-            <span class="arch-model-badge">all-MiniLM-L6-v2</span>
-            <span class="arch-model-badge">qwen2.5:3b</span>
-            <span class="arch-model-badge">ChromaDB</span>
-          </div>
+          <p style="font-size:13px; color:var(--muted); line-height:1.6; margin-bottom:12px">Inspects every outgoing prompt.<br>Strips protected code locally.<br>Forwards only what is safe.</p>
+          <a href="https://github.com/PaoloMassignan/kiri/blob/main/docs/sdd/03-filter-pipeline.md" style="font-size:12px; color:var(--accent)">How the filter works →</a>
         </div>
 
         <div class="arch-arrow-right">
@@ -420,32 +391,10 @@
 <section id="how-it-works">
   <div class="container">
     <div class="section-label">How it works</div>
-    <h2 class="section-title">Three-level filter pipeline</h2>
-    <p class="lead">Every outgoing LLM call passes through three independent checks, each catching a different class of leak — from exact symbol names to semantic code similarity to explicit extraction intent.</p>
-    <div class="pipeline">
-      <div class="pipe-card">
-        <div class="pipe-level">L1 — semantic</div>
-        <h3>Vector similarity</h3>
-        <p>Your source is indexed with <code>all-MiniLM-L6-v2</code> and stored in a local ChromaDB. Cosine similarity ≥ 0.90 triggers redaction even when class names are renamed or code is partially pasted.</p>
-        <span class="badge badge-redact">REDACT</span>
-      </div>
-      <div class="pipe-card">
-        <div class="pipe-level">L2 — always active</div>
-        <h3>Symbol matching</h3>
-        <p>Word-boundary regex against your protected symbol list. Catches any prompt that names a protected class or function verbatim. Never fails silently — active even when L1 and L3 are unavailable.</p>
-        <span class="badge badge-redact">REDACT</span>
-      </div>
-      <div class="pipe-card">
-        <div class="pipe-level">L3 — intent</div>
-        <h3>Ollama classifier</h3>
-        <p>Prompts scoring 0.75–0.90 enter a grace zone and are classified by a local <code>qwen2.5:3b</code> model. Blocked only when explicit extraction intent is detected. Runs entirely on your hardware.</p>
-        <span class="badge badge-block">BLOCK if intent</span>
-      </div>
-    </div>
-    <p style="margin-top:18px; font-size:14px; color:var(--muted)">
-      Embeddings store float vectors only — source text never leaves your machine.
-      On errors, Kiri fails open (PASS) rather than blocking work — L2 remains the safety net.
-    </p>
+    <h2 class="section-title">Intercept, filter, forward</h2>
+    <p class="lead">When you ask Claude Code, Cursor, or any AI coding tool about your code, Kiri intercepts the prompt before it leaves your machine. It identifies protected source — by symbol name, by semantic similarity, or by intent — strips the implementation, and replaces it with a functional stub. Your AI gets a useful answer. Your implementation never reaches the cloud.</p>
+    <p style="font-size:14px; color:var(--muted); margin-bottom:24px">Source code is never stored remotely — only float vectors. On infrastructure errors, Kiri fails open rather than blocking your work; symbol matching always remains active as the last line of defence.</p>
+    <a class="btn btn-secondary" href="https://github.com/PaoloMassignan/kiri/blob/main/docs/sdd/03-filter-pipeline.md">Filter pipeline — full technical spec →</a>
   </div>
 </section>
 
