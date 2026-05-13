@@ -39,7 +39,7 @@ class VectorStore:
         raw: Any = self._col.query(
             query_embeddings=[vector],  # type: ignore[arg-type]
             n_results=n,
-            include=["distances", "metadatas"],
+            include=["distances", "metadatas"],  # type: ignore[list-item]
         )
 
         ids: list[str] = raw["ids"][0]

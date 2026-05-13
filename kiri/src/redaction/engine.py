@@ -161,7 +161,9 @@ class RedactionEngine:
                 original = result_prompt[start:end]
                 replacement = self._fenced_code_stub(original)
                 result_prompt = result_prompt[:start] + replacement + result_prompt[end:]
-                spans.append(RedactedSpan(symbol=symbol, original=original, replacement=replacement))
+                spans.append(
+                    RedactedSpan(symbol=symbol, original=original, replacement=replacement)
+                )
                 continue
 
             # 4. Try indented code block (≥2 lines with 4-space / tab indent).
@@ -173,7 +175,9 @@ class RedactionEngine:
                 original = result_prompt[start:end]
                 replacement = f"    {_BODY_STUB}\n"
                 result_prompt = result_prompt[:start] + replacement + result_prompt[end:]
-                spans.append(RedactedSpan(symbol=symbol, original=original, replacement=replacement))
+                spans.append(
+                    RedactedSpan(symbol=symbol, original=original, replacement=replacement)
+                )
                 continue
 
             # 5. Fallback: replace inline occurrence of the symbol name.

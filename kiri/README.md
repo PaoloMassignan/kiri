@@ -27,6 +27,15 @@ and classifier all run locally.
 
 ---
 
+## Try the demo
+
+Want to see Kiri in action before setting it up on your own project?
+[**kiri-demo**](https://github.com/PaoloMassignan/kiri-demo) is a self-contained
+sandbox with fictional protected code and step-by-step instructions.
+It works on Windows, Linux, and macOS with Claude Code or OpenCode.
+
+---
+
 ## Hello world
 
 ### 1. Install

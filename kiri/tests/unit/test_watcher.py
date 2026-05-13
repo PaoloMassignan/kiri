@@ -282,7 +282,8 @@ def test_index_path_seeds_ast_constants_before_ollama(tmp_path: Path) -> None:
 
         def filter_symbols(self, symbols: list[str], _path: Path) -> list[str]:
             # At this point, the pre-seed add() should have already been called.
-            seeded_before_ollama.append("_ENTROPY_FLOOR" in {s for _, syms in ss.added for s in syms})
+            seeded = "_ENTROPY_FLOOR" in {s for _, syms in ss.added for s in syms}
+            seeded_before_ollama.append(seeded)
             return symbols
 
         def extract(self, _text: str) -> list[str]:
