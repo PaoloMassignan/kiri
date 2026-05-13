@@ -662,6 +662,123 @@ def test_rescan_globs_indexes_new_files(tmp_path: Path) -> None:
     assert vs.count_prefix("new_scorer") == 1
 
 
+# --- re-indexing on source file modification ----------------------------------
+
+
+def test_reindex_path_purges_then_reindexes(tmp_path: Path) -> None:
+    """_reindex_path must purge stale vectors then re-index with fresh content."""
+    from src.indexer.watcher import Watcher
+
+    f = tmp_path / "engine.py"
+    f.write_text("def foo(): pass", encoding="utf-8")
+    chunks = [make_chunk("engine", 0, "def foo(): pass", str(f))]
+    vs = FakeVectorStore()
+    sym = FakeSymbolStore()
+
+    watcher = Watcher(
+        secrets_store=FakeSecretsStore([f]),
+        vector_store=vs,
+        symbol_store=sym,
+        chunker=make_chunker(chunks),
+        embedder=FakeEmbedder(),  # type: ignore[arg-type]
+        extractor=FakeExtractor(),  # type: ignore[arg-type]
+    )
+    watcher._known_paths = {f}
+
+    watcher._reindex_path(f)
+
+    assert "engine" in vs.deleted
+    assert len(vs.added) == 1
+
+
+def test_is_protected_path_true_for_known_path(tmp_path: Path) -> None:
+    f = tmp_path / "engine.py"
+    watcher = make_watcher()
+    watcher._known_paths = {f}
+    assert watcher._is_protected_path(f) is True
+
+
+def test_is_protected_path_false_for_unknown_path(tmp_path: Path) -> None:
+    f = tmp_path / "engine.py"
+    other = tmp_path / "other.py"
+    watcher = make_watcher()
+    watcher._known_paths = {f}
+    assert watcher._is_protected_path(other) is False
+
+
+def test_is_protected_path_true_for_glob_expanded_file(tmp_path: Path) -> None:
+    f = tmp_path / "engine.py"
+    watcher = make_watcher()
+    watcher._known_paths = set()
+    watcher._glob_expanded = {"src/": {f}}
+    assert watcher._is_protected_path(f) is True
+
+
+def test_source_file_handler_calls_callback_on_modify(tmp_path: Path) -> None:
+    from unittest.mock import MagicMock
+
+    from watchdog.events import FileModifiedEvent
+
+    from src.indexer.watcher import _SourceFileEventHandler
+
+    f = tmp_path / "engine.py"
+    callback = MagicMock()
+    handler = _SourceFileEventHandler(callback=callback, is_protected=lambda p: p == f)
+
+    handler.on_modified(FileModifiedEvent(str(f)))
+
+    callback.assert_called_once_with(f)
+
+
+def test_source_file_handler_calls_callback_on_created(tmp_path: Path) -> None:
+    """Atomic-save editors emit on_created on the target path instead of on_modified."""
+    from unittest.mock import MagicMock
+
+    from watchdog.events import FileCreatedEvent
+
+    from src.indexer.watcher import _SourceFileEventHandler
+
+    f = tmp_path / "engine.py"
+    callback = MagicMock()
+    handler = _SourceFileEventHandler(callback=callback, is_protected=lambda p: p == f)
+
+    handler.on_created(FileCreatedEvent(str(f)))
+
+    callback.assert_called_once_with(f)
+
+
+def test_source_file_handler_ignores_unprotected_files(tmp_path: Path) -> None:
+    from unittest.mock import MagicMock
+
+    from watchdog.events import FileModifiedEvent
+
+    from src.indexer.watcher import _SourceFileEventHandler
+
+    f = tmp_path / "engine.py"
+    other = tmp_path / "other.py"
+    callback = MagicMock()
+    handler = _SourceFileEventHandler(callback=callback, is_protected=lambda p: p == f)
+
+    handler.on_modified(FileModifiedEvent(str(other)))
+
+    callback.assert_not_called()
+
+
+def test_source_file_handler_ignores_directory_events(tmp_path: Path) -> None:
+    from unittest.mock import MagicMock
+
+    from watchdog.events import DirModifiedEvent
+
+    from src.indexer.watcher import _SourceFileEventHandler
+
+    callback = MagicMock()
+    handler = _SourceFileEventHandler(callback=callback, is_protected=lambda p: True)
+
+    handler.on_modified(DirModifiedEvent(str(tmp_path)))
+
+    callback.assert_not_called()
+
+
 def test_rescan_globs_purges_removed_files(tmp_path: Path) -> None:
     """_rescan_globs must purge files that disappeared from the glob expansion."""
     from src.indexer.watcher import Watcher

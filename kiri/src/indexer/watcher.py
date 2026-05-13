@@ -53,6 +53,8 @@ class Watcher:
         self._glob_expanded: dict[str, set[Path]] = {}
         self._observer: BaseObserver | None = None
         self._glob_rescan_interval: int = 60
+        self._source_handler: _SourceFileEventHandler | None = None
+        self._watched_dirs: set[Path] = set()
 
     def _store_embedded_chunks(
         self,
@@ -224,6 +226,32 @@ class Watcher:
         finally:
             tmp_path.unlink(missing_ok=True)
 
+    def _is_protected_path(self, path: Path) -> bool:
+        if path in self._known_paths:
+            return True
+        for files in self._glob_expanded.values():
+            if path in files:
+                return True
+        return False
+
+    def _reindex_path(self, path: Path) -> None:
+        """Purge stale vectors and re-index a protected file whose content changed."""
+        logger.info("watcher: protected file modified, re-indexing %s", path.name)
+        self.purge_path(path)
+        self.index_path(path)
+
+    def _schedule_source_watchers(self, observer: BaseObserver) -> None:
+        """Watch parent directories of all currently protected paths for modifications."""
+        assert self._source_handler is not None
+        all_paths: set[Path] = set(self._known_paths)
+        for files in self._glob_expanded.values():
+            all_paths.update(files)
+        for path in all_paths:
+            parent = path.parent
+            if parent not in self._watched_dirs:
+                observer.schedule(self._source_handler, str(parent), recursive=False)
+                self._watched_dirs.add(parent)
+
     def list_protected_paths(self) -> list[Path]:
         """Return all paths currently listed in the secrets file."""
         return self._secrets.list_paths()
@@ -287,6 +315,12 @@ class Watcher:
             logger.debug("watcher: using native observer for %s", secrets_path.parent)
 
         observer.schedule(handler, str(secrets_path.parent), recursive=False)
+
+        self._source_handler = _SourceFileEventHandler(
+            self._reindex_path, self._is_protected_path
+        )
+        self._schedule_source_watchers(observer)
+
         observer.daemon = True
         observer.start()
         self._observer = observer
@@ -305,6 +339,11 @@ class Watcher:
 
         for path in added:
             self.index_path(path)
+            if self._observer is not None and self._source_handler is not None:
+                parent = path.parent
+                if parent not in self._watched_dirs:
+                    self._observer.schedule(self._source_handler, str(parent), recursive=False)
+                    self._watched_dirs.add(parent)
         for path in removed:
             self.purge_path(path)
 
@@ -369,6 +408,33 @@ def _is_docker() -> bool:
     lightweight check — no subprocess, no env-var dependency.
     """
     return Path("/.dockerenv").exists()
+
+
+class _SourceFileEventHandler(FileSystemEventHandler):
+    """Re-index a protected source file when it is modified on disk."""
+
+    def __init__(
+        self,
+        callback: Callable[[Path], None],
+        is_protected: Callable[[Path], bool],
+    ) -> None:
+        super().__init__()
+        self._callback = callback
+        self._is_protected = is_protected
+
+    def on_modified(self, event: FileSystemEvent) -> None:
+        if not event.is_directory:
+            path = Path(str(event.src_path))
+            if self._is_protected(path):
+                self._callback(path)
+
+    def on_created(self, event: FileSystemEvent) -> None:
+        # Some editors (Vim, Emacs) save by replacing the file atomically.
+        # The target path receives a created event rather than modified.
+        if not event.is_directory:
+            path = Path(str(event.src_path))
+            if self._is_protected(path):
+                self._callback(path)
 
 
 class _SecretsEventHandler(FileSystemEventHandler):
