@@ -128,6 +128,19 @@ class Watcher:
         ast_symbols = extract_symbols(path, min_length=self._settings.symbol_min_length)
         if ast_symbols:
             remaining = [s for s in ast_symbols if s not in chunk_names]
+
+            # Eagerly seed L2 with ALL AST symbols before Ollama runs.  Vectors
+            # are already stored above, so L1 is live; without this, a function
+            # body pasted without its def line can slip through during the Ollama
+            # startup window because module-level constants (_ENTROPY_FLOOR etc.)
+            # are only added to L2 after Ollama finishes.  Over-blocking during
+            # this window is acceptable; false negatives are not.
+            pre_confirmed = list(dict.fromkeys(confirmed + remaining))
+            self._ss.add(str(path), pre_confirmed)
+            numeric_constants = extract_numeric_constants(path)
+            if numeric_constants:
+                self._ss.add_numbers(str(path), numeric_constants)
+
             if remaining:
                 # Ask Ollama to filter out generic programming terms, keeping only
                 # domain-specific symbols. Falls back to all remaining symbols if unavailable.
@@ -145,9 +158,6 @@ class Watcher:
                     confirmed.extend(remaining)
             if confirmed:
                 self._ss.add(str(path), confirmed)
-            numeric_constants = extract_numeric_constants(path)
-            if numeric_constants:
-                self._ss.add_numbers(str(path), numeric_constants)
         elif confirmed:
             # No AST symbols (unsupported language) but chunk names were found
             self._ss.add(str(path), confirmed)

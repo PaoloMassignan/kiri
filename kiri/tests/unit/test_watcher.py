@@ -41,6 +41,9 @@ class FakeSymbolStore:
     def add(self, source_file: str, symbols: list[str]) -> None:
         self.added.append((source_file, symbols))
 
+    def add_numbers(self, source_file: str, values: list[object]) -> None:
+        pass
+
     def remove(self, source_file: str) -> None:
         self.removed.append(source_file)
 
@@ -245,9 +248,62 @@ def test_index_path_adds_symbols_to_symbol_store(tmp_path: Path) -> None:
     )
     watcher.index_path(f)
 
-    assert len(ss.added) == 1
-    source_file, symbols = ss.added[0]
-    assert "RiskScorer" in symbols
+    # Two add() calls: eager pre-Ollama seed + refined post-Ollama set.
+    assert len(ss.added) >= 1
+    # RiskScorer must be present in every call (it's a chunk name, always confirmed).
+    for _source_file, symbols in ss.added:
+        assert "RiskScorer" in symbols
+
+
+def test_index_path_seeds_ast_constants_before_ollama(tmp_path: Path) -> None:
+    """Module-level constants must be in L2 before Ollama filtering completes.
+
+    Without the eager pre-seed, a function body pasted without its def line can
+    slip through: the body contains the constant (_ENTROPY_FLOOR) but not the
+    function name, so L2 only catches it once Ollama adds the constant — which
+    can take minutes on first startup.
+    """
+    from src.indexer.watcher import Watcher
+
+    src = (
+        "_ENTROPY_FLOOR = 1.618\n\n"
+        "def _entropy_fingerprints(fps):\n"
+        "    return min(1.0, _ENTROPY_FLOOR)\n"
+    )
+    f = tmp_path / "risk_scorer.py"
+    f.write_text(src, encoding="utf-8")
+
+    chunks = [make_chunk("_entropy_fingerprints", 0, src, str(f))]
+
+    seeded_before_ollama: list[bool] = []
+
+    class SlowExtractor:
+        """Records whether _ENTROPY_FLOOR is in L2 before it is called."""
+
+        def filter_symbols(self, symbols: list[str], _path: Path) -> list[str]:
+            # At this point, the pre-seed add() should have already been called.
+            seeded_before_ollama.append("_ENTROPY_FLOOR" in {s for _, syms in ss.added for s in syms})
+            return symbols
+
+        def extract(self, _text: str) -> list[str]:
+            return []
+
+    ss = FakeSymbolStore()
+    watcher = Watcher(
+        secrets_store=FakeSecretsStore([f]),
+        vector_store=FakeVectorStore(),
+        symbol_store=ss,
+        chunker=make_chunker(chunks),
+        embedder=FakeEmbedder(),  # type: ignore[arg-type]
+        extractor=SlowExtractor(),  # type: ignore[arg-type]
+    )
+    watcher.index_path(f)
+
+    assert seeded_before_ollama == [True], "_ENTROPY_FLOOR must be in L2 before Ollama is called"
+    # Final state must also contain the constant.
+    final_symbols = ss.added[-1][1]
+    assert "_ENTROPY_FLOOR" in final_symbols
+
 
 
 def test_index_path_missing_file_logs_warning_and_does_not_raise(
