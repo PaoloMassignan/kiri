@@ -834,6 +834,122 @@ class TestClaudeCodeNumberedLineFormat:
 
 
 # ===========================================================================
+# Inline code block redaction — fenced (```) and indented (4-space)
+# ===========================================================================
+
+
+class TestInlineCodeBlockRedaction:
+    """Body-only pastes (no def line) must redact the entire block, not just the symbol token."""
+
+    def _make_engine(self, symbols: list[str], tmp_path):
+        from src.redaction.engine import RedactionEngine
+        from src.store.summary_store import SummaryStore
+        from src.store.symbol_store import SymbolStore
+
+        ss = SymbolStore(tmp_path)
+        ss.add_explicit(symbols)
+        return RedactionEngine(SummaryStore(tmp_path), ss)
+
+    def test_fenced_block_body_paste_redacts_entire_block(self, tmp_path):
+        """Fenced block containing a protected constant — entire block replaced."""
+        engine = self._make_engine(["_ENTROPY_FLOOR"], tmp_path)
+        prompt = (
+            "Cosa fa questo codice?\n\n"
+            "```python\n"
+            "    if not fps:\n"
+            "        return 0.0\n"
+            "    total = len(fps)\n"
+            "    entropy = -sum((c / total) * math.log2(c / total) for c in counts.values())\n"
+            "    return min(entropy / max(math.log2(total + 1), _ENTROPY_FLOOR), 1.0)\n"
+            "```"
+        )
+        result = engine.redact(prompt)
+        assert result.was_redacted
+        assert "entropy = -sum" not in result.redacted_prompt
+        assert "return 0.0" not in result.redacted_prompt
+        assert "PROTECTED" in result.redacted_prompt
+
+    def test_fenced_block_preserves_language_tag(self, tmp_path):
+        engine = self._make_engine(["_ENTROPY_FLOOR"], tmp_path)
+        prompt = "```python\n    return _ENTROPY_FLOOR * x\n    pass\n```"
+        result = engine.redact(prompt)
+        assert result.was_redacted
+        assert result.redacted_prompt.startswith("```python")
+
+    def test_indented_block_body_paste_redacts_entire_block(self, tmp_path):
+        """Indented body paste (4-space indent, no def line) — entire block replaced."""
+        engine = self._make_engine(["_ENTROPY_FLOOR"], tmp_path)
+        prompt = (
+            "Cosa fa questo?\n\n"
+            "    if not fps:\n"
+            "        return 0.0\n"
+            "    total = len(fps)\n"
+            "    return min(entropy / max(math.log2(total + 1), _ENTROPY_FLOOR), 1.0)\n"
+        )
+        result = engine.redact(prompt)
+        assert result.was_redacted
+        assert "return 0.0" not in result.redacted_prompt
+        assert "PROTECTED" in result.redacted_prompt
+
+    def test_indented_block_exact_demo_body(self, tmp_path):
+        """Exact body from DEMO.md step 4 must be fully redacted."""
+        engine = self._make_engine(["_ENTROPY_FLOOR"], tmp_path)
+        prompt = (
+            "    if not fps:\n"
+            "        return 0.0\n"
+            "    counts: dict[str, int] = {}\n"
+            "    for fp in fps:\n"
+            "        h = hashlib.sha1(fp.encode()).hexdigest()[:6]\n"
+            "        counts[h] = counts.get(h, 0) + 1\n"
+            "    total = len(fps)\n"
+            "    entropy = -sum((c / total) * math.log2(c / total) for c in counts.values())\n"
+            "    return min(entropy / max(math.log2(total + 1), _ENTROPY_FLOOR), 1.0)\n"
+        )
+        result = engine.redact(prompt)
+        assert result.was_redacted
+        assert "sha1" not in result.redacted_prompt
+        assert "entropy = -sum" not in result.redacted_prompt
+        assert "PROTECTED" in result.redacted_prompt
+
+    def test_fenced_block_without_protected_symbol_passes_through(self, tmp_path):
+        engine = self._make_engine(["_ENTROPY_FLOOR"], tmp_path)
+        prompt = "```python\ndef foo():\n    return 42\n```"
+        result = engine.redact(prompt)
+        assert not result.was_redacted
+        assert "return 42" in result.redacted_prompt
+
+    def test_single_indented_line_falls_back_to_inline_substitution(self, tmp_path):
+        """A single indented line is not a code block — symbol substitution only."""
+        engine = self._make_engine(["_ENTROPY_FLOOR"], tmp_path)
+        prompt = "    result = _ENTROPY_FLOOR * factor"
+        result = engine.redact(prompt)
+        assert result.was_redacted
+        assert "[PROTECTED:_ENTROPY_FLOOR]" in result.redacted_prompt
+
+    def test_symbol_in_prose_falls_back_to_inline_substitution(self, tmp_path):
+        engine = self._make_engine(["_ENTROPY_FLOOR"], tmp_path)
+        prompt = "What is the value of _ENTROPY_FLOOR?"
+        result = engine.redact(prompt)
+        assert result.was_redacted
+        assert "[PROTECTED:_ENTROPY_FLOOR]" in result.redacted_prompt
+
+    def test_prose_around_block_is_preserved(self, tmp_path):
+        engine = self._make_engine(["_ENTROPY_FLOOR"], tmp_path)
+        prompt = (
+            "Review this:\n\n"
+            "```python\n"
+            "    x = _ENTROPY_FLOOR\n"
+            "    y = x * 2\n"
+            "```\n\n"
+            "Thanks."
+        )
+        result = engine.redact(prompt)
+        assert result.was_redacted
+        assert "Review this:" in result.redacted_prompt
+        assert "Thanks." in result.redacted_prompt
+
+
+# ===========================================================================
 # Helpers
 # ===========================================================================
 

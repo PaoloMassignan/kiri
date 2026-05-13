@@ -120,21 +120,28 @@ The user's `{prompt}` cannot expand placeholders in the template — safe by des
 REDACT is the default decision whenever protected code is detected,
 except when explicit malicious intent is found (L3 `extract_ip` → BLOCK).
 
-The `RedactionEngine` replaces the bodies of protected functions with stubs before
-forwarding the prompt:
+The `RedactionEngine` replaces protected code with stubs before forwarding the prompt.
+It handles four cases, tried in order for each matched symbol:
 
-```python
-# Input (prompt with protected code)
-def sliding_window_dedup(events):
-    seen = set()
-    for e in events:
-        # ... proprietary implementation
-    return result
+1. **Numbered file content** (Claude Code / OpenCode `Read` tool output `N\tdef foo`):
+   the full function block is replaced, preserving the signature line.
+2. **Python `def`/`class` block**: matched by indentation rules; body replaced with stub.
+3. **Curly-brace block** (Java, Go, Rust, JS/TS …): matched by brace depth; body replaced.
+4. **Fenced code block** (`` ``` `` or `~~~`): if the pasted block contains a protected
+   symbol, the entire block is replaced — not just the token. This covers body-only pastes
+   where the `def` line is absent.
+5. **Indented code block** (≥2 consecutive lines with 4-space / tab prefix): same as
+   fenced — the whole block is replaced when a protected symbol is found inside.
+6. **Inline fallback**: replaces the symbol token with `[PROTECTED:symbol]`.
 
-# Output (forwarded to upstream LLM)
-def sliding_window_dedup(events):
-    # [implementation redacted — protected symbol]
-    ...
+```
+# Input — user pastes body without def line
+    if not fps:
+        return 0.0
+    return min(entropy / max(math.log2(total + 1), _ENTROPY_FLOOR), 1.0)
+
+# Output — entire indented block replaced
+    # [PROTECTED: implementation is confidential]
 ```
 
 The developer gets a useful response; the proprietary implementation

@@ -12,6 +12,19 @@ _BODY_STUB = "# [PROTECTED: implementation is confidential]"
 # Curly-brace languages (Java, Go, Rust, C, C++, C#, JS, TS)
 _BRACE_BODY_STUB = "// [PROTECTED: implementation is confidential]"
 
+# Fenced code block: ```[lang]\n...\n```  or  ~~~[lang]\n...\n~~~
+_FENCED_CODE_RE = re.compile(
+    r'(?P<fence>```|~~~)[^\n]*\n(?P<body>.*?)(?P=fence)',
+    re.DOTALL,
+)
+
+# Indented code block: two or more consecutive lines starting with 4 spaces or a tab.
+# Blank lines between indented lines are included so that multi-paragraph bodies
+# are captured as a single block.
+_INDENTED_BLOCK_RE = re.compile(
+    r'(?m)(?:^(?:    |\t)[^\n]+(?:\n|$)(?:[ \t]*\n)*)+',
+)
+
 # Template for matching a Python/indentation-based function or class block.
 # Matches from the first decorator (if any) or def/class line to the next
 # top-level statement.  @[^\n]* captures the full decorator line including
@@ -139,7 +152,31 @@ class RedactionEngine:
                 )
                 continue
 
-            # 3. Fallback: replace inline occurrence of the symbol name.
+            # 3. Try fenced code block (```...``` or ~~~...~~~) containing the symbol.
+            # Replaces the entire block so the surrounding algorithm is not leaked
+            # when the user pastes a function body without its def line.
+            fenced_span = self._find_fenced_block_with_symbol(result_prompt, symbol)
+            if fenced_span is not None:
+                start, end = fenced_span
+                original = result_prompt[start:end]
+                replacement = self._fenced_code_stub(original)
+                result_prompt = result_prompt[:start] + replacement + result_prompt[end:]
+                spans.append(RedactedSpan(symbol=symbol, original=original, replacement=replacement))
+                continue
+
+            # 4. Try indented code block (≥2 lines with 4-space / tab indent).
+            # Same rationale as fenced: body-only pastes leak algorithm details
+            # if only the symbol token is replaced.
+            indented_span = self._find_indented_block_with_symbol(result_prompt, symbol)
+            if indented_span is not None:
+                start, end = indented_span
+                original = result_prompt[start:end]
+                replacement = f"    {_BODY_STUB}\n"
+                result_prompt = result_prompt[:start] + replacement + result_prompt[end:]
+                spans.append(RedactedSpan(symbol=symbol, original=original, replacement=replacement))
+                continue
+
+            # 5. Fallback: replace inline occurrence of the symbol name.
             # Skip numeric literals — they are matched by L2 for detection but
             # replacing "1.7" inline creates mangled prompts when no code block
             # is present (the number is already gone if a block was redacted).
@@ -160,6 +197,35 @@ class RedactionEngine:
             was_redacted=len(spans) > 0,
             redacted_spans=spans,
         )
+
+    # ------------------------------------------------------------------
+    # Fenced code block  (``` ... ```)
+    # ------------------------------------------------------------------
+
+    def _find_fenced_block_with_symbol(self, prompt: str, symbol: str) -> tuple[int, int] | None:
+        for m in _FENCED_CODE_RE.finditer(prompt):
+            if _symbol_re(symbol).search(m.group("body")):
+                return (m.start(), m.end())
+        return None
+
+    def _fenced_code_stub(self, block: str) -> str:
+        first_line = block.split("\n", 1)[0]
+        fence = "```" if first_line.startswith("```") else "~~~"
+        return f"{first_line}\n{_BODY_STUB}\n{fence}"
+
+    # ------------------------------------------------------------------
+    # Indented code block  (4-space / tab prefix, ≥2 lines)
+    # ------------------------------------------------------------------
+
+    def _find_indented_block_with_symbol(self, prompt: str, symbol: str) -> tuple[int, int] | None:
+        for m in _INDENTED_BLOCK_RE.finditer(prompt):
+            block = m.group(0)
+            if not _symbol_re(symbol).search(block):
+                continue
+            non_empty = [ln for ln in block.splitlines() if ln.strip()]
+            if len(non_empty) >= 2:
+                return (m.start(), m.end())
+        return None
 
     # ------------------------------------------------------------------
     # Numbered-line content (OpenCode "N: code" format)
