@@ -10,7 +10,8 @@
 
 **Please do not open a public GitHub issue for security vulnerabilities.**
 
-Report vulnerabilities by opening a **private GitHub security advisory**
+Report vulnerabilities by email to **[security@usekiri.dev](mailto:security@usekiri.dev)**
+or by opening a **private GitHub security advisory**
 ([github.com/…/security/advisories/new](../../security/advisories/new))
 with the title: `[KIRI SECURITY] <short description>`
 

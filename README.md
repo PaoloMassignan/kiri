@@ -180,3 +180,8 @@ kiri explain --show-redacted              # full forwarded prompt with stubs
 For CLI reference, key management, and advanced configuration:
 - **Claude Code** → [`kiri/CLAUDE.md`](kiri/CLAUDE.md)
 - **OpenCode** → [`kiri/AGENTS.md`](kiri/AGENTS.md)
+
+## Contact
+
+- General questions: [hello@usekiri.dev](mailto:hello@usekiri.dev)
+- Security vulnerabilities: [security@usekiri.dev](mailto:security@usekiri.dev) — see [SECURITY.md](SECURITY.md)

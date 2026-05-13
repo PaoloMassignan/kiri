@@ -13,7 +13,7 @@ services:
       - WORKSPACE=/workspace
       - KIRI_CONFIG=/workspace/.kiri/config.yaml
       - OLLAMA_BASE_URL=http://ollama:11434
-      # ANTHROPIC_API_KEY is now a Docker secret — see below.
+      # ANTHROPIC_API_KEY is now a Docker secret -- see below.
       # It is mounted at /run/secrets/anthropic_key inside the container
       # and never appears in `docker inspect` environment output.
     secrets:
@@ -40,7 +40,7 @@ services:
       start_period: 30s
 
   # Pulls the classifier model once Ollama is healthy.
-  # Runs to completion and exits — gateway waits for this before starting.
+  # Runs to completion and exits -- gateway waits for this before starting.
   ollama-pull:
     image: curlimages/curl:latest
     restart: "no"
