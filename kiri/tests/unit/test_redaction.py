@@ -761,6 +761,79 @@ class TestWatcherChunkNamesAlwaysIndexed:
 
 
 # ===========================================================================
+# Claude Code numbered line format (tab separator)
+# ===========================================================================
+
+
+class TestClaudeCodeNumberedLineFormat:
+    """RedactionEngine must handle Claude Code's Read tool output (N\\tdef foo)."""
+
+    def _make_engine(self, tmp_path, symbol: str):
+        from src.redaction.engine import RedactionEngine
+        from src.store.summary_store import SummaryStore
+        from src.store.symbol_store import SymbolStore
+        symbol_store = SymbolStore(tmp_path)
+        symbol_store.add_explicit([symbol])
+        return RedactionEngine(SummaryStore(tmp_path), symbol_store)
+
+    def test_tab_separated_python_function_body_is_redacted(self, tmp_path):
+        engine = self._make_engine(tmp_path, "compute_price")
+        prompt = (
+            "1\t\"\"\"module\"\"\"\n"
+            "2\t\n"
+            "3\tdef compute_price(base: float, factor: float) -> float:\n"
+            "4\t    result = base * factor * 0.42\n"
+            "5\t    return round(result, 2)\n"
+            "6\t\n"
+            "7\tdef other():\n"
+            "8\t    pass\n"
+        )
+        result = engine.redact(prompt)
+        assert result.was_redacted
+        assert "0.42" not in result.redacted_prompt
+        assert "result = base * factor" not in result.redacted_prompt
+        assert "PROTECTED" in result.redacted_prompt
+
+    def test_tab_separated_class_body_is_redacted(self, tmp_path):
+        engine = self._make_engine(tmp_path, "RiskScorer")
+        prompt = (
+            "1\tclass RiskScorer:\n"
+            "2\t    _weight = 0.87\n"
+            "3\t    def score(self):\n"
+            "4\t        return self._weight\n"
+            "5\t\n"
+        )
+        result = engine.redact(prompt)
+        assert result.was_redacted
+        assert "0.87" not in result.redacted_prompt
+
+    def test_tab_separated_async_function_is_redacted(self, tmp_path):
+        engine = self._make_engine(tmp_path, "fetch_score")
+        prompt = (
+            "1\tasync def fetch_score(user_id: str) -> float:\n"
+            "2\t    await asyncio.sleep(0)\n"
+            "3\t    return 0.99\n"
+            "4\t\n"
+            "5\tdef other(): pass\n"
+        )
+        result = engine.redact(prompt)
+        assert result.was_redacted
+        assert "0.99" not in result.redacted_prompt
+
+    def test_colon_format_still_works(self, tmp_path):
+        engine = self._make_engine(tmp_path, "compute_price")
+        prompt = (
+            "1: def compute_price(base: float) -> float:\n"
+            "2:     return base * 0.42\n"
+            "3: \n"
+            "4: def other(): pass\n"
+        )
+        result = engine.redact(prompt)
+        assert result.was_redacted
+        assert "0.42" not in result.redacted_prompt
+
+
+# ===========================================================================
 # Helpers
 # ===========================================================================
 

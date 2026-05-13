@@ -46,14 +46,17 @@ def _block_re(name: str) -> re.Pattern[str]:
 
 @lru_cache(maxsize=256)
 def _numbered_def_re(name: str) -> re.Pattern[str]:
-    """Match a function/class def line prefixed with a line number (e.g. '1: def foo')."""
+    """Match a function/class def line prefixed with a line number.
+
+    Supports both OpenCode format ('1: def foo') and Claude Code format ('1\\tdef foo').
+    """
     return re.compile(
-        rf'^(\d+):\s*(?:(?:async\s+)?def\s+{re.escape(name)}\b|class\s+{re.escape(name)}\b)',
+        rf'^(\d+)[:\t]\s*(?:(?:async\s+)?def\s+{re.escape(name)}\b|class\s+{re.escape(name)}\b)',
         re.MULTILINE,
     )
 
 
-_NUMBERED_LINE_STRIP_RE = re.compile(r'^\d+:[ \t]?', re.MULTILINE)
+_NUMBERED_LINE_STRIP_RE = re.compile(r'^\d+[:\t][ \t]?', re.MULTILINE)
 
 
 @lru_cache(maxsize=256)
@@ -184,7 +187,7 @@ class RedactionEngine:
         found_def = False
         block_end = line_start
 
-        for lm in re.finditer(r'^(\d+):[ \t]?(.*)', prompt[line_start:], re.MULTILINE):
+        for lm in re.finditer(r'^(\d+)[:\t][ \t]?(.*)', prompt[line_start:], re.MULTILINE):
             content = lm.group(2)
             abs_end = line_start + lm.end()
             if not found_def:
