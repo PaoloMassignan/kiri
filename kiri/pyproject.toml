@@ -59,6 +59,14 @@ ignore = [
 strict = true
 python_version = "3.11"
 
+[[tool.mypy.overrides]]
+# chromadb's Include type stubs differ across versions: on some builds the
+# include=["distances", "metadatas"] call is typed as List[IncludeEnum] and
+# plain strings trigger list-item errors; on others it accepts Literal strings
+# and the ignore is unused.  Suppress warn_unused_ignores for this module only.
+module = "src.store.vector_store"
+warn_unused_ignores = false
+
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 testpaths = ["tests"]
