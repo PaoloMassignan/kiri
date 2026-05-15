@@ -9,7 +9,27 @@ env:
   REGISTRY: ghcr.io
 
 jobs:
+  # Gate: unit tests must pass before we push any image.
+  # Duplicates ci.yml intentionally — the Docker publish should be self-contained
+  # and never push a broken image even if ci.yml is skipped or fails silently.
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: kiri/pyproject.toml
+      - name: Install
+        working-directory: kiri
+        run: pip install -e ".[dev]"
+      - name: Unit tests
+        working-directory: kiri
+        run: python -m pytest tests/unit/ -q --tb=short
+
   build-and-push:
+    needs: test
     runs-on: ubuntu-latest
 
     permissions:
