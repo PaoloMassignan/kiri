@@ -58,12 +58,15 @@ jobs:
         shell: bash
         run: |
           if [ "${{ matrix.os }}" = "ubuntu-22.04" ]; then
-            dist/kiri/kiri --help
+            bin="dist/kiri/kiri"
           else
-            binary="${{ matrix.binary }}"
-            binary="${binary//\\//}"
-            ./"$binary" --help
+            bin="${{ matrix.binary }}"
+            bin="${bin//\\//}"
           fi
+          ./"$bin" --help
+          ./"$bin" serve --help
+          ./"$bin" install --help
+          ./"$bin" status --help
 
       - name: Package Linux binary as zip
         if: matrix.os == 'ubuntu-22.04'
