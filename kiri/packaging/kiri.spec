@@ -6,23 +6,17 @@
 #   pip install -e "."
 #
 # Output:
-#   dist/kiri        (Linux/macOS onefile, or Linux onedir when KIRI_ONEFILE=0)
-#   dist/kiri.exe    (Windows)
+#   dist/kiri        (Linux onedir when --onedir passed, macOS onefile)
+#   dist/kiri.exe    (Windows onefile)
 #
 # The GGUF model and embedding model are NOT bundled (too large).
 # kiri install downloads both at installation time.
-#
-# Linux note: PyTorch (via sentence-transformers) makes the onefile binary
-# exceed GitHub's 2 GB asset limit.  Set KIRI_ONEFILE=0 to build onedir,
-# then zip the dist/kiri/ directory for distribution.
 
-import os
 import sys
 from pathlib import Path
 
 block_cipher = None
 root = Path(SPECPATH).parent  # kiri/
-ONEFILE = os.environ.get("KIRI_ONEFILE", "1") == "1"
 
 a = Analysis(
     [str(root / "src" / "cli" / "app.py")],  # CLI entry point (typer)
@@ -91,22 +85,12 @@ pyz = PYZ(a.pure, a.zipped_data, cipher=block_cipher)
 exe = EXE(
     pyz,
     a.scripts,
-    [] if not ONEFILE else a.binaries,
-    [] if not ONEFILE else a.zipfiles,
-    [] if not ONEFILE else a.datas,
+    a.binaries,
+    a.zipfiles,
+    a.datas,
     name="kiri",
     debug=False,
     strip=False,
     upx=False,
     console=True,
-    onefile=ONEFILE,
 )
-
-if not ONEFILE:
-    coll = COLLECT(
-        exe,
-        a.binaries,
-        a.zipfiles,
-        a.datas,
-        name="kiri",
-    )

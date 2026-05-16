@@ -18,15 +18,12 @@ jobs:
           - os: ubuntu-22.04
             artifact: kiri-linux-amd64
             binary: dist/kiri
-            onefile: "0"
           - os: macos-14
             artifact: kiri-macos-arm64
             binary: dist/kiri
-            onefile: "1"
           - os: windows-2022
             artifact: kiri-windows-amd64
             binary: dist/kiri.exe
-            onefile: "1"
 
     runs-on: ${{ matrix.os }}
     defaults:
@@ -49,26 +46,29 @@ jobs:
         # on macOS with Metal).  Install base deps only; L3 fails-open.
         run: pip install -e "."
 
-      - name: Build binary
-        env:
-          KIRI_ONEFILE: ${{ matrix.onefile }}
-        run: pyinstaller packaging/kiri.spec --distpath dist --workpath /tmp/pyinstaller-work
+      - name: Build binary (onefile — macOS / Windows)
+        if: matrix.os != 'ubuntu-22.04'
+        run: pyinstaller packaging/kiri.spec --onefile --distpath dist --workpath /tmp/pyinstaller-work
 
-      - name: Package Linux binary as zip
+      - name: Build binary (onedir — Linux, PyTorch makes onefile > 2 GB)
         if: matrix.os == 'ubuntu-22.04'
-        working-directory: kiri/dist
-        run: zip -r kiri-linux-amd64.zip kiri/
+        run: pyinstaller packaging/kiri.spec --onedir --distpath dist --workpath /tmp/pyinstaller-work
 
-      - name: Smoke test binary
+      - name: Smoke test
         shell: bash
         run: |
           if [ "${{ matrix.os }}" = "ubuntu-22.04" ]; then
-            ./dist/kiri/kiri --help
+            dist/kiri/kiri --help
           else
             binary="${{ matrix.binary }}"
             binary="${binary//\\//}"
             ./"$binary" --help
           fi
+
+      - name: Package Linux binary as zip
+        if: matrix.os == 'ubuntu-22.04'
+        working-directory: kiri/dist
+        run: zip -r kiri-linux-amd64.zip kiri/
 
       - name: Upload artifact (Linux zip)
         if: matrix.os == 'ubuntu-22.04'
@@ -89,7 +89,6 @@ jobs:
           retention-days: 30
 
   release:
-    # Only runs when a tag is pushed; waits for all three builds to succeed.
     if: startsWith(github.ref, 'refs/tags/')
     needs: build
     runs-on: ubuntu-latest
