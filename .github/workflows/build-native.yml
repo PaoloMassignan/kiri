@@ -18,12 +18,15 @@ jobs:
           - os: ubuntu-22.04
             artifact: kiri-linux-amd64
             binary: dist/kiri
+            onefile: "0"
           - os: macos-14
             artifact: kiri-macos-arm64
             binary: dist/kiri
+            onefile: "1"
           - os: windows-2022
             artifact: kiri-windows-amd64
             binary: dist/kiri.exe
+            onefile: "1"
 
     runs-on: ${{ matrix.os }}
     defaults:
@@ -47,17 +50,37 @@ jobs:
         run: pip install -e "."
 
       - name: Build binary
+        env:
+          KIRI_ONEFILE: ${{ matrix.onefile }}
         run: pyinstaller packaging/kiri.spec --distpath dist --workpath /tmp/pyinstaller-work
+
+      - name: Package Linux binary as zip
+        if: matrix.os == 'ubuntu-22.04'
+        working-directory: kiri/dist
+        run: zip -r kiri-linux-amd64.zip kiri/
 
       - name: Smoke test binary
         shell: bash
         run: |
-          binary="${{ matrix.binary }}"
-          # On Windows the path uses backslash; normalise for bash
-          binary="${binary//\\//}"
-          ./"$binary" --help
+          if [ "${{ matrix.os }}" = "ubuntu-22.04" ]; then
+            ./dist/kiri/kiri --help
+          else
+            binary="${{ matrix.binary }}"
+            binary="${binary//\\//}"
+            ./"$binary" --help
+          fi
 
-      - name: Upload artifact
+      - name: Upload artifact (Linux zip)
+        if: matrix.os == 'ubuntu-22.04'
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact }}
+          path: kiri/dist/kiri-linux-amd64.zip
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Upload artifact (macOS / Windows)
+        if: matrix.os != 'ubuntu-22.04'
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.artifact }}
@@ -86,6 +109,6 @@ jobs:
         with:
           generate_release_notes: true
           files: |
-            artifacts/kiri-linux-amd64/kiri
+            artifacts/kiri-linux-amd64/kiri-linux-amd64.zip
             artifacts/kiri-macos-arm64/kiri
             artifacts/kiri-windows-amd64/kiri.exe
