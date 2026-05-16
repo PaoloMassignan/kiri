@@ -33,6 +33,12 @@ a = Analysis(
         "uvicorn.protocols.websockets.auto",
         "uvicorn.lifespan",
         "uvicorn.lifespan.on",
+        # chromadb dynamic imports (loaded via importlib/dependency injection)
+        "chromadb.telemetry.product.posthog",
+        "chromadb.telemetry.product.events",
+        "chromadb.segment.impl.manager.local",
+        "chromadb.segment.impl.manager.cache.cache",
+        "chromadb.db.migrations",
         # tree-sitter language grammars loaded via importlib
         "tree_sitter_python",
         "tree_sitter_javascript",
