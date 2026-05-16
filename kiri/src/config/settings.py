@@ -35,6 +35,10 @@ class Settings(BaseModel):
     llm_backend: Literal["ollama", "llama_cpp"] = "ollama"
     # Path to the GGUF model file — required when llm_backend = "llama_cpp"
     llm_model_path: str = "/var/lib/kiri/models/qwen2.5-3b-q4.gguf"
+    # llama-cpp-python tuning (only used when llm_backend = "llama_cpp")
+    llm_n_ctx: int = 2048         # context window in tokens
+    llm_n_threads: int = 0        # CPU threads; 0 = auto (os.cpu_count())
+    llm_n_gpu_layers: int = 0     # GPU layers; 0 = CPU-only, -1 = all layers on GPU
     # When True, requests carrying an Anthropic sk-ant- token are accepted and
     # forwarded with the original token. Bypass-prevention does not apply.
     # See REQ-S-010 and US-16.

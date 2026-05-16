@@ -40,6 +40,15 @@ dev = [
     "ruff>=0.3",
     "types-PyYAML>=6.0",
 ]
+# Native binary distribution: in-process LLM (no Ollama sidecar)
+# Install: pip install -e ".[native]"
+# Platform notes:
+#   - CPU-only:        pip install llama-cpp-python
+#   - CUDA (NVIDIA):   CMAKE_ARGS="-DGGML_CUDA=on" pip install llama-cpp-python
+#   - Metal (macOS):   CMAKE_ARGS="-DGGML_METAL=on" pip install llama-cpp-python
+native = [
+    "llama-cpp-python>=0.3.0",
+]
 
 [project.scripts]
 kiri = "src.cli.app:app"
