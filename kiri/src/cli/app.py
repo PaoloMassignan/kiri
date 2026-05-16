@@ -337,6 +337,37 @@ def install(
 
 
 @app.command()
+def uninstall(
+    data_dir: Path | None = typer.Option(
+        None, "--data-dir",
+        help="Data directory to inspect / purge (default: /var/lib/kiri or C:\\ProgramData\\Kiri)",
+    ),
+    purge: bool = typer.Option(
+        False, "--purge",
+        help="Also delete the data directory (upstream key, model, workspace). Irreversible.",
+    ),
+) -> None:
+    """Remove the Kiri OS service (requires root / Administrator)."""
+    import platform
+
+    from src.cli.commands.install import InstallError
+    from src.cli.commands.uninstall import run as uninstall_run
+
+    if data_dir is None:
+        data_dir = (
+            Path("C:/ProgramData/Kiri")
+            if platform.system() == "Windows"
+            else Path("/var/lib/kiri")
+        )
+
+    try:
+        uninstall_run(data_dir, purge=purge)
+    except InstallError as exc:
+        typer.echo(f"Error: {exc}", err=True)
+        raise typer.Exit(1) from exc
+
+
+@app.command()
 def serve(
     port: int | None = typer.Option(
         None, "--port", "-p",

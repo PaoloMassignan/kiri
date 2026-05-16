@@ -1,11 +1,14 @@
 # PyInstaller spec — Kiri native binary
-# Build: pyinstaller packaging/kiri.spec
+# Build: cd kiri && pyinstaller packaging/kiri.spec
 #
 # Requirements:
 #   pip install pyinstaller
 #   pip install -e ".[native]"   (adds llama-cpp-python)
 #
 # Output: dist/kiri  (Linux/macOS)  or  dist/kiri.exe  (Windows)
+#
+# The GGUF model and embedding model are NOT bundled (too large).
+# kiri install downloads both at installation time.
 
 import sys
 from pathlib import Path
@@ -14,14 +17,12 @@ block_cipher = None
 root = Path(SPECPATH).parent  # kiri/
 
 a = Analysis(
-    [str(root / "src" / "main.py")],
+    [str(root / "src" / "cli" / "app.py")],  # CLI entry point (typer)
     pathex=[str(root)],
     binaries=[],
-    datas=[
-        # Bundle the sentence-transformers embedding model
-        (str(root / ".kiri" / "models"), ".kiri/models"),
-    ],
+    datas=[],
     hiddenimports=[
+        # uvicorn dynamic imports
         "uvicorn.logging",
         "uvicorn.loops",
         "uvicorn.loops.auto",
@@ -32,8 +33,17 @@ a = Analysis(
         "uvicorn.protocols.websockets.auto",
         "uvicorn.lifespan",
         "uvicorn.lifespan.on",
-        "chromadb",
-        "sentence_transformers",
+        # tree-sitter language grammars loaded via importlib
+        "tree_sitter_python",
+        "tree_sitter_javascript",
+        "tree_sitter_typescript",
+        "tree_sitter_java",
+        "tree_sitter_go",
+        "tree_sitter_rust",
+        "tree_sitter_c",
+        "tree_sitter_cpp",
+        "tree_sitter_c_sharp",
+        # optional — present only when [native] extras are installed
         "llama_cpp",
     ],
     hookspath=[],

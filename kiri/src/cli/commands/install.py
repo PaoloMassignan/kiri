@@ -70,6 +70,29 @@ def _check_privileges(system: str) -> None:
 # System user creation
 # ---------------------------------------------------------------------------
 
+_MACOS_UID_MIN = 300
+_MACOS_UID_MAX = 400
+
+
+def _find_free_uid_macos(run_cmd: _RunCmd) -> int:
+    """Return the first unused UID in [_MACOS_UID_MIN, _MACOS_UID_MAX).
+
+    macOS reserves UIDs < 500 for system accounts (_kiri, _www, etc.).
+    We scan the range so we don't collide with any existing account.
+    """
+    for uid in range(_MACOS_UID_MIN, _MACOS_UID_MAX):
+        result = run_cmd(
+            ["dscl", ".", "-search", "/Users", "UniqueID", str(uid)],
+            check=False,
+        )
+        # dscl exits 0 and prints nothing if the UID is free
+        if result.returncode == 0 and not (result.stdout or "").strip():
+            return uid
+    raise InstallError(
+        f"No free UID found in range [{_MACOS_UID_MIN}, {_MACOS_UID_MAX}). "
+        "Remove a system account or expand the search range."
+    )
+
 
 def _create_system_user(system: str, run_cmd: _RunCmd, output_fn: _OutputFn) -> None:
     output_fn("Creating system user...")
@@ -88,14 +111,14 @@ def _create_system_user(system: str, run_cmd: _RunCmd, output_fn: _OutputFn) -> 
             check=False,
         )
         if result.returncode != 0:
-            # Find a free UID >= 300 (macOS system account range)
+            uid = _find_free_uid_macos(run_cmd)
             run_cmd(["dscl", ".", "-create", f"/Users/{_KIRI_USER_MACOS}"], check=True)
             run_cmd(["dscl", ".", "-create", f"/Users/{_KIRI_USER_MACOS}",
                      "UserShell", "/usr/bin/false"], check=True)
             run_cmd(["dscl", ".", "-create", f"/Users/{_KIRI_USER_MACOS}",
                      "RealName", "Kiri Service Account"], check=True)
             run_cmd(["dscl", ".", "-create", f"/Users/{_KIRI_USER_MACOS}",
-                     "UniqueID", "399"], check=True)
+                     "UniqueID", str(uid)], check=True)
             run_cmd(["dscl", ".", "-create", f"/Users/{_KIRI_USER_MACOS}",
                      "PrimaryGroupID", "80"], check=True)
     elif system == "Windows":
@@ -163,6 +186,46 @@ def _write_upstream_key(
              "/grant:r", "SYSTEM:F"],
             check=True,
         )
+
+
+# ---------------------------------------------------------------------------
+# Default config.yaml
+# ---------------------------------------------------------------------------
+
+
+def _generate_config_yaml(config: InstallConfig) -> str:
+    """Return a minimal config.yaml suited for the native binary distribution.
+
+    When local AI is enabled the file points llm_backend at the GGUF model
+    that was downloaded (or copied) by _install_model.  When --no-local-ai is
+    used we omit the llm_backend key so the gateway defaults to "ollama" and
+    L3 fails-open gracefully (ADR-004) if Ollama is not running.
+    """
+    model_path = config.data_dir / "models" / _MODEL_FILENAME
+    lines: list[str] = [
+        f"workspace: {config.data_dir / 'workspace'}",
+        f"proxy_port: {config.port}",
+    ]
+    if not config.no_local_ai:
+        lines += [
+            "llm_backend: llama_cpp",
+            f"llm_model_path: {model_path}",
+        ]
+    return "\n".join(lines) + "\n"
+
+
+def _write_config_yaml(
+    config: InstallConfig, system: str, run_cmd: _RunCmd, output_fn: _OutputFn
+) -> None:
+    cfg_path = config.data_dir / "config.yaml"
+    if cfg_path.exists():
+        output_fn(f"  config.yaml already exists — skipping (remove to regenerate).")
+        return
+    output_fn("Writing default config.yaml...")
+    cfg_path.write_text(_generate_config_yaml(config), encoding="utf-8")
+    if system in ("Linux", "Darwin"):
+        user = _kiri_user(system)
+        run_cmd(["chown", f"{user}:{user}", str(cfg_path)], check=True)
 
 
 # ---------------------------------------------------------------------------
@@ -368,6 +431,7 @@ def run(
     if not key.strip():
         raise InstallError("Upstream key cannot be empty.")
     _write_upstream_key(config.data_dir, key.strip(), system, run_cmd, output_fn)
+    _write_config_yaml(config, system, run_cmd, output_fn)
 
     _install_service(config, system, run_cmd, output_fn)
 

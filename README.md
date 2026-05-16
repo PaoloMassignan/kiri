@@ -1,6 +1,7 @@
 # Kiri
 
 [![CI](https://github.com/PaoloMassignan/kiri/actions/workflows/ci.yml/badge.svg)](https://github.com/PaoloMassignan/kiri/actions/workflows/ci.yml)
+[![Build Native](https://github.com/PaoloMassignan/kiri/actions/workflows/build-native.yml/badge.svg)](https://github.com/PaoloMassignan/kiri/actions/workflows/build-native.yml)
 
 **Use AI coding tools at full power — without sending your code to the cloud.**
 
@@ -13,14 +14,61 @@ Works for a single developer or an entire team:
 
 > Built with Claude Code. Works with every AI coding tool. Kiri was developed using Claude Code — a deliberate choice: we used the tool we're protecting against to build the protection itself.
 
-## Prerequisites
+## Distributions
 
-- Docker Desktop — [download](https://www.docker.com/products/docker-desktop/)
-- An API key for the provider(s) you use:
-  - Anthropic (`sk-ant-...`) from [console.anthropic.com](https://console.anthropic.com)
-  - OpenAI (`sk-...`) from [platform.openai.com](https://platform.openai.com) — only if you use GPT models via Cursor or similar tools
+| | Native binary | Docker |
+|---|---|---|
+| **Dependencies** | None (single binary) | Docker Desktop |
+| **LLM classifier (L3)** | Built-in (`llama-cpp-python`) | Ollama sidecar |
+| **Best for** | Single developer, air-gapped networks | Teams, shared gateway |
+| **Install** | `sudo kiri install` | `docker compose up -d` |
 
 ## Installation
+
+### Native binary (no Docker, no Ollama)
+
+Download the binary for your platform from the [latest release](https://github.com/PaoloMassignan/kiri/releases/latest), then run as root / Administrator:
+
+```bash
+# Linux / macOS
+sudo kiri install
+#   ↳ creates system user, writes key, downloads GGUF model, installs OS service
+
+# Windows (PowerShell — run as Administrator)
+kiri install
+```
+
+Options:
+
+| Flag | Description |
+|---|---|
+| `--port 9000` | Custom gateway port (default: 8765) |
+| `--no-local-ai` | Skip model download — L3 classifier disabled |
+| `--model-path /path/to/model.gguf` | Air-gapped install: use pre-downloaded model |
+| `--data-dir /custom/path` | Override default data directory |
+
+To start the service after install:
+
+```bash
+sudo systemctl start kiri   # Linux
+sudo launchctl start dev.kiri  # macOS
+sc start Kiri               # Windows (Admin)
+```
+
+To uninstall:
+
+```bash
+sudo kiri uninstall          # keeps data directory
+sudo kiri uninstall --purge  # also deletes upstream key, model, workspace
+```
+
+### Docker distribution (team / multi-developer)
+
+**Prerequisites:** Docker Desktop — [download](https://www.docker.com/products/docker-desktop/)
+
+**API key:**
+- Anthropic (`sk-ant-...`) from [console.anthropic.com](https://console.anthropic.com)
+- OpenAI (`sk-...`) from [platform.openai.com](https://platform.openai.com) — only if you use GPT models via Cursor or similar
 
 ### macOS
 

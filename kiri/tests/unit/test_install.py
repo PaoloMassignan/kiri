@@ -23,9 +23,11 @@ from src.cli.commands.install import (
     _check_privileges,
     _create_data_dir,
     _create_system_user,
+    _generate_config_yaml,
     _generate_launchd_plist,
     _generate_systemd_unit,
     _install_model,
+    _write_config_yaml,
     _write_upstream_key,
     run,
 )
@@ -192,11 +194,18 @@ def test_create_system_user_linux_calls_useradd(monkeypatch: pytest.MonkeyPatch)
 
 
 def test_create_system_user_macos_calls_dscl(monkeypatch: pytest.MonkeyPatch) -> None:
-    # First call is the read check — return non-zero so user is created
-    results = [MagicMock(returncode=1)] + [MagicMock(returncode=0)] * 10
-
     def _run(args: list[str], *a: Any, **kw: Any) -> Any:
-        return results.pop(0) if results else MagicMock(returncode=0)
+        result = MagicMock()
+        if "-read" in args:
+            result.returncode = 1   # user doesn't exist yet
+            result.stdout = ""
+        elif "-search" in args:
+            result.returncode = 0
+            result.stdout = ""      # UID is free (empty output)
+        else:
+            result.returncode = 0
+            result.stdout = ""
+        return result
 
     _create_system_user("Darwin", _run, print)
     # No exception = success
@@ -278,6 +287,85 @@ def test_write_upstream_key_windows_calls_icacls(tmp_path: Path) -> None:
     calls, run_cmd = _recording_run()
     _write_upstream_key(data_dir, "sk-ant-test", "Windows", run_cmd, print)
     assert any("icacls" in c for c in calls)
+
+
+# ---------------------------------------------------------------------------
+# _generate_config_yaml
+# ---------------------------------------------------------------------------
+
+
+def test_generate_config_yaml_sets_llm_backend_when_local_ai(tmp_path: Path) -> None:
+    cfg = InstallConfig(data_dir=tmp_path / "kiri")
+    yaml_text = _generate_config_yaml(cfg)
+    assert "llm_backend: llama_cpp" in yaml_text
+
+
+def test_generate_config_yaml_includes_model_path(tmp_path: Path) -> None:
+    cfg = InstallConfig(data_dir=tmp_path / "kiri")
+    yaml_text = _generate_config_yaml(cfg)
+    assert "llm_model_path:" in yaml_text
+    assert "qwen2.5-3b-q4.gguf" in yaml_text
+
+
+def test_generate_config_yaml_omits_llm_backend_when_no_local_ai(tmp_path: Path) -> None:
+    cfg = InstallConfig(data_dir=tmp_path / "kiri", no_local_ai=True)
+    yaml_text = _generate_config_yaml(cfg)
+    assert "llm_backend" not in yaml_text
+    assert "llm_model_path" not in yaml_text
+
+
+def test_generate_config_yaml_contains_workspace(tmp_path: Path) -> None:
+    cfg = InstallConfig(data_dir=tmp_path / "kiri")
+    yaml_text = _generate_config_yaml(cfg)
+    assert "workspace:" in yaml_text
+    assert "workspace" in yaml_text
+
+
+def test_generate_config_yaml_contains_port(tmp_path: Path) -> None:
+    cfg = InstallConfig(data_dir=tmp_path / "kiri", port=9000)
+    yaml_text = _generate_config_yaml(cfg)
+    assert "proxy_port: 9000" in yaml_text
+
+
+# ---------------------------------------------------------------------------
+# _write_config_yaml
+# ---------------------------------------------------------------------------
+
+
+def test_write_config_yaml_creates_file(tmp_path: Path) -> None:
+    data_dir = tmp_path / "kiri"
+    data_dir.mkdir()
+    cfg = InstallConfig(data_dir=data_dir)
+    _write_config_yaml(cfg, "Linux", _fake_run(), lambda _: None)
+    assert (data_dir / "config.yaml").exists()
+
+
+def test_write_config_yaml_skips_if_already_exists(tmp_path: Path) -> None:
+    data_dir = tmp_path / "kiri"
+    data_dir.mkdir()
+    cfg = InstallConfig(data_dir=data_dir)
+    (data_dir / "config.yaml").write_text("existing: true\n")
+    _write_config_yaml(cfg, "Linux", _fake_run(), lambda _: None)
+    # File should not be overwritten
+    assert (data_dir / "config.yaml").read_text() == "existing: true\n"
+
+
+def test_write_config_yaml_calls_chown_on_linux(tmp_path: Path) -> None:
+    data_dir = tmp_path / "kiri"
+    data_dir.mkdir()
+    calls, run_cmd = _recording_run()
+    cfg = InstallConfig(data_dir=data_dir)
+    _write_config_yaml(cfg, "Linux", run_cmd, lambda _: None)
+    assert any("chown" in c for c in calls)
+
+
+def test_write_config_yaml_no_chown_on_windows(tmp_path: Path) -> None:
+    data_dir = tmp_path / "kiri"
+    data_dir.mkdir()
+    calls, run_cmd = _recording_run()
+    cfg = InstallConfig(data_dir=data_dir)
+    _write_config_yaml(cfg, "Windows", run_cmd, lambda _: None)
+    assert not any("chown" in c for c in calls)
 
 
 # ---------------------------------------------------------------------------
