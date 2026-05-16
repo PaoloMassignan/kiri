@@ -51,14 +51,17 @@ def _build_pipeline(settings: Settings) -> FilterPipeline:
     from src.filter.l3_classifier import L3Filter
     from src.indexer.embedder import Embedder
 
+    from src.llm import make_llm_backend
+
     vs = make_vector_store(settings)
     ss = make_symbol_store(settings)
     secrets_store = make_secrets_store(settings)
     embedder = Embedder(settings=settings)
+    llm_backend = make_llm_backend(settings)
 
     l1 = L1Filter(vector_store=vs, embedder=embedder)
     l2 = L2Filter(symbol_store=ss)
-    l3 = L3Filter(settings=settings)
+    l3 = L3Filter(backend=llm_backend)
 
     return FilterPipeline(settings=settings, l1=l1, l2=l2, l3=l3, secrets_store=secrets_store)
 
