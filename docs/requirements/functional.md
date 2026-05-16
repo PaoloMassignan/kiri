@@ -240,3 +240,63 @@ Ollama-generated summaries for the same symbol.
 
 **User story:** US-13
 **Tests:** `tests/unit/test_summary_cli.py`
+
+---
+
+## REQ-F-012: Multi-workspace support
+
+```
+WHEN the gateway configuration contains a "workspaces" list,
+the gateway SHALL index and protect files from every listed workspace directory.
+
+WHEN the configuration contains a singular "workspace" key,
+the gateway SHALL treat it as a list of one entry (backwards-compatible).
+
+WHEN neither key is present,
+the gateway SHALL default to the current working directory as the sole workspace.
+
+WHEN both "workspace" and "workspaces" keys are present in the same config file,
+the gateway SHALL exit at startup with a descriptive error message.
+
+WHEN a listed workspace path does not exist on disk at startup,
+the gateway SHALL exit with a descriptive error message naming the missing path.
+
+WHILE the gateway is running,
+the gateway SHALL maintain a separate ChromaDB collection namespace per workspace,
+named using a stable hash of the workspace path, so that symbols with identical
+names in different workspaces do not collide.
+
+WHEN the filter pipeline evaluates a request,
+the gateway SHALL query all active workspace namespaces in parallel and apply the
+similarity threshold to the highest score returned across all namespaces.
+
+WHEN a developer runs "kiri workspace add <path>",
+the gateway SHALL add the workspace to the running configuration, create its
+ChromaDB namespace, start a watcher thread, and begin indexing within 5 seconds,
+without restarting the gateway process.
+
+WHEN a developer runs "kiri workspace rm <path>",
+the gateway SHALL stop the watcher thread for that workspace, purge its ChromaDB
+namespace, and remove it from the running configuration within 5 seconds,
+without restarting the gateway process.
+
+WHEN a developer runs "kiri workspace list",
+the gateway SHALL display each active workspace path with its file count and
+indexed chunk count.
+
+WHEN a developer runs "kiri status",
+the gateway SHALL display workspace-level summaries (path, file count, chunk count)
+for each active workspace.
+
+WHEN the filter pipeline produces an audit log entry,
+the entry SHALL include a "workspace" field containing the path of the workspace
+whose namespace produced the highest similarity score,
+or the string "none" if no protected symbol was matched.
+
+WHEN all workspaces are removed at runtime,
+the gateway SHALL continue serving requests (all requests will PASS) and SHALL
+emit a warning-level log entry stating that no protected files remain.
+```
+
+**User story:** US-17
+**Tests:** `tests/unit/test_multi_workspace.py`, `tests/integration/test_gateway_multi_workspace.py`
