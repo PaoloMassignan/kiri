@@ -287,6 +287,56 @@ def explain(
 
 
 @app.command()
+def install(
+    port: int = typer.Option(8765, "--port", "-p", help="Gateway port"),
+    data_dir: Path | None = typer.Option(
+        None, "--data-dir",
+        help="Data directory (default: /var/lib/kiri on Linux/macOS, C:\\ProgramData\\Kiri on Windows)",
+    ),
+    no_local_ai: bool = typer.Option(
+        False, "--no-local-ai",
+        help="Skip local AI model download (L3 classifier will be disabled)",
+    ),
+    model_path: Path | None = typer.Option(
+        None, "--model-path",
+        help="Path to a pre-downloaded GGUF model file (air-gapped install)",
+        exists=False,
+    ),
+    kiri_binary: str = typer.Option(
+        "kiri", "--kiri-binary",
+        help="Path or name of the kiri executable to register in the service unit",
+    ),
+) -> None:
+    """Install Kiri as an OS service (requires root / Administrator)."""
+    import platform
+
+    from src.cli.commands.install import InstallConfig
+    from src.cli.commands.install import InstallError
+    from src.cli.commands.install import run as install_run
+
+    if data_dir is None:
+        data_dir = (
+            Path("C:/ProgramData/Kiri")
+            if platform.system() == "Windows"
+            else Path("/var/lib/kiri")
+        )
+
+    config = InstallConfig(
+        data_dir=data_dir,
+        port=port,
+        no_local_ai=no_local_ai,
+        model_path=model_path,
+        kiri_binary=kiri_binary,
+    )
+
+    try:
+        install_run(config)
+    except InstallError as exc:
+        typer.echo(f"Error: {exc}", err=True)
+        raise typer.Exit(1) from exc
+
+
+@app.command()
 def serve(
     port: int | None = typer.Option(
         None, "--port", "-p",
