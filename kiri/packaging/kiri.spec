@@ -43,12 +43,13 @@ a = Analysis(
         "tree_sitter_c",
         "tree_sitter_cpp",
         "tree_sitter_c_sharp",
-        # optional — present only when [native] extras are installed
-        "llama_cpp",
     ],
     hookspath=[],
     runtime_hooks=[],
-    excludes=[],
+    # llama_cpp is NOT bundled — its Metal/CUDA shared libs make the macOS
+    # binary exceed GitHub's 2 GB asset limit.  L3 fails-open per ADR-004
+    # when llama_cpp is absent; L1 and L2 remain fully active.
+    excludes=["llama_cpp"],
     cipher=block_cipher,
 )
 

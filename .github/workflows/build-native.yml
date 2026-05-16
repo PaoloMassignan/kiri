@@ -41,10 +41,10 @@ jobs:
       - name: Install build dependencies
         run: pip install pyinstaller
 
-      - name: Install Kiri with native extras
-        # CPU-only llama-cpp-python — no CUDA/Metal flags in CI.
-        # GPU builds are left to end users (documented in README).
-        run: pip install -e ".[native]"
+      - name: Install Kiri
+        # llama-cpp-python is excluded from the PyInstaller bundle (too large
+        # on macOS with Metal).  Install base deps only; L3 fails-open.
+        run: pip install -e "."
 
       - name: Build binary
         run: pyinstaller packaging/kiri.spec --distpath dist --workpath /tmp/pyinstaller-work
