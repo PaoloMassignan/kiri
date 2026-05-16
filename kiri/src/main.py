@@ -13,6 +13,7 @@ from src.indexer.embedder import Embedder
 from src.indexer.symbol_extractor import SymbolExtractor
 from src.indexer.watcher import Watcher
 from src.keys.manager import KeyManager
+from src.llm import make_llm_backend
 from src.proxy.forwarder import Forwarder
 from src.proxy.server import create_app
 from src.ratelimit.limiter import RateLimiter
@@ -42,10 +43,12 @@ def create_gateway_app(settings: Settings | None = None) -> FastAPI:
     summary_store = SummaryStore(index_dir=index_dir)
     secrets_store = SecretsStore(secrets_path=secrets_path, workspace=settings.workspace)
 
-    embedder = Embedder(settings=settings)
-    extractor = SymbolExtractor(settings=settings)
+    llm_backend = make_llm_backend(settings)
 
-    summary_generator = SummaryGenerator(settings=settings)
+    embedder = Embedder(settings=settings)
+    extractor = SymbolExtractor(backend=llm_backend)
+
+    summary_generator = SummaryGenerator(backend=llm_backend)
 
     watcher = Watcher(
         secrets_store=secrets_store,
@@ -63,7 +66,7 @@ def create_gateway_app(settings: Settings | None = None) -> FastAPI:
 
     l1 = L1Filter(vector_store=vector_store, embedder=embedder)
     l2 = L2Filter(symbol_store=symbol_store)
-    l3 = L3Filter(settings=settings)
+    l3 = L3Filter(backend=llm_backend)
     pipeline = FilterPipeline(
         settings=settings,
         l1=l1,

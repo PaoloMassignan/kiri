@@ -88,19 +88,30 @@ class TestSummaryStore:
 
 
 class TestSummaryGenerator:
-    """Call Ollama to generate a safe public summary of a protected chunk."""
+    """LLM backend generates a safe public summary of a protected chunk."""
+
+    def _make_backend(self, response: str = "# summary", error: bool = False) -> object:
+        from src.llm.backend import LocalLLMError
+
+        class FakeBackend:
+            def __init__(self, resp: str, err: bool) -> None:
+                self._resp = resp
+                self._err = err
+                self.calls: list[str] = []
+
+            def generate(self, prompt: str, *, timeout: float | None = None) -> str:
+                self.calls.append(prompt)
+                if self._err:
+                    raise LocalLLMError("unavailable")
+                return self._resp
+
+        return FakeBackend(response, error)
 
     def test_generate_returns_string(self, tmp_path):
-        from src.config.settings import Settings
         from src.redaction.summary_generator import SummaryGenerator
 
-        mock_client = MagicMock()
-        mock_client.post.return_value.status_code = 200
-        mock_client.post.return_value.json.return_value = {
-            "response": "# [PROTECTED] _weighted_sum\n# Scopo: media pesata."
-        }
-
-        gen = SummaryGenerator(Settings(), http_client=mock_client)
+        backend = self._make_backend("# [PROTECTED] _weighted_sum\n# Scopo: media pesata.")
+        gen = SummaryGenerator(backend=backend)
         result = gen.generate(
             chunk_id="scorer__3",
             chunk_text="def _weighted_sum(components):\n    return sum(...)",
@@ -110,47 +121,32 @@ class TestSummaryGenerator:
         assert len(result) > 0
 
     def test_generate_calls_ollama_with_prompt(self, tmp_path):
-        from src.config.settings import Settings
         from src.redaction.summary_generator import SummaryGenerator
 
-        mock_client = MagicMock()
-        mock_client.post.return_value.status_code = 200
-        mock_client.post.return_value.json.return_value = {"response": "# summary"}
-
-        gen = SummaryGenerator(Settings(), http_client=mock_client)
+        backend = self._make_backend("# summary")
+        gen = SummaryGenerator(backend=backend)
         gen.generate("scorer__3", "def _weighted_sum(): ...", "_weighted_sum")
 
-        call_kwargs = mock_client.post.call_args
-        body = call_kwargs[1]["json"] if "json" in call_kwargs[1] else call_kwargs[0][1]
-        assert "_weighted_sum" in str(body) or "weighted_sum" in str(body)
+        assert backend.calls  # type: ignore[attr-defined]
+        assert "_weighted_sum" in backend.calls[0]  # type: ignore[attr-defined]
 
     def test_generate_raises_on_ollama_unavailable(self):
-        import httpx
-
-        from src.config.settings import Settings
         from src.redaction.summary_generator import SummaryGenerationError, SummaryGenerator
 
-        mock_client = MagicMock()
-        mock_client.post.side_effect = httpx.ConnectError("refused")
-
-        gen = SummaryGenerator(Settings(), http_client=mock_client)
+        backend = self._make_backend(error=True)
+        gen = SummaryGenerator(backend=backend)
         with pytest.raises(SummaryGenerationError):
             gen.generate("scorer__3", "def _weighted_sum(): ...", "_weighted_sum")
 
     def test_generate_summary_does_not_contain_implementation(self):
         """The generated summary must not contain the original code body."""
-        from src.config.settings import Settings
         from src.redaction.summary_generator import SummaryGenerator
 
         secret_body = "return sum(components[k] * weights[k] for k in weights)"  # noqa: S105
-        mock_client = MagicMock()
-        mock_client.post.return_value.status_code = 200
-        # Ollama correctly returns only the summary, not the implementation
-        mock_client.post.return_value.json.return_value = {
-            "response": "# [PROTECTED] _weighted_sum\n# Scopo: calcola media pesata."
-        }
-
-        gen = SummaryGenerator(Settings(), http_client=mock_client)
+        backend = self._make_backend(
+            "# [PROTECTED] _weighted_sum\n# Scopo: calcola media pesata."
+        )
+        gen = SummaryGenerator(backend=backend)
         result = gen.generate("scorer__3", secret_body, "_weighted_sum")
         assert secret_body not in result
 

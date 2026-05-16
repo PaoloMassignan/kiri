@@ -4,11 +4,8 @@ import json
 import logging
 from pathlib import Path
 
-import httpx
+from src.llm.backend import LocalLLMBackend, LocalLLMError
 
-from src.config.settings import Settings
-
-_OLLAMA_PATH = "/api/generate"
 _TIMEOUT = 30.0
 
 _EXTRACT_TEMPLATE = (
@@ -42,24 +39,21 @@ class OllamaUnavailableError(Exception):
 
 
 class SymbolExtractor:
-    def __init__(self, settings: Settings) -> None:
-        self._model = settings.ollama_model
-        self._url = settings.ollama_base_url.rstrip("/") + _OLLAMA_PATH
-        self._client = httpx.Client(timeout=_TIMEOUT)
+    def __init__(self, backend: LocalLLMBackend) -> None:
+        self._backend = backend
 
     def extract(self, text: str) -> list[str]:
         """Extract proprietary symbol names from raw code text."""
         if not text.strip():
             return []
         prompt = _EXTRACT_TEMPLATE.format(code=text)
-        raw = self._call_ollama(prompt)
+        raw = self._call(prompt)
         return _parse_symbols(raw)
 
     def filter_symbols(self, symbols: list[str], file_path: Path) -> list[str]:
         """
-        Filter AST-extracted symbols to domain-specific ones using Ollama.
+        Filter AST-extracted symbols to domain-specific ones using the LLM backend.
 
-        Asks the model to classify each symbol as domain-specific vs generic.
         Only returns symbols that were in the original list (prevents hallucination).
         Falls back to the full list on parse error.
         """
@@ -76,32 +70,18 @@ class SymbolExtractor:
             preview=preview,
             symbols=json.dumps(symbols),
         )
-        raw = self._call_ollama(prompt)
+        raw = self._call(prompt)
         filtered = _parse_symbols(raw)
 
-        # Intersect with originals — prevent the model from hallucinating new names
         original = set(symbols)
         result = [s for s in filtered if s in original]
-
-        # If Ollama returns nothing sensible, keep everything (safe default)
         return result if result else symbols
 
-    def _call_ollama(self, prompt: str) -> str:
+    def _call(self, prompt: str) -> str:
         try:
-            response = self._client.post(
-                self._url,
-                json={"model": self._model, "prompt": prompt, "stream": False},
-            )
-        except (httpx.ConnectError, httpx.TimeoutException) as exc:
+            return self._backend.generate(prompt, timeout=_TIMEOUT)
+        except LocalLLMError as exc:
             raise OllamaUnavailableError(str(exc)) from exc
-
-        if response.status_code < 200 or response.status_code >= 300:
-            raise OllamaUnavailableError(
-                f"Ollama returned HTTP {response.status_code}"
-            )
-
-        data = response.json()
-        return str(data.get("response", ""))
 
 
 def _read_preview(file_path: Path, lines: int = _PREVIEW_LINES) -> str:
@@ -113,7 +93,7 @@ def _parse_symbols(raw: str) -> list[str]:
     try:
         parsed = json.loads(raw)
     except json.JSONDecodeError:
-        logger.debug("symbol_extractor: invalid JSON from Ollama: %r", raw)
+        logger.debug("symbol_extractor: invalid JSON from backend: %r", raw)
         return []
 
     if not isinstance(parsed, list):

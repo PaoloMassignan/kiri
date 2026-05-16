@@ -31,6 +31,10 @@ class Settings(BaseModel):
     audit_backup_count: int = 5               # keep up to 5 rotated files
     rate_limit_rpm: int = 0                   # requests/minute per key; 0 = disabled
     ollama_timeout_seconds: float = 10.0      # L3 classifier request timeout
+    # LocalLLM backend: "ollama" (Docker distribution) or "llama_cpp" (native distribution)
+    llm_backend: Literal["ollama", "llama_cpp"] = "ollama"
+    # Path to the GGUF model file — required when llm_backend = "llama_cpp"
+    llm_model_path: str = "/var/lib/kiri/models/qwen2.5-3b-q4.gguf"
     # When True, requests carrying an Anthropic sk-ant- token are accepted and
     # forwarded with the original token. Bypass-prevention does not apply.
     # See REQ-S-010 and US-16.

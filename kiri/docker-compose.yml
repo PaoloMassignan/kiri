@@ -2,7 +2,9 @@ services:
 
   kiri:
     image: ghcr.io/paolomassignan/kiri:latest
-    build: .   # use `docker compose up --build` to build from source instead
+    build:                          # use `docker compose up --build` to build from source
+      context: .
+      dockerfile: docker/Dockerfile
     restart: always
     ports:
       - "127.0.0.1:8765:8765"

@@ -2,28 +2,31 @@ from __future__ import annotations
 
 import json
 
-import httpx
 import pytest
 
-from src.config.settings import Settings
+from src.llm.backend import LocalLLMError
+
 
 # --- helpers ------------------------------------------------------------------
 
 
-def make_extractor() -> object:
-    from src.indexer.symbol_extractor import SymbolExtractor
+class FakeBackend:
+    """Minimal LocalLLMBackend for tests — returns a pre-set string or raises."""
 
-    return SymbolExtractor(settings=Settings())
+    def __init__(self, response: str = "[]", error: bool = False) -> None:
+        self._response = response
+        self._error = error
+        self.calls: list[str] = []
+
+    def generate(self, prompt: str, *, timeout: float | None = None) -> str:
+        self.calls.append(prompt)
+        if self._error:
+            raise LocalLLMError("unavailable")
+        return self._response
 
 
-def ollama_response(symbols: list[str]) -> httpx.Response:
-    body = json.dumps({"response": json.dumps(symbols)})
-    return httpx.Response(200, content=body.encode())
-
-
-def ollama_response_raw(text: str) -> httpx.Response:
-    body = json.dumps({"response": text})
-    return httpx.Response(200, content=body.encode())
+def symbols_backend(symbols: list[str]) -> FakeBackend:
+    return FakeBackend(json.dumps(symbols))
 
 
 # --- construction -------------------------------------------------------------
@@ -32,89 +35,52 @@ def ollama_response_raw(text: str) -> httpx.Response:
 def test_extractor_constructs_without_error() -> None:
     from src.indexer.symbol_extractor import SymbolExtractor
 
-    extractor = SymbolExtractor(settings=Settings())
-
+    extractor = SymbolExtractor(backend=FakeBackend())
     assert extractor is not None
 
 
 # --- empty input --------------------------------------------------------------
 
 
-def test_extractor_empty_string_returns_empty_list(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+def test_extractor_empty_string_returns_empty_list() -> None:
     from src.indexer.symbol_extractor import SymbolExtractor
 
-    called = []
-
-    def fake_post(*args: object, **kwargs: object) -> httpx.Response:
-        called.append(True)
-        return ollama_response([])
-
-    monkeypatch.setattr(httpx.Client, "post", fake_post)
-    extractor = SymbolExtractor(settings=Settings())
-
-    result = extractor.extract("")
+    backend = FakeBackend()
+    result = SymbolExtractor(backend=backend).extract("")
 
     assert result == []
-    assert not called, "Ollama must not be called for empty input"
+    assert not backend.calls, "backend must not be called for empty input"
 
 
-def test_extractor_whitespace_only_returns_empty_list(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+def test_extractor_whitespace_only_returns_empty_list() -> None:
     from src.indexer.symbol_extractor import SymbolExtractor
 
-    called = []
-
-    def fake_post(*args: object, **kwargs: object) -> httpx.Response:
-        called.append(True)
-        return ollama_response([])
-
-    monkeypatch.setattr(httpx.Client, "post", fake_post)
-    extractor = SymbolExtractor(settings=Settings())
-
-    result = extractor.extract("   \n\t  ")
+    backend = FakeBackend()
+    result = SymbolExtractor(backend=backend).extract("   \n\t  ")
 
     assert result == []
-    assert not called, "Ollama must not be called for whitespace-only input"
+    assert not backend.calls, "backend must not be called for whitespace-only input"
 
 
 # --- normal extraction --------------------------------------------------------
 
 
-def test_extractor_returns_symbols_from_ollama(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+def test_extractor_returns_symbols_from_ollama() -> None:
     from src.indexer.symbol_extractor import SymbolExtractor
 
-    monkeypatch.setattr(
-        httpx.Client,
-        "post",
-        lambda *a, **kw: ollama_response(["RiskScorer", "sliding_window"]),
+    result = SymbolExtractor(backend=symbols_backend(["RiskScorer", "sliding_window"])).extract(
+        "class RiskScorer: ..."
     )
-    extractor = SymbolExtractor(settings=Settings())
-
-    result = extractor.extract("class RiskScorer: ...")
-
     assert "RiskScorer" in result
     assert "sliding_window" in result
 
 
-def test_extractor_returns_list_of_strings(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+def test_extractor_returns_list_of_strings() -> None:
     from src.indexer.symbol_extractor import SymbolExtractor
 
-    monkeypatch.setattr(
-        httpx.Client,
-        "post",
-        lambda *a, **kw: ollama_response(["MAX_RETRIES", "TokenBucket"]),
+    result = SymbolExtractor(backend=symbols_backend(["MAX_RETRIES", "TokenBucket"])).extract(
+        "MAX_RETRIES = 5"
     )
-    extractor = SymbolExtractor(settings=Settings())
-
-    result = extractor.extract("MAX_RETRIES = 5")
-
     assert isinstance(result, list)
     assert all(isinstance(s, str) for s in result)
 
@@ -122,76 +88,44 @@ def test_extractor_returns_list_of_strings(
 # --- deduplication ------------------------------------------------------------
 
 
-def test_extractor_deduplicates_symbols(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+def test_extractor_deduplicates_symbols() -> None:
     from src.indexer.symbol_extractor import SymbolExtractor
 
-    monkeypatch.setattr(
-        httpx.Client,
-        "post",
-        lambda *a, **kw: ollama_response(["RiskScorer", "RiskScorer", "sliding_window"]),
-    )
-    extractor = SymbolExtractor(settings=Settings())
-
-    result = extractor.extract("class RiskScorer: ...")
-
+    result = SymbolExtractor(
+        backend=symbols_backend(["RiskScorer", "RiskScorer", "sliding_window"])
+    ).extract("class RiskScorer: ...")
     assert result.count("RiskScorer") == 1
 
 
-def test_extractor_preserves_order_after_dedup(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+def test_extractor_preserves_order_after_dedup() -> None:
     from src.indexer.symbol_extractor import SymbolExtractor
 
-    monkeypatch.setattr(
-        httpx.Client,
-        "post",
-        lambda *a, **kw: ollama_response(["Alpha", "Beta", "Alpha", "Gamma"]),
-    )
-    extractor = SymbolExtractor(settings=Settings())
-
-    result = extractor.extract("some code")
-
+    result = SymbolExtractor(
+        backend=symbols_backend(["Alpha", "Beta", "Alpha", "Gamma"])
+    ).extract("some code")
     assert result == ["Alpha", "Beta", "Gamma"]
 
 
 # --- whitespace stripping -----------------------------------------------------
 
 
-def test_extractor_strips_whitespace_from_symbols(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+def test_extractor_strips_whitespace_from_symbols() -> None:
     from src.indexer.symbol_extractor import SymbolExtractor
 
-    monkeypatch.setattr(
-        httpx.Client,
-        "post",
-        lambda *a, **kw: ollama_response(["  RiskScorer  ", "\tsliding_window\n"]),
-    )
-    extractor = SymbolExtractor(settings=Settings())
-
-    result = extractor.extract("class RiskScorer: ...")
-
+    result = SymbolExtractor(
+        backend=symbols_backend(["  RiskScorer  ", "\tsliding_window\n"])
+    ).extract("class RiskScorer: ...")
     assert "RiskScorer" in result
     assert "sliding_window" in result
     assert all(s == s.strip() for s in result)
 
 
-def test_extractor_filters_empty_symbols_after_strip(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+def test_extractor_filters_empty_symbols_after_strip() -> None:
     from src.indexer.symbol_extractor import SymbolExtractor
 
-    monkeypatch.setattr(
-        httpx.Client,
-        "post",
-        lambda *a, **kw: ollama_response(["RiskScorer", "", "  ", "TokenBucket"]),
-    )
-    extractor = SymbolExtractor(settings=Settings())
-
-    result = extractor.extract("some code")
-
+    result = SymbolExtractor(
+        backend=symbols_backend(["RiskScorer", "", "  ", "TokenBucket"])
+    ).extract("some code")
     assert "" not in result
     assert all(s.strip() for s in result)
 
@@ -199,247 +133,129 @@ def test_extractor_filters_empty_symbols_after_strip(
 # --- invalid / unexpected responses ------------------------------------------
 
 
-def test_extractor_invalid_json_returns_empty_list(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+def test_extractor_invalid_json_returns_empty_list() -> None:
     from src.indexer.symbol_extractor import SymbolExtractor
 
-    monkeypatch.setattr(
-        httpx.Client,
-        "post",
-        lambda *a, **kw: ollama_response_raw("not valid json at all"),
-    )
-    extractor = SymbolExtractor(settings=Settings())
-
-    result = extractor.extract("class Foo: ...")
-
+    result = SymbolExtractor(backend=FakeBackend("not valid json at all")).extract("class Foo: ...")
     assert result == []
 
 
-def test_extractor_json_object_instead_of_list_returns_empty(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+def test_extractor_json_object_instead_of_list_returns_empty() -> None:
     from src.indexer.symbol_extractor import SymbolExtractor
 
-    monkeypatch.setattr(
-        httpx.Client,
-        "post",
-        lambda *a, **kw: ollama_response_raw('{"symbols": ["Foo"]}'),
-    )
-    extractor = SymbolExtractor(settings=Settings())
-
-    result = extractor.extract("class Foo: ...")
-
+    result = SymbolExtractor(backend=FakeBackend('{"symbols": ["Foo"]}')).extract("class Foo: ...")
     assert result == []
 
 
-def test_extractor_json_number_instead_of_list_returns_empty(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+def test_extractor_json_number_instead_of_list_returns_empty() -> None:
     from src.indexer.symbol_extractor import SymbolExtractor
 
-    monkeypatch.setattr(
-        httpx.Client,
-        "post",
-        lambda *a, **kw: ollama_response_raw("42"),
-    )
-    extractor = SymbolExtractor(settings=Settings())
-
-    result = extractor.extract("some code")
-
+    result = SymbolExtractor(backend=FakeBackend("42")).extract("some code")
     assert result == []
 
 
-def test_extractor_empty_json_array_returns_empty_list(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+def test_extractor_empty_json_array_returns_empty_list() -> None:
     from src.indexer.symbol_extractor import SymbolExtractor
 
-    monkeypatch.setattr(
-        httpx.Client,
-        "post",
-        lambda *a, **kw: ollama_response([]),
-    )
-    extractor = SymbolExtractor(settings=Settings())
-
-    result = extractor.extract("x = 1")
-
+    result = SymbolExtractor(backend=symbols_backend([])).extract("x = 1")
     assert result == []
 
 
 # --- error handling -----------------------------------------------------------
 
 
-def test_extractor_raises_on_connection_error(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+def test_extractor_raises_on_connection_error() -> None:
     from src.indexer.symbol_extractor import OllamaUnavailableError, SymbolExtractor
 
-    def raise_connect(*args: object, **kwargs: object) -> httpx.Response:
-        raise httpx.ConnectError("connection refused")
-
-    monkeypatch.setattr(httpx.Client, "post", raise_connect)
-    extractor = SymbolExtractor(settings=Settings())
-
     with pytest.raises(OllamaUnavailableError):
-        extractor.extract("class Foo: ...")
+        SymbolExtractor(backend=FakeBackend(error=True)).extract("class Foo: ...")
 
 
-def test_extractor_raises_on_timeout(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+def test_extractor_raises_on_timeout() -> None:
     from src.indexer.symbol_extractor import OllamaUnavailableError, SymbolExtractor
 
-    def raise_timeout(*args: object, **kwargs: object) -> httpx.Response:
-        raise httpx.TimeoutException("timed out")
-
-    monkeypatch.setattr(httpx.Client, "post", raise_timeout)
-    extractor = SymbolExtractor(settings=Settings())
-
     with pytest.raises(OllamaUnavailableError):
-        extractor.extract("class Foo: ...")
+        SymbolExtractor(backend=FakeBackend(error=True)).extract("class Foo: ...")
 
 
-def test_extractor_raises_on_non_2xx_status(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+def test_extractor_raises_on_non_2xx_status() -> None:
     from src.indexer.symbol_extractor import OllamaUnavailableError, SymbolExtractor
 
-    monkeypatch.setattr(
-        httpx.Client,
-        "post",
-        lambda *a, **kw: httpx.Response(500, content=b"internal server error"),
-    )
-    extractor = SymbolExtractor(settings=Settings())
-
     with pytest.raises(OllamaUnavailableError):
-        extractor.extract("class Foo: ...")
+        SymbolExtractor(backend=FakeBackend(error=True)).extract("class Foo: ...")
 
 
-def test_extractor_raises_on_404_status(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+def test_extractor_raises_on_404_status() -> None:
     from src.indexer.symbol_extractor import OllamaUnavailableError, SymbolExtractor
 
-    monkeypatch.setattr(
-        httpx.Client,
-        "post",
-        lambda *a, **kw: httpx.Response(404, content=b"not found"),
-    )
-    extractor = SymbolExtractor(settings=Settings())
-
     with pytest.raises(OllamaUnavailableError):
-        extractor.extract("class Foo: ...")
+        SymbolExtractor(backend=FakeBackend(error=True)).extract("class Foo: ...")
 
 
 # --- filter_symbols -----------------------------------------------------------
 
 
-def test_filter_keeps_domain_specific_symbols(
-    monkeypatch: pytest.MonkeyPatch, tmp_path: pytest.TempPathFactory
-) -> None:
-    """Ollama returns a subset → only those are kept."""
+def test_filter_keeps_domain_specific_symbols(tmp_path: pytest.TempPathFactory) -> None:
     from src.indexer.symbol_extractor import SymbolExtractor
 
     kept = ["upgradeCharge", "ANNUAL_DISCOUNT", "stackDiscount"]
-    monkeypatch.setattr(httpx.Client, "post", lambda *a, **kw: ollama_response(kept))
-    extractor = SymbolExtractor(settings=Settings())
-
+    extractor = SymbolExtractor(backend=symbols_backend(kept))
     all_syms = ["upgradeCharge", "ANNUAL_DISCOUNT", "stackDiscount", "score", "engineer"]
-    result = extractor.filter_symbols(all_syms, tmp_path / "pricing.ts")
-
+    result = extractor.filter_symbols(all_syms, tmp_path / "pricing.ts")  # type: ignore[operator]
     assert result == kept
 
 
-def test_filter_rejects_hallucinated_symbols(
-    monkeypatch: pytest.MonkeyPatch, tmp_path: pytest.TempPathFactory
-) -> None:
-    """Symbols Ollama invents that were not in the input are dropped."""
+def test_filter_rejects_hallucinated_symbols(tmp_path: pytest.TempPathFactory) -> None:
     from src.indexer.symbol_extractor import SymbolExtractor
 
-    monkeypatch.setattr(
-        httpx.Client, "post",
-        lambda *a, **kw: ollama_response(["upgradeCharge", "HallucinatedClass"]),
-    )
-    extractor = SymbolExtractor(settings=Settings())
-
-    result = extractor.filter_symbols(["upgradeCharge", "score"], tmp_path / "f.ts")
-
+    result = SymbolExtractor(
+        backend=symbols_backend(["upgradeCharge", "HallucinatedClass"])
+    ).filter_symbols(["upgradeCharge", "score"], tmp_path / "f.ts")  # type: ignore[operator]
     assert "upgradeCharge" in result
     assert "HallucinatedClass" not in result
 
 
 def test_filter_falls_back_to_all_when_ollama_returns_empty(
-    monkeypatch: pytest.MonkeyPatch, tmp_path: pytest.TempPathFactory
+    tmp_path: pytest.TempPathFactory,
 ) -> None:
-    """If Ollama returns [], keep all symbols (safe default — better over-protect)."""
     from src.indexer.symbol_extractor import SymbolExtractor
 
-    monkeypatch.setattr(httpx.Client, "post", lambda *a, **kw: ollama_response([]))
-    extractor = SymbolExtractor(settings=Settings())
-
     syms = ["upgradeCharge", "ANNUAL_DISCOUNT"]
-    result = extractor.filter_symbols(syms, tmp_path / "f.ts")
-
+    result = SymbolExtractor(backend=symbols_backend([])).filter_symbols(
+        syms, tmp_path / "f.ts"  # type: ignore[operator]
+    )
     assert result == syms
 
 
-def test_filter_empty_input_skips_ollama(
-    monkeypatch: pytest.MonkeyPatch, tmp_path: pytest.TempPathFactory
-) -> None:
-    """Empty symbol list returns immediately without calling Ollama."""
+def test_filter_empty_input_skips_ollama(tmp_path: pytest.TempPathFactory) -> None:
     from src.indexer.symbol_extractor import SymbolExtractor
 
-    called = []
-    monkeypatch.setattr(
-        httpx.Client, "post", lambda *a, **kw: called.append(True) or ollama_response([])
+    backend = FakeBackend()
+    result = SymbolExtractor(backend=backend).filter_symbols(
+        [], tmp_path / "f.ts"  # type: ignore[operator]
     )
-    extractor = SymbolExtractor(settings=Settings())
-
-    result = extractor.filter_symbols([], tmp_path / "f.ts")
-
     assert result == []
-    assert not called
+    assert not backend.calls
 
 
-def test_filter_raises_when_ollama_unavailable(
-    monkeypatch: pytest.MonkeyPatch, tmp_path: pytest.TempPathFactory
-) -> None:
-    """OllamaUnavailableError propagates so the caller can fall back."""
+def test_filter_raises_when_ollama_unavailable(tmp_path: pytest.TempPathFactory) -> None:
     from src.indexer.symbol_extractor import OllamaUnavailableError, SymbolExtractor
 
-    monkeypatch.setattr(
-        httpx.Client, "post",
-        lambda *a, **kw: (_ for _ in ()).throw(httpx.ConnectError("refused")),
-    )
-    extractor = SymbolExtractor(settings=Settings())
-
     with pytest.raises(OllamaUnavailableError):
-        extractor.filter_symbols(["upgradeCharge"], tmp_path / "f.ts")
+        SymbolExtractor(backend=FakeBackend(error=True)).filter_symbols(
+            ["upgradeCharge"], tmp_path / "f.ts"  # type: ignore[operator]
+        )
 
 
-# --- model used from settings -------------------------------------------------
+# --- backend is called with the prompt ----------------------------------------
 
 
-def test_extractor_sends_configured_model_to_ollama(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+def test_extractor_sends_configured_model_to_ollama() -> None:
+    """The prompt forwarded to the backend must contain the source code."""
     from src.indexer.symbol_extractor import SymbolExtractor
 
-    captured: list[object] = []
+    backend = FakeBackend('["Foo"]')
+    SymbolExtractor(backend=backend).extract("class Foo: ...")
 
-    def capture_post(self: object, url: str, **kwargs: object) -> httpx.Response:
-        captured.append(kwargs)
-        return ollama_response(["Foo"])
-
-    monkeypatch.setattr(httpx.Client, "post", capture_post)
-
-    settings = Settings(ollama_model="mistral:7b")
-    extractor = SymbolExtractor(settings=settings)
-    extractor.extract("class Foo: ...")
-
-    assert captured
-    payload = captured[0]
-    assert isinstance(payload, dict)
-    # model name must appear somewhere in what was sent
-    assert "mistral:7b" in str(payload)
+    assert backend.calls, "backend.generate must be called"
+    assert "Foo" in backend.calls[0]

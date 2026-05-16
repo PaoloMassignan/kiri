@@ -55,6 +55,7 @@ def _build_watcher(settings: Settings) -> Watcher:
     from src.indexer.embedder import Embedder
     from src.indexer.symbol_extractor import SymbolExtractor
     from src.indexer.watcher import Watcher
+    from src.llm import make_llm_backend
 
     return Watcher(
         secrets_store=make_secrets_store(settings),
@@ -62,5 +63,5 @@ def _build_watcher(settings: Settings) -> Watcher:
         symbol_store=make_symbol_store(settings),
         chunker=chunk,
         embedder=Embedder(settings=settings),
-        extractor=SymbolExtractor(settings=settings),
+        extractor=SymbolExtractor(backend=make_llm_backend(settings)),
     )
