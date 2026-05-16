@@ -90,7 +90,17 @@ class KeyManager:
         return key.startswith("sk-ant-")
 
     def get_upstream_key(self, protocol: str = "anthropic") -> str:
-        # Prefer Docker secret (not visible via `docker inspect`)
+        # Tier 0: explicit file path via env var — used by the native distribution.
+        # The systemd/launchd/Windows service sets KIRI_UPSTREAM_KEY_FILE to
+        # /var/lib/kiri/upstream.key (owned by the kiri service account, mode 600).
+        if env_path := os.environ.get("KIRI_UPSTREAM_KEY_FILE"):
+            p = Path(env_path)
+            if p.exists():
+                value = p.read_text(encoding="utf-8").strip()
+                if value:
+                    return value
+
+        # Tier 1: Docker secret (not visible via `docker inspect`)
         secret_name = _PROTOCOL_SECRET.get(protocol, "anthropic_key")
         secret_file = self._secrets_dir / secret_name
         if secret_file.exists():

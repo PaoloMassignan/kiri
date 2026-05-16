@@ -12,6 +12,12 @@
   <key>UserName</key>          <string>_kiri</string>
   <key>RunAtLoad</key>         <true/>
   <key>KeepAlive</key>         <true/>
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>KIRI_UPSTREAM_KEY_FILE</key> <string>/var/lib/kiri/upstream.key</string>
+    <key>KIRI_CONFIG</key>            <string>/var/lib/kiri/config.yaml</string>
+    <key>WORKSPACE</key>              <string>/var/lib/kiri/workspace</string>
+  </dict>
   <key>StandardOutPath</key>   <string>/var/log/kiri/kiri.log</string>
   <key>StandardErrorPath</key> <string>/var/log/kiri/kiri.log</string>
 </dict>

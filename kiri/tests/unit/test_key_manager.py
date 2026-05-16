@@ -323,6 +323,86 @@ def test_get_upstream_key_openai_reads_correct_secret_file(tmp_path: Path) -> No
     assert km.get_upstream_key(protocol="openai") == "sk-openai-fromsecret"
 
 
+# --- Tier 0: KIRI_UPSTREAM_KEY_FILE (native distribution) --------------------
+
+
+def test_get_upstream_key_reads_from_env_key_file(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from src.keys.manager import KeyManager
+
+    key_file = tmp_path / "upstream.key"
+    key_file.write_text("sk-ant-fromnative\n", encoding="utf-8")
+    monkeypatch.setenv("KIRI_UPSTREAM_KEY_FILE", str(key_file))
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+
+    km = KeyManager(keys_dir=tmp_path, secrets_dir=tmp_path / "nosecrets")
+    assert km.get_upstream_key() == "sk-ant-fromnative"
+
+
+def test_kiri_upstream_key_file_takes_priority_over_docker_secret(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from src.keys.manager import KeyManager
+
+    key_file = tmp_path / "native.key"
+    key_file.write_text("sk-ant-native", encoding="utf-8")
+    monkeypatch.setenv("KIRI_UPSTREAM_KEY_FILE", str(key_file))
+
+    secrets_dir = tmp_path / "secrets"
+    secrets_dir.mkdir()
+    (secrets_dir / "anthropic_key").write_text("sk-ant-docker", encoding="utf-8")
+
+    km = KeyManager(keys_dir=tmp_path, secrets_dir=secrets_dir)
+    assert km.get_upstream_key() == "sk-ant-native"
+
+
+def test_kiri_upstream_key_file_takes_priority_over_env_var(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from src.keys.manager import KeyManager
+
+    key_file = tmp_path / "native.key"
+    key_file.write_text("sk-ant-native", encoding="utf-8")
+    monkeypatch.setenv("KIRI_UPSTREAM_KEY_FILE", str(key_file))
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-ant-fromenv")
+
+    km = KeyManager(keys_dir=tmp_path, secrets_dir=tmp_path / "nosecrets")
+    assert km.get_upstream_key() == "sk-ant-native"
+
+
+def test_empty_kiri_upstream_key_file_falls_back_to_docker_secret(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from src.keys.manager import KeyManager
+
+    key_file = tmp_path / "empty.key"
+    key_file.write_text("   \n", encoding="utf-8")
+    monkeypatch.setenv("KIRI_UPSTREAM_KEY_FILE", str(key_file))
+
+    secrets_dir = tmp_path / "secrets"
+    secrets_dir.mkdir()
+    (secrets_dir / "anthropic_key").write_text("sk-ant-docker", encoding="utf-8")
+
+    km = KeyManager(keys_dir=tmp_path, secrets_dir=secrets_dir)
+    assert km.get_upstream_key() == "sk-ant-docker"
+
+
+def test_missing_kiri_upstream_key_file_falls_back_to_docker_secret(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from src.keys.manager import KeyManager
+
+    monkeypatch.setenv("KIRI_UPSTREAM_KEY_FILE", str(tmp_path / "nonexistent.key"))
+
+    secrets_dir = tmp_path / "secrets"
+    secrets_dir.mkdir()
+    (secrets_dir / "anthropic_key").write_text("sk-ant-docker", encoding="utf-8")
+
+    km = KeyManager(keys_dir=tmp_path, secrets_dir=secrets_dir)
+    assert km.get_upstream_key() == "sk-ant-docker"
+
+
 # --- key expiry ---------------------------------------------------------------
 
 

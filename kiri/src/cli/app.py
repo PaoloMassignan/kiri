@@ -287,16 +287,31 @@ def explain(
 
 
 @app.command()
-def serve() -> None:
+def serve(
+    port: int | None = typer.Option(
+        None, "--port", "-p",
+        help="Port to listen on (overrides config; default: 8765)",
+    ),
+    upstream_key_file: Path | None = typer.Option(
+        None, "--upstream-key-file",
+        help="Path to the upstream API key file (overrides KIRI_UPSTREAM_KEY_FILE env var)",
+        exists=False,
+    ),
+) -> None:
     """Start the gateway proxy server."""
+    import os
     import uvicorn
 
     from src.main import create_gateway_app
 
+    if upstream_key_file is not None:
+        os.environ["KIRI_UPSTREAM_KEY_FILE"] = str(upstream_key_file)
+
     s = _settings()
+    listen_port = port if port is not None else s.proxy_port
     application = create_gateway_app(s)
-    typer.echo(f"Gateway listening on http://127.0.0.1:{s.proxy_port}")
-    uvicorn.run(application, host="127.0.0.1", port=s.proxy_port)
+    typer.echo(f"Kiri listening on http://127.0.0.1:{listen_port}")
+    uvicorn.run(application, host="127.0.0.1", port=listen_port)
 
 
 if __name__ == "__main__":

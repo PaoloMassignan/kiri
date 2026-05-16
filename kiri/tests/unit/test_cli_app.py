@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 from unittest.mock import patch
 
 from typer.testing import CliRunner
@@ -80,6 +81,49 @@ def test_serve_binds_to_localhost() -> None:
     assert calls[0].get("host") == "127.0.0.1", (
         f"gateway serve must bind to 127.0.0.1, got: {calls[0].get('host')}"
     )
+
+
+def test_serve_port_option_overrides_settings() -> None:
+    """--port overrides settings.proxy_port."""
+    import uvicorn
+
+    from src.config.settings import Settings
+
+    calls: list[dict] = []
+
+    with patch.object(uvicorn, "run", lambda app, **kw: calls.append(kw)), \
+         patch("src.main.create_gateway_app", return_value=None), \
+         patch("src.cli.app._settings", return_value=Settings(proxy_port=8765)):
+        runner.invoke(app, ["serve", "--port", "9999"])
+
+    assert calls[0].get("port") == 9999
+
+
+def test_serve_upstream_key_file_sets_env_var(tmp_path, monkeypatch) -> None:
+    """--upstream-key-file sets KIRI_UPSTREAM_KEY_FILE before app creation."""
+    import uvicorn
+
+    from src.config.settings import Settings
+
+    key_file = tmp_path / "upstream.key"
+    key_file.write_text("sk-ant-test", encoding="utf-8")
+
+    # Pre-register env var with monkeypatch so it is cleaned up after this test,
+    # regardless of what value serve() writes to it.
+    monkeypatch.setenv("KIRI_UPSTREAM_KEY_FILE", "placeholder")
+
+    captured_env: list[str | None] = []
+
+    def fake_create(s):
+        captured_env.append(os.environ.get("KIRI_UPSTREAM_KEY_FILE"))
+        return None
+
+    with patch.object(uvicorn, "run", lambda app, **kw: None), \
+         patch("src.main.create_gateway_app", side_effect=fake_create), \
+         patch("src.cli.app._settings", return_value=Settings()):
+        runner.invoke(app, ["serve", "--upstream-key-file", str(key_file)])
+
+    assert captured_env and captured_env[0] == str(key_file)
 
 
 # --- add ----------------------------------------------------------------------

@@ -8,6 +8,9 @@ Type=simple
 User=kiri
 Group=kiri
 ExecStart=/usr/bin/kiri serve
+Environment=KIRI_UPSTREAM_KEY_FILE=/var/lib/kiri/upstream.key
+Environment=KIRI_CONFIG=/var/lib/kiri/config.yaml
+Environment=WORKSPACE=/var/lib/kiri/workspace
 Restart=always
 RestartSec=5
 # Hardening
