@@ -13,7 +13,13 @@
 # kiri install downloads both at installation time.
 
 import sys
+import platform
 from pathlib import Path
+
+# On Linux, PyTorch makes a onefile binary exceed 2 GB (GitHub asset limit).
+# Use onedir on Linux, onefile everywhere else. Controlled here in the spec
+# so the CLI invocation never passes --onedir/--onefile (not allowed with .spec).
+_onedir = platform.system() == "Linux"
 
 block_cipher = None
 root = Path(SPECPATH).parent  # kiri/
@@ -85,12 +91,23 @@ pyz = PYZ(a.pure, a.zipped_data, cipher=block_cipher)
 exe = EXE(
     pyz,
     a.scripts,
-    a.binaries,
-    a.zipfiles,
-    a.datas,
+    [] if _onedir else a.binaries,
+    [] if _onedir else a.zipfiles,
+    [] if _onedir else a.datas,
     name="kiri",
     debug=False,
     strip=False,
     upx=False,
     console=True,
 )
+
+if _onedir:
+    coll = COLLECT(
+        exe,
+        a.binaries,
+        a.zipfiles,
+        a.datas,
+        strip=False,
+        upx=False,
+        name="kiri",
+    )

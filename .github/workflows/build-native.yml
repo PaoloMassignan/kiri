@@ -46,13 +46,8 @@ jobs:
         # on macOS with Metal).  Install base deps only; L3 fails-open.
         run: pip install -e "."
 
-      - name: Build binary (onefile — macOS / Windows)
-        if: matrix.os != 'ubuntu-22.04'
-        run: pyinstaller packaging/kiri.spec --onefile --distpath dist --workpath /tmp/pyinstaller-work
-
-      - name: Build binary (onedir — Linux, PyTorch makes onefile > 2 GB)
-        if: matrix.os == 'ubuntu-22.04'
-        run: pyinstaller packaging/kiri.spec --onedir --distpath dist --workpath /tmp/pyinstaller-work
+      - name: Build binary
+        run: pyinstaller packaging/kiri.spec --distpath dist --workpath /tmp/pyinstaller-work
 
       - name: Smoke test
         shell: bash
