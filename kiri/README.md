@@ -189,6 +189,9 @@ kiri inspect "<prompt>"  # test a prompt against the filter
 kiri inspect --file p.txt
 kiri log --tail 50
 kiri log --decision BLOCK --since today
+kiri explain             # why was the last request filtered?
+kiri explain --entry 2  # second-last filtered request
+kiri explain --show-redacted  # also print the forwarded prompt
 kiri key create
 kiri key list
 kiri key revoke kr-...
