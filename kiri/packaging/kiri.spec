@@ -88,9 +88,12 @@ a = Analysis(
 
 pyz = PYZ(a.pure, a.zipped_data, cipher=block_cipher)
 
+_onefile_tocs = [] if _onedir else [a.binaries, a.zipfiles, a.datas]
+
 exe = EXE(
     pyz,
     a.scripts,
+    *_onefile_tocs,
     exclude_binaries=_onedir,
     name="kiri",
     debug=False,
