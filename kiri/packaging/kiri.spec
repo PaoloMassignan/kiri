@@ -65,7 +65,6 @@ a = Analysis(
         "chromadb.server.fastapi",
         "chromadb.telemetry.opentelemetry.fastapi",
         "chromadb.telemetry.product.events",
-        "chromadb.telemetry.product.posthog",
         # tree-sitter language grammars loaded via importlib
         "tree_sitter_python",
         "tree_sitter_javascript",
@@ -78,7 +77,7 @@ a = Analysis(
         "tree_sitter_c_sharp",
     ],
     hookspath=[],
-    runtime_hooks=[],
+    runtime_hooks=[str(root / "packaging" / "hook_disable_chromadb_telemetry.py")],
     # llama_cpp is NOT bundled — its Metal/CUDA shared libs make the macOS
     # binary exceed GitHub's 2 GB asset limit.  L3 fails-open per ADR-004
     # when llama_cpp is absent; L1 and L2 remain fully active.
