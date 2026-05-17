@@ -91,9 +91,7 @@ pyz = PYZ(a.pure, a.zipped_data, cipher=block_cipher)
 exe = EXE(
     pyz,
     a.scripts,
-    [] if _onedir else a.binaries,
-    [] if _onedir else a.zipfiles,
-    [] if _onedir else a.datas,
+    exclude_binaries=_onedir,
     name="kiri",
     debug=False,
     strip=False,
