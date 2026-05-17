@@ -8,7 +8,7 @@ from fastapi import Request, Response
 from starlette.background import BackgroundTask
 from starlette.responses import StreamingResponse
 
-_ANTHROPIC_BASE = os.environ.get("ANTHROPIC_BASE_URL", "https://api.anthropic.com")
+_ANTHROPIC_BASE = os.environ.get("KIRI_ANTHROPIC_UPSTREAM", "https://api.anthropic.com")
 _HOP_BY_HOP = {
     "connection", "keep-alive", "proxy-authenticate", "proxy-authorization",
     "te", "trailers", "transfer-encoding", "upgrade",
