@@ -39,7 +39,7 @@ jobs:
           cache: pip
 
       - name: Install build dependencies
-        run: pip install pyinstaller
+        run: pip install pyinstaller posthog
 
       - name: Install Kiri
         # llama-cpp-python is excluded from the PyInstaller bundle (too large

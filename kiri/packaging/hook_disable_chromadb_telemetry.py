@@ -1,6 +1,7 @@
 import os
 
-# Disable chromadb anonymous telemetry — prevents the posthog module from
-# being loaded at runtime. posthog is not bundled (not installed in the
-# build environment) and kiri does not send usage data.
+# Disable chromadb anonymous telemetry so posthog is never loaded at runtime.
+# chromadb 0.x reads ANONYMIZED_TELEMETRY; 1.x reads CHROMA_ANONYMIZED_TELEMETRY.
+# Set both to be safe.
 os.environ.setdefault("ANONYMIZED_TELEMETRY", "false")
+os.environ.setdefault("CHROMA_ANONYMIZED_TELEMETRY", "false")
