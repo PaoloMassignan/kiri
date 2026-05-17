@@ -60,8 +60,7 @@ def _check_privileges(system: str) -> None:
                 raise InstallError("kiri install must be run as Administrator on Windows.")
         except AttributeError:
             pass  # non-Windows ctypes — skip
-    elif hasattr(os, "getuid"):
-        # os.getuid() exists on POSIX only (Linux, macOS)
+    elif system in ("Linux", "Darwin"):
         if os.getuid() != 0:
             raise InstallError("kiri install must be run as root (use sudo).")
 
